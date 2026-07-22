@@ -62,7 +62,7 @@ return [
                 ],
                 
                 'app-passwords' => [
-                    'config_key' => 'ixp_fe.frontend.disabled.app-password',
+                    'config_key' => 'ixp_fe.frontend.disabled.app-passwords',
                     'dotenv_key' => 'IXP_FE_FRONTEND_DISABLED_APP_PASSWORD',
                     'type'       => 'radio',
                     'invert'     => true,
