@@ -14,7 +14,7 @@ namespace IXP\Jobs;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -29,6 +29,7 @@ use Carbon\Carbon;
 
 use Illuminate\Bus\Queueable;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\{
     SerializesModels,
     InteractsWithQueue
@@ -97,6 +98,7 @@ class FetchFilteredPrefixesForCustomer extends Job implements ShouldQueue
             throw new GeneralException('A persistent cache is required to fetch filtered prefixes' );
         }
 
+        $taskBeganAt = now();
 
         // so, find all vlan interfaces where this customer is configured for route server client
         // them, for each router, get a list of filtered prefixes and record reason(s) and routers
@@ -123,6 +125,8 @@ class FetchFilteredPrefixesForCustomer extends Job implements ShouldQueue
 
         // and jam the results into the cache
         Cache::put('filtered-prefixes-' . $this->customer->id, $this->filteredPrefixes, 900);
+
+        Log::notice( 'Completed fetching filtered prefixes for customer with ID: ' . $this->customer->id . '. Took ' . $taskBeganAt->diffInMilliseconds() . ' ms');
     }
 
     /**

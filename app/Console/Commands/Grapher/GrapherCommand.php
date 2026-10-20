@@ -14,7 +14,7 @@ namespace IXP\Console\Commands\Grapher;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -25,7 +25,6 @@ namespace IXP\Console\Commands\Grapher;
 use IXP\Services\Grapher as Grapher;
 
 use IXP\Console\Commands\Command as IXPCommand;
-use IXP\Console\Commands\Command;
 
 /**
  *

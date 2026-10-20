@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Auth;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -27,7 +27,6 @@ use Former, Hash;
 
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\{
-    JsonResponse,
     RedirectResponse
 };
 
@@ -98,7 +97,7 @@ class ResetPasswordController extends Controller
      *
      * @return View
      */
-    public function showResetForm( Request $request, ?string $token = null ): View
+    public function showResetForm( Request $request, #[\SensitiveParameter] ?string $token = null ): View
     {
         Former::populate( [
             'username'      => request()->old( 'username',  $request->username    ),
@@ -148,10 +147,8 @@ class ResetPasswordController extends Controller
      * @param  string   $password
      *
      * @return void
-     *
-     * @throws
      */
-    protected function resetPassword( User $user, string $password ): void
+    protected function resetPassword( User $user, #[\SensitiveParameter] string $password ): void
     {
         $user->password = Hash::make( $password );
         $user->save();
@@ -159,6 +156,7 @@ class ResetPasswordController extends Controller
         event( new PasswordResetEvent( $user ) );
         $this->redirectTo = route("login@showForm" ) . '?username=' . $user->username ;
     }
+
     /**
      * Get the response for a failed password reset.
      *

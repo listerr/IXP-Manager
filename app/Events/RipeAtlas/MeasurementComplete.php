@@ -1,9 +1,6 @@
 <?php
-
-namespace IXP\Events\RipeAtlas;
-
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace IXP\Events\RipeAtlas;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -23,28 +20,17 @@ namespace IXP\Events\RipeAtlas;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+declare(strict_types=1);
+
+namespace IXP\Events\RipeAtlas;
+
 use IXP\Models\AtlasMeasurement as AtlasMeasurementModel;
 
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
 
 final class MeasurementComplete
 {
-    use Dispatchable, SerializesModels;
+    use SerializesModels;
 
-    /**
-     * @var AtlasMeasurementModel
-     */
-    public $atlasMeasurement;
-
-    /**
-     * Create a new event instance.
-     *
-     * @param AtlasMeasurementModel $atlasMeasurement
-     *
-     */
-    public function __construct( AtlasMeasurementModel $atlasMeasurement )
-    {
-        $this->atlasMeasurement = $atlasMeasurement;
-    }
+    public function __construct(public readonly AtlasMeasurementModel $atlasMeasurement ) {}
 }

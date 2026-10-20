@@ -78,13 +78,13 @@ class ConsoleServerConnectionController extends EloquentController
             'model'             => ConsoleServerConnection::class,
             'pagetitle'         => 'Console Server Connections',
             'titleSingular'     => 'Console Server Connection',
-            'nameSingular'      => 'a console server connection',
+            'nameSingular'      => 'console server connection',
             'listOrderBy'       => [ 'c.name', 'csc.port' ],
             'listOrderByDir'    => 'ASC',
             'viewFolderName'    => 'console-server-connection',
             'listColumns'    => [
                 'customer'  => [
-                    'title'      => 'Customer',
+                    'title'      => ucfirst( config( 'ixp_fe.lang.customer.one' ) ),
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
                     'controller' => 'admin/customer',
                     'action'     => 'overview',

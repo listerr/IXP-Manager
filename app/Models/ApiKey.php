@@ -42,7 +42,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $last_seen_at
  * @property string|null $last_seen_from
  * @property string|null $description
- * @property Carbon|null $created_at
+ * @property Carbon $created_at
  * @property Carbon|null $updated_at
  * @property-read \IXP\Models\User $user
  * @method static Builder<static>|ApiKey newModelQuery()
@@ -60,18 +60,11 @@ use Illuminate\Support\Carbon;
  * @method static Builder<static>|ApiKey whereTokenIdentifier($value)
  * @method static Builder<static>|ApiKey whereUpdatedAt($value)
  * @method static Builder<static>|ApiKey whereUserId($value)
- * @property string $apiKey
- * @property string|null $allowedIPs
- * @property string|null $lastseenAt
- * @property string|null $lastseenFrom
- * @method static Builder<static>|ApiKey whereAllowedIPs($value)
- * @method static Builder<static>|ApiKey whereLastseenAt($value)
- * @method static Builder<static>|ApiKey whereLastseenFrom($value)
  * @mixin Eloquent
  */
 class ApiKey extends Model
 {
-    const PREFIX = 'ixpm_';
+    const string PREFIX = 'ixpm_';
 
 
     /**

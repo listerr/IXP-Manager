@@ -30,18 +30,10 @@ class PublicControllerTest extends TestCase
         $this->user->custid = $this->customer->id;
         $this->user->save();
 
-        $this->c2u = $this->user->customerToUser()->create( [
+        $this->c2u = $this->user->customerToUser()->forceCreate( [
             'customer_id' => $this->customer->id ,
             'privs' => User::AUTH_CUSTUSER,
         ] );
-    }
-
-    public function tearDown(): void
-    {
-        $this->c2u->delete();
-        $this->customer->delete();
-        $this->user->delete();
-        parent::tearDown();
     }
 
     public function testTestWhileNotAuthenticated()
@@ -104,6 +96,7 @@ class PublicControllerTest extends TestCase
         $apiKey->description = "legacy api key";
         $apiKey->save();
 
+        config()->set('ixp_api.allow_apikeys_get_parameter', true);
         $response = $this->get( '/api/v4/test?apikey=' . $legacyApiKey );
         $response->assertStatus( 200 )
             ->assertSee( 'Authenticated: Yes' );

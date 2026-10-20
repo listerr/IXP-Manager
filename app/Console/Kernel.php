@@ -14,7 +14,7 @@ namespace IXP\Console;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -27,6 +27,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use IXP\Jobs\SendApiKeyExpiryReminders;
 use IXP\Jobs\SendAppPasswordExpiryReminders;
+use IXP\Models\TaskLastRun;
 
 class Kernel extends ConsoleKernel
 {
@@ -94,6 +95,7 @@ class Kernel extends ConsoleKernel
         $schedule->command( 'switch:snmp-poll' )->everyFiveMinutes()
             ->withoutOverlapping();
 
+        TaskLastRun::updateSchedulerCronJob();
     }
 
     /**

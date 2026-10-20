@@ -12,7 +12,7 @@
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -20,6 +20,8 @@
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
 
 namespace Tests\Http\Controllers\Irrdb;
 
@@ -57,7 +59,7 @@ class IrrdbControllerTest extends TestCase
         $this->user = User::create();
         $this->user->custid = $this->customer->id;
         $this->user->save();
-        $this->cust2User = CustomerToUser::create([
+        $this->cust2User = CustomerToUser::forceCreate([
             'user_id' => $this->user->id,
             'customer_id' => $this->customer->id,
             'privs' => User::AUTH_CUSTUSER,
@@ -70,22 +72,6 @@ class IrrdbControllerTest extends TestCase
             'rsclient' => true,
             'irrdbfilter' => true,
         ] );
-    }
-
-    public function tearDown(): void
-    {
-        $this->cust2User->delete();
-        $this->user->delete();
-        $this->customer->irrdbUpdateLog()->delete();
-        $this->customer->delete();
-
-        unset($this->cust2User);
-        unset($this->user);
-        unset($this->customer);
-        unset($this->vi);
-        unset($this->vli);
-
-        parent::tearDown();
     }
 
     public function testUpdateWhenNoData()

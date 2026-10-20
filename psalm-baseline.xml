@@ -269,11 +269,6 @@
       <code><![CDATA[$c]]></code>
     </UndefinedDocblockClass>
   </file>
-  <file src="app/Http/Controllers/Auth/ResetPasswordController.php">
-    <MissingDocblockType>
-      <code><![CDATA[protected function resetPassword( User $user, string $password ): void]]></code>
-    </MissingDocblockType>
-  </file>
   <file src="app/Http/Controllers/CabinetController.php">
     <InvalidReturnStatement>
       <code><![CDATA[$okay]]></code>
@@ -449,15 +444,12 @@
       <code><![CDATA[$r->nocwww]]></code>
     </UndefinedMagicPropertyFetch>
   </file>
-  <file src="app/Http/Controllers/Docstore/FileController.php">
+  <file src="app/Http/Controllers/Api/V4/Docstore/FileController.php">
     <InvalidOperand>
       <code><![CDATA[config( 'filesystems.disks.' . $file->disk . '.root', '*** UNKNOWN LOCATION ***' )]]></code>
     </InvalidOperand>
   </file>
-  <file src="app/Http/Controllers/DocstoreCustomer/FileController.php">
-    <InvalidArgument>
-      <code><![CDATA[$file->customer->id]]></code>
-    </InvalidArgument>
+  <file src="app/Http/Controllers/Api/V4/DocstoreCustomer/FileController.php">
     <InvalidOperand>
       <code><![CDATA[config( 'filesystems.disks.' . $file->disk . '.root', '*** UNKNOWN LOCATION ***' )]]></code>
     </InvalidOperand>
@@ -969,16 +961,6 @@
       <code><![CDATA[public function handle( Request $r, Closure $next )]]></code>
     </MissingDocblockType>
   </file>
-  <file src="app/Http/Middleware/RsPrefixes.php">
-    <MissingDocblockType>
-      <code><![CDATA[public function handle( Request $r, Closure $next )]]></code>
-    </MissingDocblockType>
-    <RedundantCast>
-      <code><![CDATA[(int)config( 'ixp_fe.rs-prefixes.access' )]]></code>
-      <code><![CDATA[(int)config( 'ixp_fe.rs-prefixes.access' )]]></code>
-      <code><![CDATA[(int)config( 'ixp_fe.rs-prefixes.access' )]]></code>
-    </RedundantCast>
-  </file>
   <file src="app/Http/Middleware/Services/Grapher.php">
     <NoEnvOutsideConfig>
       <code><![CDATA[env]]></code>
@@ -1138,14 +1120,6 @@
     <MissingDocblockType>
       <code><![CDATA[$result[ $ppp->id ]]]></code>
     </MissingDocblockType>
-  </file>
-  <file src="app/Models/Aggregators/RsPrefixAggregator.php">
-    <RedundantCondition>
-      <code><![CDATA[$result]]></code>
-    </RedundantCondition>
-    <TypeDoesNotContainType>
-      <code><![CDATA[false]]></code>
-    </TypeDoesNotContainType>
   </file>
   <file src="app/Models/Aggregators/SwitcherAggregator.php">
     <InvalidOperand>
@@ -1329,14 +1303,6 @@
       <code><![CDATA[public function addRememberToken( $user ): UserRememberToken]]></code>
       <code><![CDATA[public function purgeExpiredRememberTokens( User $user ): void]]></code>
     </MissingDocblockType>
-  </file>
-  <file src="app/Services/Auth/SessionGuard.php">
-    <InvalidDocblock>
-      <code><![CDATA[protected $userRememberToken;]]></code>
-    </InvalidDocblock>
-    <NoInterfaceProperties>
-      <code><![CDATA[$this->user()->userRememberTokens]]></code>
-    </NoInterfaceProperties>
   </file>
   <file src="app/Services/Diagnostics/Suites/PhysicalInterfaceDiagnosticSuite.php">
     <RedundantCondition>
@@ -1636,11 +1602,6 @@
     <TooManyArguments>
       <code><![CDATA[fake]]></code>
     </TooManyArguments>
-  </file>
-  <file src="app/Services/Purifier.php">
-    <TypeDoesNotContainType>
-      <code><![CDATA[is_string($config)]]></code>
-    </TypeDoesNotContainType>
   </file>
   <file src="app/Services/RipeAtlas/ApiCall.php">
     <MissingDocblockType>

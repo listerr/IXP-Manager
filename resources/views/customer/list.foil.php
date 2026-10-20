@@ -70,6 +70,27 @@
             </ul>
         </div>
 
+        <?php if( $t->resellerMode() ): ?>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-white dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <?= $t->resellerType ? 'Reseller Type: ' . $t->resellerTypes[ $t->resellerType ] : 'Limit to reseller type...' ?>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right">
+                    <a class="dropdown-item <?= $t->resellerType ?: 'active' ?>" href="<?= route( 'customer@list', [ 'reseller-type' => 'all' ] ) ?>">
+                        All
+                    </a>
+
+                    <div class="dropdown-divider"></div>
+
+                    <?php foreach( $t->resellerTypes as $resellerType => $resellerTypeLabel ): ?>
+                        <a class="dropdown-item <?= $t->resellerType === $resellerType ? 'active' : '' ?>" href="<?= route( 'customer@list', [ 'reseller-type' => $resellerType ] ) ?>">
+                            <?= $t->ee( $resellerTypeLabel ) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <a class="btn btn-white" href="<?= route( 'customer@create' ) ?>">
             <span class="fa fa-plus"></span>
         </a>
@@ -78,7 +99,7 @@
 
 <?php $this->section('content') ?>
     <?= $t->alerts() ?>
-        <table id='customer-list' class="table collapse table-striped no-wrap responsive tw-shadow-md w-100" >
+        <table id='customer-list' class="table collapse table-striped no-wrap responsive tw:shadow-md w-100" >
             <thead class="thead-dark">
                 <tr>
                     <th>
@@ -156,7 +177,7 @@
 <?php $this->append() ?>
 
 <?php $this->section( 'scripts' ) ?>
-    <script>
+    <script type="module">
         $(document).ready( function() {
             $('#customer-list').dataTable( {
                 responsive: true,

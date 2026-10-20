@@ -1,7 +1,7 @@
 <?php $this->layout('services/lg/layout') ?>
 
 <?php $this->section('title') ?>
-    <small>Routes for <?= ucwords( $t->source ) ?> <code><?= $t->ee( $t->name ) ?></code></small>
+    <small>Routes for <?= $t->ee( ucwords( $t->source ) ) ?> <code><?= $t->ee( $t->name ) ?></code></small>
 <?php $this->append() ?>
 
 <?php $this->section('content') ?>
@@ -140,7 +140,7 @@
 <?php $this->append() ?>
 
 <?php $this->section('scripts') ?>
-    <script type="text/javascript">
+    <script type="module">
         $('#routes').removeClass( 'display' ).addClass( 'table' );
 
         $(document).ready(function() {

@@ -68,7 +68,7 @@ echo "Installing mysql, apache, php, etc..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y apache2 php8.4 php8.4-intl php8.4-mysql php8.4-rrd php8.4-cgi php8.4-cli \
     php8.4-snmp php8.4-curl  php8.4-memcached libapache2-mod-php8.4 mysql-server            \
     mysql-client memcached snmp php8.4-mbstring php8.4-xml php8.4-gd bgpq3 bgpq4 unzip git  \
-    joe php8.4-bcmath bgpq3 php8.4-memcache unzip php8.4-zip git php8.4-yaml phpmyadmin     \
+    joe php8.4-bcmath php8.4-memcache unzip php8.4-zip git php8.4-yaml phpmyadmin     \
     php8.4-ds libconfig-general-perl libnetaddr-ip-perl mrtg  libconfig-general-perl        \
     php8.4-mcrypt libnetaddr-ip-perl rrdtool librrds-perl curl bash-completion &>/dev/null
 
@@ -141,15 +141,18 @@ GRANT SUPER,SYSTEM_USER ON *.* TO ixp_ci@`%`;
 FLUSH PRIVILEGES;
 END_SQL
 
-
-
+SEEDED=0
 if [[ -f /vagrant/ixpmanager-preferred.sql.bz2 ]]; then
+    echo "Importing ixpmanager-preferred.sql.bz2 - Full database dump expected."
     bzcat /vagrant/ixpmanager-preferred.sql.bz2 | mysql --defaults-extra-file=/etc/mysql/root-client.cnf ixp
-elif [[ -f /vagrant/tools/vagrant/vagrant-base.sql ]]; then
-    cat /vagrant/tools/vagrant/vagrant-base.sql | mysql --defaults-extra-file=/etc/mysql/root-client.cnf ixp
+    SEEDED=1
+elif [[ -f /vagrant/ixpmanager-preferred.sql ]]; then
+    echo "Importing ixpmanager-preferred.sql - Full database dump expected."
+    cat /vagrant/ixpmanager-preferred.sql | mysql --defaults-extra-file=/etc/mysql/root-client.cnf ixp
+    SEEDED=1
+else
+    echo "No full schema dumps (vagrant) to import"
 fi
-
-cat /vagrant/data/ci/ci_test_db.sql  | mysql --defaults-extra-file=/etc/mysql/root-client.cnf ixp_ci
 
 
 ####################################################################################
@@ -171,9 +174,13 @@ cd /vagrant
 echo "Installing composer packages..."
 su - vagrant -c "cd /vagrant && COMPOSER_ALLOW_SUPERUSER=1 composer install" &>/dev/null
 
-echo "Installing / migrating database..." &>/dev/null
+echo "Installing / migrating database..."
 php /vagrant/artisan migrate --force &>/dev/null
 
+if [ "$SEEDED" == "0" ]; then
+    echo "Importing vagrant sample data"
+    cat /vagrant/tools/vagrant/vagrant-base-data.sql  | mysql --defaults-extra-file=/etc/mysql/root-client.cnf ixp
+fi
 
 
 ####################################################################################

@@ -207,6 +207,7 @@ return [
          Illuminate\Translation\TranslationServiceProvider::class,
          Illuminate\Validation\ValidationServiceProvider::class,
          Illuminate\View\ViewServiceProvider::class,
+         Illuminate\Concurrency\ConcurrencyServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -228,6 +229,7 @@ return [
         IXP\Providers\IxpServiceProvider::class,
         IXP\Providers\RipeAtlasProvider::class,
         IXP\Providers\RipeRestApiProvider::class,
+        IXP\Providers\ValidationServiceProvider::class,
 
         IXP\Providers\DiagnosticsServiceProvider::class,
 
@@ -239,8 +241,6 @@ return [
         IXP\Providers\ParsedownServiceProvider::class,
 
         Former\FormerServiceProvider::class,
-
-        //LukeTowers\Purifier\PurifierServiceProvider::class,
 
         Webpatser\Countries\CountriesServiceProvider::class,
 
@@ -309,7 +309,6 @@ return [
         'Image'     => Intervention\Image\Facades\Image::class,
 
         'Former'    => Former\Facades\Former::class,
-        //'Purifier'  => LukeTowers\Purifier\Facades\Purifier::class,
         'PDF'       => Barryvdh\DomPDF\Facade::class,
 
         'Countries' => Webpatser\Countries\CountriesFacade::class,

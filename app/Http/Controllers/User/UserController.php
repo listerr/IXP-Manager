@@ -489,14 +489,17 @@ class UserController extends Controller
 
         $u->delete();
 
-        AlertContainer::push('User deleted.', Alert::SUCCESS );
         Log::notice( $us->username." deleted user" . $u->username );
 
         // If the user delete itself and is loggued as the same customer logout
         if( Auth::id() === $u->id ) {
             Auth::logout();
+            // Note: logout triggers session invalidation so push this log after.
+            AlertContainer::push('User deleted.', Alert::SUCCESS );
             return redirect( route( "login@showForm" ) );
         }
+
+        AlertContainer::push('User deleted.', Alert::SUCCESS );
 
         if( $us->isSuperUser() && strpos( request()->headers->get('referer', "" ), "customer/overview" ) ) {
             return redirect( route( "customer@overview", [ 'cust' => $u->custid , "tab" => "users"] ) );
@@ -518,6 +521,7 @@ class UserController extends Controller
         $us = Auth::user();
 
         Mail::to( $u->email )->send( new UserCreatedeMailable( $u, true ) );
+        Log::notice("The user welcome email has been resent to {$u->email}");
         AlertContainer::push( sprintf( 'The welcome email has been resent' ), Alert::SUCCESS );
 
         if( $us->isSuperUser() && strpos( request()->headers->get('referer', "" ), "customer/overview" ) ) {

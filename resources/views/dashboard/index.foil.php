@@ -68,13 +68,6 @@
 
                             <?php if( !$c->typeAssociate() && !$c->hasLeft() ): ?>
                                 <?php if( $c->routeServerClient() ): ?>
-                                    <?php if( !config( 'ixp_fe.frontend.disabled.rs-prefixes' ) ): ?>
-                                    <li class="nav-item" onclick="window.location.href = '<?= route( "rs-prefixes@view", [ 'cust' =>  $c->id ] ) ?>'">
-                                        <a class="nav-link" data-toggle="tab"  href="">
-                                            RS Prefixes &raquo;
-                                        </a>
-                                    </li>
-                                    <?php endif ?>
 
                                     <?php if( !config( 'ixp_fe.frontend.disabled.filtered-prefixes' ) ): ?>
                                         <li class="nav-item" onclick="window.location.href = '<?= route( "filtered-prefixes@list", [ 'cust' =>  $c->id ] ) ?>'">
@@ -163,7 +156,7 @@
 
 <?php $this->section( 'scripts' ) ?>
 <?= $t->insert( 'customer/js/overview/notes', [ 'isSuperUser' => $isSuperUser ] ); ?>
-  <script>
+  <script type="module">
       $('.table-responsive-ixp').dataTable( {
           stateSave: true,
           stateDuration : DATATABLE_STATE_DURATION,

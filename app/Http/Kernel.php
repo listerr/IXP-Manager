@@ -13,7 +13,7 @@ namespace IXP\Http;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -52,9 +52,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-use IXP\Http\Middleware\{
-    PreventRequestsDuringMaintenance,
-    Authenticate};
+use IXP\Http\Middleware\{HandleFailedRememberMeIntegrityCheck, PreventRequestsDuringMaintenance, Authenticate};
 use Illuminate\Http\Middleware\TrustProxies;
 
 class Kernel extends HttpKernel
@@ -87,6 +85,7 @@ class Kernel extends HttpKernel
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
+            HandleFailedRememberMeIntegrityCheck::class,
             Middleware\VerifyCsrfToken::class,
             SubstituteBindings::class,
             Middleware\ControllerEnabled::class,
@@ -97,6 +96,7 @@ class Kernel extends HttpKernel
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
+            HandleFailedRememberMeIntegrityCheck::class,
             SubstituteBindings::class,
             Middleware\ControllerEnabled::class,
             //'throttle:60,1',
@@ -162,7 +162,6 @@ class Kernel extends HttpKernel
         'eloquent2Frontend'     => Middleware\Eloquent2Frontend::class,
         'grapher'               => Middleware\Services\Grapher::class,
         'guest'                 => Middleware\RedirectIfAuthenticated::class,
-        'rs-prefixes'           => Middleware\RsPrefixes::class,
         'signed'                => Middleware\ValidateSignature::class,
         'throttle'              => ThrottleRequests::class,
         'verified'              => EnsureEmailIsVerified::class,
@@ -178,6 +177,7 @@ class Kernel extends HttpKernel
     protected $middlewarePriority = [
         StartSession::class,
         ShareErrorsFromSession::class,
+        HandleFailedRememberMeIntegrityCheck::class,
         Authenticate::class,
         ThrottleRequests::class,
         AuthenticateSession::class,

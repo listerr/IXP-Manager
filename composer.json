@@ -17,12 +17,6 @@
             "homepage": "https://www.ixpmanager.org/"
         }
     ],
-    "repositories":[
-        {
-            "type": "vcs",
-            "url": "git@github.com:barryo/Purifier.git"
-        }
-    ],
     "require": {
         "php": "^8.4",
         "ext-json": "*",
@@ -53,10 +47,10 @@
         "laravel/boost": "^2.1",
         "laravel/dusk": "^8.0",
         "mockery/mockery": "^1.6",
-        "phpunit/phpunit": "^11.5.3",
+        "phpunit/phpunit": "^12.5",
+        "psalm/plugin-laravel": "^3.0.0",
         "staudenmeir/dusk-updater": "^1.5",
-        "vimeo/psalm": "^6.0",
-        "psalm/plugin-laravel": "^3.0.0"
+        "vimeo/psalm": "^6.0"
     },
     "support": {
         "issues": "https://www.ixpmanager.org/support",
@@ -73,14 +67,11 @@
         "files": [
             "app/Support/helpers.php"
         ]
-     },
-     "autoload-dev": {
-         "classmap": [
-             "tests/TestCase.php"
-         ],
-         "psr-4": {
-             "Tests\\": "tests/"
-         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "extra": {
         "laravel": {

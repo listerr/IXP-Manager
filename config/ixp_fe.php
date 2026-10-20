@@ -94,7 +94,6 @@ return [
             'peering-matrix'            => env( 'IXP_FE_FRONTEND_DISABLED_PEERING_MATRIX',    false ),
             'phpinfo'                   => env( 'IXP_FE_FRONTEND_DISABLED_PHPINFO',           true  ),
             'ripe-atlas'                => true, // not ready for use yet
-            'rs-prefixes'               => env( 'IXP_FE_FRONTEND_DISABLED_RS_PREFIXES',       true  ),
             'rs-filters'                => env( 'IXP_FE_FRONTEND_DISABLED_RS_FILTERS',        true  ),
             'settings'                  => env( 'IXP_FE_FRONTEND_DISABLED_SETTINGS',          false ),
         ],
@@ -102,26 +101,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Route Server Prefixes Access permissions
+    | Interface Controller Options
     |--------------------------------------------------------------------------
     |
-    | Generally speaking, the filtering of route server prefixes is visible
-    | on looking glasses / via comparison to route collector / etc.
+    | The range of channel group numbers considered when automatically
+    | assigning one to a LAG. A start of 0 automatically begins at the
+    | lowest channel group already assigned on the relevant switch(es).
     |
-    | However, some IXs may wish to restrict access to the Route Server Prefix
-    | Analysis Tool.
-    |
-    | The following options apply:
-    |
-    | 1. \IXP\Models\User::AUTH_PUBLIC     -> tool is publicly available to all
-    | 2. \IXP\Models\User::AUTH_CUSTUSER   -> tool is available to any logged in user
-    | 3. \IXP\Models\User::AUTH_SUPERUSER  -> summary and any customer access is restricted to superadmins,
-    |                                      logged in users may see their prefixes.
     */
-    'rs-prefixes' => [
-        'access'  => env( 'IXP_FE_RS_PREFIXES_ACCESS', \IXP\Models\User::AUTH_SUPERUSER ),
+    'interfaces' => [
+        'channelgroup_start' => (int) env( 'IXP_FE_CHANNELGROUP_START', 1 ),
+        'channelgroup_end'   => (int) env( 'IXP_FE_CHANNELGROUP_END',   1000 ),
     ],
-
 
 
     /*
@@ -282,6 +273,7 @@ return [
     */
     'vlaninterfaces' => [
         'hostname_required'  => env( 'IXP_FE_VLANINTERFACES_HOSTNAME_REQUIRED', true ),
+        'max_prefix_enabled' => env( 'IXP_FE_VLANINTERFACES_MAX_PREFIX_ENABLED', true ),
     ],
 
     /*
@@ -308,6 +300,14 @@ return [
 
     ],
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | Documentation
+    |--------------------------------------------------------------------------
+    |
+    */
+    'documentation' => [
+        'base_url' => env('IXP_FE_DOCUMENTATION_BASE_URL', 'https://docs.ixpmanager.org/' . DOCUMENTATION_VERSION),
+    ]
 
 ];

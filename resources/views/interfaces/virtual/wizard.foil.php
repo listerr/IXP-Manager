@@ -13,7 +13,7 @@ $this->layout( 'layouts/ixpv4' );
 <?php $this->section( 'page-header-postamble' ) ?>
     <div class=" btn-group btn-group-sm" role="group">
         <a class="btn btn-white" href="<?= route( 'virtual-interface@list' )?>" title="list">
-            <span class="fa fa-th-list"></span>
+            <span class="fa fa-table-list"></span>
         </a>
         <button type="button" class="btn btn-white dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-plus"></i>
@@ -154,6 +154,20 @@ $this->layout( 'layouts/ixpv4' );
                             ->addClass( 'chzn-select' )
                             ->value(1)
                             ->blockHelp( '' );
+                        ?>
+
+                        <?= Former::number( 'rate_limit' )
+                            ->label( 'Rate Limit <u>(Mbps)</u>' )
+                            ->blockHelp( 'Enter the provisioned speed if the port has been rate limited below its line rate. <strong>Enter in Mbps!</strong> Leave blank if port is not rate limited. Zero will be converted to null (blank - not rate limited).');
+                        ?>
+
+                        <?= Former::checkbox( 'autoneg' )
+                            ->label( '&nbsp;' )
+                            ->text( 'Auto-Negotiation Enabled' )
+                            ->value( 1 )
+                            ->check()
+                            ->inline()
+                            ->blockHelp( "Unless you are provisioning switches from IXP Manager, this is informational." );
                         ?>
                     </div>
 

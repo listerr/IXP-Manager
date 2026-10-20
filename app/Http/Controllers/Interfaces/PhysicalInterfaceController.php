@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Interfaces;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -149,7 +149,7 @@ class PhysicalInterfaceController extends Common
 	    // when presenting the add PI form, we include peering, reseller and unknown port types;
 	    // set the selected port as peering unless already reseller
         if ( $sp->type !== SwitchPort::TYPE_RESELLER ) {
-                $sp->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
+            $sp->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
         }
 
         $this->setBundleDetails( $vi );
@@ -330,8 +330,8 @@ class PhysicalInterfaceController extends Common
             $redirect = route( "virtual-interface@edit", [ "vi" => $pi->virtualinterfaceid ] );
         }
 
-        if( $pi->coreInterface ) {
-            AlertContainer::push( 'You cannot delete this physical interface as there is a core bundle linked with it.', Alert::DANGER );
+        if( $ci = $pi->coreInterface ) {
+            AlertContainer::push( 'This physical interface is member of a core link. You can manage it on <a href="' . route( "core-bundle@edit", [ "cb" => $ci->coreLink()->coreBundle->id ] ) . '">the core bundle page</a>', Alert::DANGER );
             return Redirect::to( $redirect );
         }
 

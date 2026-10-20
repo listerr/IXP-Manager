@@ -1,9 +1,6 @@
 <?php
-
-namespace IXP\Events\Customer;
-
 /*
- * Copyright (C) 2009 - 2020 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace IXP\Events\Customer;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,40 +19,21 @@ namespace IXP\Events\Customer;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace IXP\Events\Customer;
+
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
 
 use IXP\Models\CompanyBillingDetail;
 
 final class BillingDetailsChanged
 {
-    use Dispatchable, SerializesModels;
+    use SerializesModels;
 
-    /**
-     * Old/original details
-     *
-     * @var CompanyBillingDetail
-     */
-    public $ocbd;
-
-    /**
-     * New details
-     *
-     * @var CompanyBillingDetail
-     */
-    public $cbd;
-
-    /**
-     * Create a new event instance.
-     *
-     * @param CompanyBillingDetail     $ocbd
-     * @param CompanyBillingDetail     $cbd
-     *
-     * @return void
-     */
-    public function __construct( CompanyBillingDetail $ocbd, CompanyBillingDetail $cbd )
-    {
-        $this->ocbd = $ocbd;
-        $this->cbd  = $cbd;
-    }
+    public function __construct(
+        public readonly CompanyBillingDetail $ocbd,
+        public readonly CompanyBillingDetail $cbd
+    ) {}
 }

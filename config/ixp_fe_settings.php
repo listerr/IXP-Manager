@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2009 - 2024 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -27,8 +27,7 @@
 // determines what .env elements are configurable via the frontend and sets up the
 // form for this.
 
-use Illuminate\Validation\Rule;
-use IXP\Rules\ExistsAndExecutable;
+use IXP\Rules\IsCountry;
 
 return [
 
@@ -217,6 +216,21 @@ return [
                                         target="_blank">BGP detector</a> running.',
                 ],
 
+                'vlaninterfaces-max-prefix-enabled' => [
+                    'config_key' => 'ixp_fe.vlaninterfaces.max_prefix_enabled',
+                    'dotenv_key' => 'IXP_FE_VLANINTERFACES_MAX_PREFIX_ENABLED',
+                    'type'       => 'radio',
+                    'invert'     => false,
+                    'rules'      => 'boolean',
+                    'name'       => 'Per-VLAN Interface Maximum Prefixes',
+                    'docs_url'   => null,
+                    'help'       => 'Allow maximum prefixes to be set per VLAN interface.
+                                        If you only operate a single peering VLAN or infrastructure in one geographic location,
+                                        you may want to disable this and only use the global maximum prefix settings for each
+                                        member. Before disabling, run <code>php ./artisan customer:update-global-max-prefixes</code>',
+                ],
+
+
                 'phpinfo'                   => [
                     'config_key' => 'ixp_fe.frontend.disabled.phpinfo',
                     'dotenv_key' => 'IXP_FE_FRONTEND_DISABLED_PHPINFO',
@@ -227,17 +241,6 @@ return [
                     'docs_url'   => null,
                     'help'       => 'The PHP Info option under IXP Utilities on the left-hand menu. This is available to 
                                         administrators only and shows the output of <code>phpinfo()</code>.',
-                ],
-
-                'rs-prefixes'               => [
-                    'config_key' => 'ixp_fe.frontend.disabled.rs-prefixes',
-                    'dotenv_key' => 'IXP_FE_FRONTEND_DISABLED_RS_PREFIXES',
-                    'type'       => 'radio',
-                    'invert'     => true,
-                    'rules'      => 'boolean',
-                    'name'       => 'RS Prefixes',
-                    'docs_url'   => null,
-                    'help'       => '[DEPRECATED] <em>Filtered Prefixes</em> above should be used instead of this.',
                 ],
 
                 'rs-filters'                => [
@@ -333,7 +336,7 @@ return [
                     'dotenv_key' => 'IDENTITY_COUNTRY',
                     'type'       => 'select',
                     'options'    => [ 'type' => 'countries' ], // special option list for countries
-                    'rules'      => 'nullable|size:2',
+                    'rules'      => ['nullable', 'string', 'size:2', new IsCountry()],
                     'name'       => 'Country',
                     'docs_url'   => null,
                     'help'       => 'This is a fallback location, typically only used if it cannot be inferred from your facility settings.',
@@ -577,7 +580,7 @@ return [
                     'help'       => 'IXP Manager v7.1.0 introduced an admin/ prepend on APIs for securing them. For v7.1.0 only, unsecured access will be enabled by default to allow administrators migrate their API clients.',
                 ],
 
-                'api_get_via_get'      => [
+                'api_key_via_get'      => [
                     'config_key' => 'ixp_api.allow_apikeys_get_parameter',
                     'dotenv_key' => 'IXP_ALLOW_DEPRECATED_APIKEYS_VIA_GET',
                     'type'       => 'radio',
@@ -745,6 +748,25 @@ return [
                     'rules'      => "nullable|in:" . implode( ',', array_keys( IXP\Services\Grapher\Graph::PERIODS ) ),
                     'name'       => "Default Graph Period",
                     'help'       => 'Default graph period on the admin dashboard.',
+                ],
+
+                'channelgroup_start' => [
+                    'config_key' => 'ixp_fe.interfaces.channelgroup_start',
+                    'dotenv_key' => 'IXP_FE_CHANNELGROUP_START',
+                    'type'       => 'text',
+                    'rules'      => 'nullable|integer|min:0',
+                    'name'       => 'Channel Group Start',
+                    'help'       => 'First channel group number considered for automatic LAG assignment.
+                                        Set to 0 to begin from the lowest number already in use for the switch and assign the next available number.',
+                ],
+
+                'channelgroup_end' => [
+                    'config_key' => 'ixp_fe.interfaces.channelgroup_end',
+                    'dotenv_key' => 'IXP_FE_CHANNELGROUP_END',
+                    'type'       => 'text',
+                    'rules'      => 'nullable|integer|min:1|gt:channelgroup_start',
+                    'name'       => 'Channel Group End',
+                    'help'       => 'End range for automatic LAG assignment. For example, 1000 allows assignments up to 999.',
                 ],
 
 
@@ -928,4 +950,3 @@ return [
 
 
 ];
-

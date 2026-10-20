@@ -1,7 +1,4 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
  * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,10 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
 
 use Illuminate\Support\Facades\DB;
 use IXP\Models\IPv4Address;
@@ -75,19 +76,7 @@ class IpAddressControllerTest extends DuskTestCase
     ];
 
     /**
-     * @throws
-     */
-    public function tearDown(): void
-    {
-        $vlan = Vlan::whereName( $this->vlan )->first();
-        IPv4Address::where( "vlanid", $vlan->id )->delete();
-        IPv6Address::where( "vlanid", $vlan->id )->delete();
-        Vlan::whereName( $this->vlan )->delete();
-        parent::tearDown();
-    }
-
-    /**
-     * A Dusk test example.
+     * Test empty list, create IP's on a vlan, adding more IP's, deleting single IP, mass deleting IP's
      *
      * @return void
      *
@@ -187,7 +176,7 @@ class IpAddressControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
                 $browser->click( 'a#delete' )
-                    ->waitForText('Do you really want to delete this IP address?')
+                    ->waitForText('Do you really want to delete these IP addresses?')
                     ->press( 'Delete' )
                     ->waitForLocation( route( "ip-address@list", [ 'protocol' => $prot, 'vlanid' => $vlanId ] ) )
                     ->assertSee('IP Addresses deleted.');
@@ -207,7 +196,7 @@ class IpAddressControllerTest extends DuskTestCase
                 $this->assertTrue(count($availableIpAddresses) == 8);
 
                 $browser->click( 'a#delete' )
-                    ->waitForText('Do you really want to delete this IP address?')
+                    ->waitForText('Do you really want to delete these IP addresses?')
                     ->press( 'Delete' )
                     ->waitForLocation( route( "ip-address@list", [ 'protocol' => $prot, 'vlanid' => $vlanId ] ) )
                     ->assertSee('IP Addresses deleted.')
@@ -236,7 +225,6 @@ class IpAddressControllerTest extends DuskTestCase
                     ->assertDontSee($cat["ip2"]);
             }
 
-            //III. post removal of VLAN by teardown
         } );
     }
 }

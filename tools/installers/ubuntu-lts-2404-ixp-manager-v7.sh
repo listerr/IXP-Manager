@@ -61,7 +61,7 @@ on Ubuntu LTS 24.04 **only**.
 This script should only be run on a newly installed Ubuntu
 system.
 
-If you do not meet these criteria, please Ctrl-c not to
+If you do not meet these criteria, please Ctrl-c now to
 end this script.
 
 If you want to follow progress, open a new session and (as root):
@@ -754,7 +754,7 @@ cat >/etc/apache2/sites-available/000-default.conf <<END_APACHE
     DocumentRoot ${IXPROOT}/public
 
     <Directory ${IXPROOT}/public>
-        Header Set X-Frame-Options "DENY"
+        Header Set X-Frame-Options "SAMEORIGIN"
         Options FollowSymLinks
         AllowOverride None
         Require all granted

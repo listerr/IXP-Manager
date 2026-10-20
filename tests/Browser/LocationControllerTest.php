@@ -1,7 +1,4 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
  * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,10 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
 
 use IXP\Models\Location;
 
@@ -42,25 +43,11 @@ use Tests\DuskTestCase;
 class LocationControllerTest extends DuskTestCase
 {
     /**
-     * @throws
-     */
-    public function tearDown(): void
-    {
-        foreach( [ 'Infrastructure Test', 'Infrastructure Test2' ] as $name ) {
-            if( $c = Location::whereName( $name )->first() ) {
-                $c->delete();
-            }
-        }
-
-        parent::tearDown();
-    }
-
-    /**
-     * A Dusk test example.
+     * Test location controller - list, see CI seeded default location, create, edit with + without changes, and delete
      *
      * @return void
      *
-     * @throws
+     * @throws \Throwable
      */
     public function testAdd(): void
     {
@@ -288,6 +275,57 @@ class LocationControllerTest extends DuskTestCase
 
             // 12. do a D2EM findOneBy and verify false/null
             $this->assertTrue( Location::whereName( 'Infrastructure Test2' )->doesntExist() );
+        });
+    }
+
+
+    /**
+     * Tests scenario where location country is null - pages should not error
+     * @throws \Throwable
+     */
+    public function testEditformWhenCountryIsNull(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->resize( 1600, 1200 )
+                ->visit( '/logout' )
+                ->visit( '/login' )
+                ->type( 'username', 'travis' )
+                ->type( 'password', 'travisci' )
+                ->press( '#login-btn' )
+                ->waitForLocation( '/admin/dashboard' );
+
+            $location = new Location();
+            $location->name = "Test Location";
+            $location->shortname = "SHRTX";
+            $location->city = "Pago Pago";
+            $location->tag = "um";
+            $location->officephone = "1234567890";
+            $location->save();
+
+            $browser->visit( route( 'facility@list' ) )
+                ->assertSee( 'Facilities' )
+                ->assertSee( 'Location 1' )
+                ->assertSee( 'Test Location' )
+            ;
+
+            $browser->click("#e2f-list-edit-" . $location->id )
+                ->waitForLocation( route( 'facility@edit', [ 'id' => $location->id ] ) )
+                ->assertSee("Edit Facility")
+                ->type("nocemail", "invalid")
+                ->press("Save Changes")
+                ->waitForLocation( route( 'facility@edit', [ 'id' => $location->id ] ) )
+                ->assertSee("The nocemail must be a valid email address.")
+                ->assertSee("The country field is required.")
+            ;
+
+            $browser
+                ->type("nocemail", "test@ixp.local")
+                ->select("country", "AM")
+                ->press("Save Changes")
+                ->waitForLocation( route( 'facility@list' ) )
+                ->assertSee( "Facility updated" )
+            ;
+
         });
     }
 }
