@@ -3,7 +3,7 @@
 namespace IXP\Models;
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -84,34 +84,34 @@ use IXP\Traits\Observable;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\PatchPanelPortHistory> $patchPanelPortHistories
  * @property-read int|null $patch_panel_port_histories_count
  * @property-read \IXP\Models\SwitchPort|null $switchPort
- * @method static Builder|PatchPanelPort masterPort()
- * @method static Builder|PatchPanelPort newModelQuery()
- * @method static Builder|PatchPanelPort newQuery()
- * @method static Builder|PatchPanelPort query()
- * @method static Builder|PatchPanelPort whereAssignedAt($value)
- * @method static Builder|PatchPanelPort whereCeaseRequestedAt($value)
- * @method static Builder|PatchPanelPort whereCeasedAt($value)
- * @method static Builder|PatchPanelPort whereChargeable($value)
- * @method static Builder|PatchPanelPort whereColoBillingRef($value)
- * @method static Builder|PatchPanelPort whereColoCircuitRef($value)
- * @method static Builder|PatchPanelPort whereConnectedAt($value)
- * @method static Builder|PatchPanelPort whereCreatedAt($value)
- * @method static Builder|PatchPanelPort whereCustomerId($value)
- * @method static Builder|PatchPanelPort whereDescription($value)
- * @method static Builder|PatchPanelPort whereDuplexMasterId($value)
- * @method static Builder|PatchPanelPort whereId($value)
- * @method static Builder|PatchPanelPort whereInternalUse($value)
- * @method static Builder|PatchPanelPort whereLastStateChange($value)
- * @method static Builder|PatchPanelPort whereLoaCode($value)
- * @method static Builder|PatchPanelPort whereNotes($value)
- * @method static Builder|PatchPanelPort whereNumber($value)
- * @method static Builder|PatchPanelPort whereOwnedBy($value)
- * @method static Builder|PatchPanelPort wherePatchPanelId($value)
- * @method static Builder|PatchPanelPort wherePrivateNotes($value)
- * @method static Builder|PatchPanelPort whereState($value)
- * @method static Builder|PatchPanelPort whereSwitchPortId($value)
- * @method static Builder|PatchPanelPort whereTicketRef($value)
- * @method static Builder|PatchPanelPort whereUpdatedAt($value)
+ * @method static Builder<static>|PatchPanelPort masterPort()
+ * @method static Builder<static>|PatchPanelPort newModelQuery()
+ * @method static Builder<static>|PatchPanelPort newQuery()
+ * @method static Builder<static>|PatchPanelPort query()
+ * @method static Builder<static>|PatchPanelPort whereAssignedAt($value)
+ * @method static Builder<static>|PatchPanelPort whereCeaseRequestedAt($value)
+ * @method static Builder<static>|PatchPanelPort whereCeasedAt($value)
+ * @method static Builder<static>|PatchPanelPort whereChargeable($value)
+ * @method static Builder<static>|PatchPanelPort whereColoBillingRef($value)
+ * @method static Builder<static>|PatchPanelPort whereColoCircuitRef($value)
+ * @method static Builder<static>|PatchPanelPort whereConnectedAt($value)
+ * @method static Builder<static>|PatchPanelPort whereCreatedAt($value)
+ * @method static Builder<static>|PatchPanelPort whereCustomerId($value)
+ * @method static Builder<static>|PatchPanelPort whereDescription($value)
+ * @method static Builder<static>|PatchPanelPort whereDuplexMasterId($value)
+ * @method static Builder<static>|PatchPanelPort whereId($value)
+ * @method static Builder<static>|PatchPanelPort whereInternalUse($value)
+ * @method static Builder<static>|PatchPanelPort whereLastStateChange($value)
+ * @method static Builder<static>|PatchPanelPort whereLoaCode($value)
+ * @method static Builder<static>|PatchPanelPort whereNotes($value)
+ * @method static Builder<static>|PatchPanelPort whereNumber($value)
+ * @method static Builder<static>|PatchPanelPort whereOwnedBy($value)
+ * @method static Builder<static>|PatchPanelPort wherePatchPanelId($value)
+ * @method static Builder<static>|PatchPanelPort wherePrivateNotes($value)
+ * @method static Builder<static>|PatchPanelPort whereState($value)
+ * @method static Builder<static>|PatchPanelPort whereSwitchPortId($value)
+ * @method static Builder<static>|PatchPanelPort whereTicketRef($value)
+ * @method static Builder<static>|PatchPanelPort whereUpdatedAt($value)
  * @mixin Eloquent
  */
 
@@ -167,24 +167,24 @@ class PatchPanelPort extends Model
     /**
      * CONST STATES
      */
-    public const STATE_AVAILABLE              = 1;
-    public const STATE_AWAITING_XCONNECT      = 2;
-    public const STATE_CONNECTED              = 3;
-    public const STATE_AWAITING_CEASE         = 4;
-    public const STATE_CEASED                 = 5;
-    public const STATE_BROKEN                 = 6;
-    public const STATE_RESERVED               = 7;
-    public const STATE_PREWIRED               = 8;
-    public const STATE_OTHER                  = 999;
+    public const int STATE_AVAILABLE              = 1;
+    public const int STATE_AWAITING_XCONNECT      = 2;
+    public const int STATE_CONNECTED              = 3;
+    public const int STATE_AWAITING_CEASE         = 4;
+    public const int STATE_CEASED                 = 5;
+    public const int STATE_BROKEN                 = 6;
+    public const int STATE_RESERVED               = 7;
+    public const int STATE_PREWIRED               = 8;
+    public const int STATE_OTHER                  = 999;
 
     /**
      * CONST OWNED
      */
-    public const OWNED_CUST                    = 1;
-    public const OWNED_IXP                     = 2;
-    public const OWNED_SERV_PRO                = 3;
-    public const OWNED_DATA_CENTER             = 4;
-    public const OWNED_OTHER                   = 5;
+    public const int OWNED_CUST                    = 1;
+    public const int OWNED_IXP                     = 2;
+    public const int OWNED_SERV_PRO                = 3;
+    public const int OWNED_DATA_CENTER             = 4;
+    public const int OWNED_OTHER                   = 5;
 
     /**
      * CONST CHARGEABLE
@@ -197,15 +197,25 @@ class PatchPanelPort extends Model
     /**
      * CONST EMAIL
      */
-    public const EMAIL_CONNECT                 = 1;
-    public const EMAIL_CEASE                   = 2;
-    public const EMAIL_INFO                    = 3;
-    public const EMAIL_LOA                     = 4;
+    public const int EMAIL_CONNECT                 = 1;
+    public const int EMAIL_CEASE                   = 2;
+    public const int EMAIL_INFO                    = 3;
+    public const int EMAIL_LOA                     = 4;
+
+    /**
+     * States available when initially creating new patch panels.
+     */
+    public static array $INITIAL_PORT_STATES = [
+        self::STATE_AVAILABLE           => "Available",
+        self::STATE_RESERVED            => "Reserved",
+        self::STATE_OTHER               => "Other",
+        self::STATE_AWAITING_XCONNECT   => "Awaiting Xconnect",
+    ];
 
     /**
      * Array STATES
      */
-    public static $STATES = [
+    public static array $STATES = [
         self::STATE_AVAILABLE           => "Available",
         self::STATE_AWAITING_XCONNECT   => "Awaiting Xconnect",
         self::STATE_CONNECTED           => "Connected",
@@ -220,7 +230,7 @@ class PatchPanelPort extends Model
     /**
      * Array STATES for available
      */
-    public static $AVAILABLE_FOR_ALLOCATION_STATES = [
+    public static array $AVAILABLE_FOR_ALLOCATION_STATES = [
         self::STATE_AVAILABLE,
         self::STATE_PREWIRED,
     ];
@@ -228,7 +238,7 @@ class PatchPanelPort extends Model
     /**
      * Array STATES for allocated
      */
-    public static $ALLOCATED_STATES = [
+    public static array $ALLOCATED_STATES = [
         self::STATE_AWAITING_XCONNECT,
         self::STATE_CONNECTED,
         self::STATE_AWAITING_CEASE,
@@ -237,7 +247,7 @@ class PatchPanelPort extends Model
     /**
      * Array STATES for allocated
      */
-    public static $ALLOCATED_STATES_TEXT = [
+    public static array $ALLOCATED_STATES_TEXT = [
         self::STATE_AWAITING_XCONNECT   => "Awaiting Xconnect",
         self::STATE_CONNECTED           => "Connected",
         self::STATE_AWAITING_CEASE      => "Awaiting Cease",
@@ -245,7 +255,7 @@ class PatchPanelPort extends Model
     /**
      * Array STATES for available
      */
-    public static $AVAILABLE_STATES = [
+    public static array $AVAILABLE_STATES = [
         self::STATE_AVAILABLE,
         self::STATE_PREWIRED,
         self::STATE_AWAITING_CEASE,
@@ -255,7 +265,7 @@ class PatchPanelPort extends Model
     /**
      * Array STATES for cross-connects where there may be a circuit installed by the colo
      */
-    public static $COLO_ASSIGNED_STATES = [
+    public static array $COLO_ASSIGNED_STATES = [
         self::STATE_CONNECTED,
         self::STATE_AWAITING_CEASE,
     ];
@@ -263,7 +273,7 @@ class PatchPanelPort extends Model
     /**
      * Array $CHARGEABLES
      */
-    public static $OWNED_BY = [
+    public static array $OWNED_BY = [
         self::OWNED_CUST                => "Customer",
         self::OWNED_IXP                 => "IXP",
         self::OWNED_SERV_PRO            => "Service Provider",
@@ -274,7 +284,7 @@ class PatchPanelPort extends Model
     /**
      * Array $CHARGEABLES
      */
-    public static $CHARGEABLES = [
+    public static array $CHARGEABLES = [
         self::CHARGEABLE_YES            => "Yes",
         self::CHARGEABLE_NO             => "No",
         self::CHARGEABLE_HALF           => "Half",
@@ -284,7 +294,7 @@ class PatchPanelPort extends Model
     /**
      * @var array Email ids to classes
      */
-    public static $EMAIL_CLASSES = [
+    public static array $EMAIL_CLASSES = [
         self::EMAIL_CEASE       =>  CeaseMail::class,
         self::EMAIL_CONNECT     =>  ConnectMail::class,
         self::EMAIL_INFO        =>  InfoMail::class,
@@ -293,6 +303,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the Patch Panel that owns this patch panel port
+     *
+     * @return BelongsTo<PatchPanel, PatchPanelPort>
      */
     public function patchPanel(): BelongsTo
     {
@@ -301,6 +313,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the switch port that owns this patch panel port
+     *
+     * @return BelongsTo<SwitchPort, PatchPanelPort>
      */
     public function switchPort(): BelongsTo
     {
@@ -309,6 +323,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the customer that owns this patch panel port
+     *
+     * @return BelongsTo<Customer, PatchPanelPort>
      */
     public function customer(): BelongsTo
     {
@@ -317,6 +333,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the duplex master port that owns this patch panel port
+     *
+     * @psalm-return BelongsTo<self, PatchPanelPort>
      */
     public function duplexMasterPort(): BelongsTo
     {
@@ -325,6 +343,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the patch panel port files for this patch panel port
+     *
+     * @return HasMany<PatchPanelPortFile, PatchPanelPort>
      */
     public function patchPanelPortFiles(): HasMany
     {
@@ -333,6 +353,8 @@ class PatchPanelPort extends Model
 
     /**
      * Get the patch panel port histories for this patch panel port
+     *
+     * @return HasMany<PatchPanelPortHistory, PatchPanelPort>
      */
     public function patchPanelPortHistories(): HasMany
     {
@@ -341,16 +363,19 @@ class PatchPanelPort extends Model
 
     /**
      * Get the public patch panel port files for this patch panel port
-     * @psalm-suppress all
+     *
+     * @return HasMany<PatchPanelPortFile, PatchPanelPort>
      */
     public function patchPanelPortFilesPublic(): HasMany
     {
         return $this->hasMany(PatchPanelPortFile::class, 'patch_panel_port_id' )
-            ->where( 'is_private', 0 );
+            ->where( 'is_private', false );
     }
 
     /**
      * Get the duplex slaves ports for this patch panel port
+     *
+     * @return HasMany<PatchPanelPort, PatchPanelPort>
      */
     public function duplexSlavePorts(): HasMany
     {
@@ -536,13 +561,23 @@ class PatchPanelPort extends Model
     }
 
     /**
-     * Is the state STATE_RESERVED?
+     * Is the state STATE_PREWIRED?
      *
      * @return bool
      */
     public function statePrewired(): bool
     {
         return $this->state === self::STATE_PREWIRED;
+    }
+
+    /**
+     * Is the state STATE_OTHER?
+     *
+     * @return bool
+     */
+    public function stateOther(): bool
+    {
+        return $this->state === self::STATE_OTHER;
     }
 
     /**
@@ -591,7 +626,7 @@ class PatchPanelPort extends Model
     {
         foreach( $this->duplexSlavePorts as $pppsp ) {
             $pppsp->reset();
-            $pppsp->update( [ 'duplex_master_id', null ] );
+            $pppsp->update( [ 'duplex_master_id' => null ] );
         }
 
         // Attributes that are not reset
@@ -666,7 +701,7 @@ class PatchPanelPort extends Model
      *
      * @throws
      */
-    public function move( PatchPanelPort $dest, PatchPanelPort $slave = null ): bool
+    public function move( PatchPanelPort $dest, ?PatchPanelPort $slave = null ): bool
     {
         // preflight checks
         if( $this->duplexSlavePorts()->count() && ( $slave === null || !$slave->availableForUse() ) ) {
@@ -756,7 +791,7 @@ class PatchPanelPort extends Model
         foreach( $this->patchPanelPortHistories as $history ) {
             /** @var $history PatchPanelPortHistory */
 
-            $user = Auth::check() ? Auth::getUser()->username : 'unkown/unauth';
+            $user = Auth::check() ? Auth::getUser()->username : 'unknown/unauth';
             foreach( PatchPanelPortHistory::whereDuplexMasterId( $history->id )->get() as $duplex ){
                 $duplex->update([
                     'duplex_master_id'  => null,

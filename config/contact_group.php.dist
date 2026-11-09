@@ -31,14 +31,15 @@
 ;; to contacts such as 'Admin', 'Billing', 'Technical', 'Marketing'. These are set up
 ;; by the default fixtures.
 ;;
-;; See: https://github.com/inex/IXP-Manager/wiki/Contact-Groups
+;; See: https://docs.ixpmanager.org/latest/usage/contacts/#contact-groups
 */
 
 
 return [
     'types' => [
-        'ROLE'           => 'Role',
-        //'MEETING'        => 'Meeting Registration',
-        //'MARKETING_PREFERENCES'  => 'Marketing Preferences',
+        // NOTE: the fields on the left of the arrows must be <= 20 characters long
+        'ROLE'            => 'Role',
+        //'MEETING'         => 'Meeting Registration',
+        //'MARKETING_PREFS' => 'Marketing Preferences',
     ],
 ];

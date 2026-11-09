@@ -80,9 +80,9 @@ class Customer extends Graph
      *
      * @param CustomerModel $c
      *
-     * @return Customer Fluid interface
+     * @return static Fluid interface
      */
-    public function setCustomer( CustomerModel $c ): Customer
+    public function setCustomer( CustomerModel $c ): static
     {
         if( $this->customer() && $this->customer()->id !== $c->id ) {
             $this->wipe();
@@ -97,6 +97,7 @@ class Customer extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function name(): string
     {
         return $this->customer()->name ?: '';
@@ -109,6 +110,7 @@ class Customer extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function identifier(): string
     {
         return sprintf( "aggregate-%05d", $this->customer()->id );
@@ -128,7 +130,7 @@ class Customer extends Graph
             return true;
         }
 
-        if( !Auth::check() && is_numeric( config( 'grapher.access.customer' ) ) && config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
+        if( !Auth::check() && is_numeric( config( 'grapher.access.customer' ) ) && (int)config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
             return true;
         }
 
@@ -144,13 +146,14 @@ class Customer extends Graph
      *
      * @return bool
      */
+    #[\Override]
     public function authorise(): bool
     {
         /** @var User $us */
         $us = Auth::getUser();
 
         // NB: see above authorisedForAllCustomers()
-        if( is_numeric( config( 'grapher.access.customer' ) ) && config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
+        if( is_numeric( config( 'grapher.access.customer' ) ) && (int)config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
             return $this->allow();
         }
 
@@ -190,6 +193,7 @@ class Customer extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function url( array $overrides = [] ): string
     {
         return parent::url( $overrides ) . sprintf("&id=%d",
@@ -202,8 +206,11 @@ class Customer extends Graph
      *
      * Extends base function
      *
-     * @return array $params
+     * @return (\Carbon\Carbon|int|mixed|null)[]
+     *
+     * @psalm-return array{protocol: mixed, period: mixed, category: mixed, type: mixed, period_start?: \Carbon\Carbon|null, period_end?: \Carbon\Carbon|null, id: int}
      */
+    #[\Override]
     public function getParamsAsArray(): array
     {
         $p = parent::getParamsAsArray();

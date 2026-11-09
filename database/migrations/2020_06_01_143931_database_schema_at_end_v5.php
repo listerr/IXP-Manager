@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class DatabaseSchemaAtEndV5 extends Migration
+final class DatabaseSchemaAtEndV5 extends Migration
 {
     /**
      * Run the migrations.
@@ -19,7 +19,6 @@ class DatabaseSchemaAtEndV5 extends Migration
             return;
         }
 
-        echo "*** Importing base IXP Manager schema...\n";
         DB::connection()->getPdo()->exec( file_get_contents( database_path('schema/2021-as-at-end-v5.sql') ) );
     }
 

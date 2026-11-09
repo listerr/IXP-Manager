@@ -47,6 +47,7 @@ use IXP\Utils\Http\Controllers\Frontend\EloquentController;
  *
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers\ConsoleServer
  * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
@@ -61,16 +62,20 @@ class ConsoleServerController extends EloquentController
      */
     protected $object = null;
 
+
+    protected static bool $is_admin_route = true;
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = (object)[
             'model'             => ConsoleServer::class,
             'pagetitle'         => 'Console Servers',
             'titleSingular'     => 'Console Server',
-            'nameSingular'      => 'a console server',
+            'nameSingular'      => 'console server',
             'listOrderBy'       => 'id',
             'listOrderByDir'    => 'ASC',
             'viewFolderName'    => 'console-server',
@@ -78,28 +83,28 @@ class ConsoleServerController extends EloquentController
                 'name'           => [
                     'title'      => 'Name',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'console-server-connection',
+                    'controller' => 'admin/console-server-connection',
                     'action'     => 'list/port',
                     'idField'    => 'id'
                 ],
                 'facility'  => [
                     'title'      => 'Facility',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'facility',
+                    'controller' => 'admin/facility',
                     'action'     => 'view',
                     'idField'    => 'locationid'
                 ],
                 'cabinet'  => [
-                    'title'      => 'Cabinet',
+                    'title'      => 'Rack',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'rack',
+                    'controller' => 'admin/rack',
                     'action'     => 'view',
                     'idField'    => 'cabinetid'
                 ],
                 'vendor'  => [
                     'title'       => 'Vendor',
                     'type'        => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller'  => 'vendor',
+                    'controller'  => 'admin/vendor',
                     'action'      => 'view',
                     'idField'     => 'vendorid'
                 ],
@@ -107,7 +112,7 @@ class ConsoleServerController extends EloquentController
                 'num_connections' => [
                     'title'      => 'Connections',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'console-server-connection',
+                    'controller' => 'admin/console-server-connection',
                     'action'     => 'list/port',
                     'idField'    => 'id'
                 ],
@@ -146,7 +151,8 @@ class ConsoleServerController extends EloquentController
      *
      * @return array
      */
-    protected function listGetData( $id = null ): array
+    #[\Override]
+    protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
         return ConsoleServer::selectRaw(
@@ -172,8 +178,11 @@ class ConsoleServerController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (ConsoleServer|mixed)[]
+     *
+     * @psalm-return array{object: ConsoleServer, cabinets: mixed, vendors: mixed}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -187,10 +196,13 @@ class ConsoleServerController extends EloquentController
     /**
      * Display the form to edit an object
      *
-     * @param   int $id ID of the row to edit
+     * @param int $id ID of the row to edit
      *
      * @return array
+     *
+     * @psalm-return array{object: mixed, cabinets: mixed, vendors: mixed}
      */
+    #[\Override]
     protected function editPrepareForm( int $id ): array
     {
         $this->object = ConsoleServer::findOrFail( $id );
@@ -219,10 +231,11 @@ class ConsoleServerController extends EloquentController
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -236,10 +249,11 @@ class ConsoleServerController extends EloquentController
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = ConsoleServer::findOrFail( $id );
@@ -255,6 +269,7 @@ class ConsoleServerController extends EloquentController
      *
      * @return bool Return false to stop / cancel the deletion
      */
+    #[\Override]
     protected function preDelete(): bool
     {
         $this->object->consoleServerConnections()->delete();
@@ -266,6 +281,7 @@ class ConsoleServerController extends EloquentController
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [

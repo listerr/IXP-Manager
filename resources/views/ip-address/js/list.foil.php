@@ -1,8 +1,8 @@
-<script>
+<script type="module">
     //////////////////////////////////////////////////////////////////////////////////////
     // we'll need these handles to html elements in a few places:
 
-    const protocol  = "<?= $t->protocol ?>";
+    const protocol  = "<?= $t->ee( $t->protocol , 'js' ) ?>";
     const table     = $( '#ip-address-list' );
 
     $(document).ready( function() {
@@ -23,7 +23,7 @@
 
     $( "#vlan" ).select2({ placeholder: "Select a VLAN..." }).on( 'change', function(e) {
         let vlan = this.value;
-        window.location = "<?= url( 'ip-address/list' ) ?>/"+ protocol + '/' + vlan;
+        window.location = "<?= url( 'admin/ip-address/list' ) ?>/"+ protocol + '/' + vlan;
     });
 
     /**
@@ -38,6 +38,7 @@
                         <input type="hidden" name="protocol" value="${protocol}">
                         <input type="hidden" name="_method" value="delete" />
                     </form>`;
+
         bootbox.dialog({
             message: html,
             title: "Delete IP Address",

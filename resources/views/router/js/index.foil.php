@@ -1,4 +1,4 @@
-<script>
+<script type="module">
     $('.table-responsive-ixp-with-header').show();
 
     $('.table-responsive-ixp-with-header').DataTable( {
@@ -9,9 +9,20 @@
             { responsivePriority: 1, targets: 0 },
             { responsivePriority: 2, targets: -1 }
         ],
+        fnDrawCallback: function( oSettings ) {
+            $( '.btn-reset-ts' ).click( resetRouterTimestamp );
+            $( '.btn-resume' ).click( resumeRouterUpdates );
+            $( '.btn-pause' ).click( pauseRouterUpdates );
+            $( '.btn-delete' ).click( deleteRouter );
+        },
+        initComplete: function () {
+            $('div.dataTables_filter input', this.api().table().container()).attr('name', 'dt-search-input');
+        },
     } );
 
-    $( '.btn-delete' ).click( function( e ) {
+
+
+    function deleteRouter( e ) {
         e.preventDefault();
         let url = this.href;
 
@@ -34,7 +45,7 @@
                     }
                 },
                 submit: {
-                    label: 'Delete',
+                    label: 'Delete Router',
                     className: 'btn-danger',
                     callback: function () {
                         $( '#form-delete' ).submit();
@@ -42,10 +53,10 @@
                 },
             }
         });
-    });
+    }
 
 
-    $( '.btn-pause' ).click( function( e ) {
+    function pauseRouterUpdates( e ) {
         e.preventDefault();
         let url = this.href;
 
@@ -75,11 +86,11 @@
                 },
             }
         });
-    });
+    }
 
 
 
-    $( '.btn-resume' ).click( function( e ) {
+    function resumeRouterUpdates( e ) {
         e.preventDefault();
         let url = this.href;
 
@@ -109,11 +120,11 @@
                 },
             }
         });
-    });
+    }
 
 
 
-    $( '.btn-reset-ts' ).click( function( e ) {
+    function resetRouterTimestamp( e ) {
         e.preventDefault();
         let url = this.href;
 
@@ -145,5 +156,5 @@
                 },
             }
         });
-    });
+    }
 </script>

@@ -62,25 +62,25 @@ use IXP\Traits\Observable;
  * @property-read int|null $routers_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\VlanInterface> $vlanInterfaces
  * @property-read int|null $vlan_interfaces_count
- * @method static Builder|Vlan newModelQuery()
- * @method static Builder|Vlan newQuery()
- * @method static Builder|Vlan peeringManager()
- * @method static Builder|Vlan privateOnly()
- * @method static Builder|Vlan publicOnly()
- * @method static Builder|Vlan query()
- * @method static Builder|Vlan whereConfigName($value)
- * @method static Builder|Vlan whereCreatedAt($value)
- * @method static Builder|Vlan whereExportToIxf($value)
- * @method static Builder|Vlan whereId($value)
- * @method static Builder|Vlan whereInfrastructureid($value)
- * @method static Builder|Vlan whereName($value)
- * @method static Builder|Vlan whereNotes($value)
- * @method static Builder|Vlan whereNumber($value)
- * @method static Builder|Vlan wherePeeringManager($value)
- * @method static Builder|Vlan wherePeeringMatrix($value)
- * @method static Builder|Vlan wherePrivate($value)
- * @method static Builder|Vlan whereUpdatedAt($value)
- * @method static Builder|Vlan publicProductionPeeringLan()
+ * @method static Builder<static>|Vlan newModelQuery()
+ * @method static Builder<static>|Vlan newQuery()
+ * @method static Builder<static>|Vlan peeringManager()
+ * @method static Builder<static>|Vlan privateOnly()
+ * @method static Builder<static>|Vlan publicOnly()
+ * @method static Builder<static>|Vlan publicProductionPeeringLan()
+ * @method static Builder<static>|Vlan query()
+ * @method static Builder<static>|Vlan whereConfigName($value)
+ * @method static Builder<static>|Vlan whereCreatedAt($value)
+ * @method static Builder<static>|Vlan whereExportToIxf($value)
+ * @method static Builder<static>|Vlan whereId($value)
+ * @method static Builder<static>|Vlan whereInfrastructureid($value)
+ * @method static Builder<static>|Vlan whereName($value)
+ * @method static Builder<static>|Vlan whereNotes($value)
+ * @method static Builder<static>|Vlan whereNumber($value)
+ * @method static Builder<static>|Vlan wherePeeringManager($value)
+ * @method static Builder<static>|Vlan wherePeeringMatrix($value)
+ * @method static Builder<static>|Vlan wherePrivate($value)
+ * @method static Builder<static>|Vlan whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class Vlan extends Model
@@ -122,6 +122,8 @@ class Vlan extends Model
 
     /**
      * Get the vlan interfaces that are in this vlan
+     *
+     * @return HasMany<VlanInterface, Vlan>
      */
     public function vlanInterfaces(): HasMany
     {
@@ -130,6 +132,8 @@ class Vlan extends Model
 
     /**
      * Get the vlan interfaces that are in this vlan
+     *
+     * @return HasMany<Router, Vlan>
      */
     public function routers(): HasMany
     {
@@ -138,6 +142,8 @@ class Vlan extends Model
 
     /**
      * Get the ipv4addresses for the vlan
+     *
+     * @return HasMany<IPv4Address, Vlan>
      */
     public function ipv4Addresses(): HasMany
     {
@@ -146,6 +152,8 @@ class Vlan extends Model
 
     /**
      * Get the ipv6addresses for the vlan
+     *
+     * @return HasMany<IPv6Address, Vlan>
      */
     public function ipv6Addresses(): HasMany
     {
@@ -154,6 +162,8 @@ class Vlan extends Model
 
     /**
      * Get the route server filters for the vlan
+     *
+     * @return HasMany<RouteServerFilter, Vlan>
      */
     public function routeServerFilters(): HasMany
     {
@@ -162,6 +172,8 @@ class Vlan extends Model
 
     /**
      * Get the networks info for the vlan
+     *
+     * @return HasMany<NetworkInfo, Vlan>
      */
     public function networksInfo(): HasMany
     {
@@ -170,6 +182,8 @@ class Vlan extends Model
 
     /**
      * Get the atlas run that are in this vlan
+     *
+     * @return HasMany<AtlasRun, Vlan>
      */
     public function atlasRun(): HasMany
     {
@@ -178,6 +192,8 @@ class Vlan extends Model
 
     /**
      * Get the infrastructure that own the vlan
+     *
+     * @return BelongsTo<Infrastructure, Vlan>
      */
     public function infrastructure(): BelongsTo
     {

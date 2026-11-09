@@ -30,7 +30,7 @@
                 </div>
             <?php endif; ?>
 
-            <table id="table-pi" class="table table-striped table-responsive-ixp-no-header">
+            <table id="table-pi" class="table table-striped table-responsive-ixp-no-header w-100">
                 <thead class="thead-dark">
                     <tr>
                         <th>
@@ -46,6 +46,9 @@
                         <?php endif; ?>
                         <th>
                             Speed
+                        </th>
+                        <th>
+                            Status
                         </th>
                         <?php if( $t->cb ): ?>
                             <th>
@@ -67,10 +70,10 @@
                             </td>
                             <td>
                                 <?php if( $pi->switchPort->type !== \IXP\Models\SwitchPort::TYPE_FANOUT ): ?>
-                                    <?= $t->ee( $pi->switchPort->switcher->name ) ?> :: <?= $pi->switchPort->ifName ?>
+                                    <?= $t->ee( $pi->switchPort->switcher->name ) ?> :: <?= $t->ee( $pi->switchPort->ifName ) ?>
                                 <?php elseif( $pi->peeringPhysicalInterface ): ?>
                                     <a href="<?= route( 'virtual-interface@edit' , [ 'vi' => $pi->peeringPhysicalInterface->virtualInterface->id ]) ?>">
-                                        <?= $t->ee( $pi->peeringPhysicalInterface->switchPort->switcher->name ) ?> :: <?= $pi->peeringPhysicalInterface->switchPort->ifName ?>
+                                        <?= $t->ee( $pi->peeringPhysicalInterface->switchPort->switcher->name ) ?> :: <?= $t->ee( $pi->peeringPhysicalInterface->switchPort->ifName ) ?>
                                     </a>
                                 <?php endif; ?>
 
@@ -84,10 +87,10 @@
                             <?php if( $t->resellerMode() && !$t->cb && $t->vi->customer->resellerObject ): ?>
                                 <td>
                                     <?php if ( $pi->switchPort->type === \IXP\Models\SwitchPort::TYPE_FANOUT ): ?>
-                                        <?= $pi->switchPort->switcher->name ?> :: <?= $pi->switchPort->ifName ?>
+                                        <?= $t->ee( $pi->switchPort->switcher->name ) ?> :: <?= $t->ee( $pi->switchPort->ifName ) ?>
                                     <?php elseif( $pi->fanoutPhysicalInterface ): ?>
                                         <a href="<?= route( 'virtual-interface@edit' , [ 'vi' => $pi->fanoutPhysicalInterface->virtualinterfaceid ]) ?>">
-                                            <?= $t->ee( $pi->fanoutPhysicalInterface->switchPort->switcher->name ) ?> :: <?= $pi->fanoutPhysicalInterface->switchPort->ifName ?>
+                                            <?= $t->ee( $pi->fanoutPhysicalInterface->switchPort->switcher->name ) ?> :: <?= $t->ee( $pi->fanoutPhysicalInterface->switchPort->ifName ) ?>
                                         </a>
                                     <?php endif; ?>
                                 </td>
@@ -105,10 +108,13 @@
                                     <span class="badge badge-danger phys-int-autoneg-state" data-toggle="tooltip" title="Hard-Coded - Auto-Negotiation DISABLED">HC</span>
                                 <?php endif; ?>
                             </td>
+                            <td>
+                                <?= $t->insert( 'interfaces/virtual/add/pi-status', [ 'pi' => $pi ] ); ?>
+                            </td>
                             <?php if( $t->cb ): ?>
                                 <td>
                                     <?php if( $otherPi ): ?>
-                                        <?= $otherPi->switchPort->switcher->name ?> :: <?= $pi->otherPICoreLink()->switchPort->ifName ?>
+                                        <?= $t->ee( $otherPi->switchPort->switcher->name ) ?> :: <?= $t->ee( $pi->otherPICoreLink()->switchPort->ifName ) ?>
                                     <?php endif; ?>
                                 </td>
                             <?php endif; ?>

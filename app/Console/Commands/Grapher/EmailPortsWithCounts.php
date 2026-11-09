@@ -27,6 +27,7 @@ use Carbon\Carbon;
 
 use Grapher, Mail;
 
+use Illuminate\Support\Facades\Log;
 use IXP\Mail\Grapher\PortsWithCounts as PortsWithCountsMail;
 
 use IXP\Models\{
@@ -90,6 +91,7 @@ class EmailPortsWithCounts extends GrapherCommand
 
         if( count( $ports ) ) {
             Mail::to( explode( ',', $this->argument( 'email' ) ) )->send( new PortsWithCountsMail( $ports, $category ) );
+            Log::notice("Sent email as " . count($ports) . " ports found with " . Graph::CATEGORY_DESCS[$category]);
         } else if( $this->isVerbosityVerbose() ) {
             $this->info("No ports with packet counts > 0");
         }
@@ -100,11 +102,15 @@ class EmailPortsWithCounts extends GrapherCommand
     /**
      * @param $category
      *
-     * @return array
+     * @return (mixed|string)[][]
      *
      * @throws
+     *
+     * @psalm-param 'discs'|'errs' $category
+     *
+     * @psalm-return list<array{cust_id: mixed, in: mixed, name: mixed, out: mixed, png: string}>
      */
-    private function emailPortsWithCounts( $category ): array
+    private function emailPortsWithCounts( string $category ): array
     {
         $data   = TrafficDaily::loadTraffic( Carbon::yesterday(), $category );
         $ports  = [];
@@ -138,6 +144,8 @@ class EmailPortsWithCounts extends GrapherCommand
      * Check the various arguments and options that have been password to the console command
      *
      * @return int 0 for success or else an error code
+     *
+     * @psalm-return 0|254
      */
     protected function verifyArgsAndOptions(): int
     {

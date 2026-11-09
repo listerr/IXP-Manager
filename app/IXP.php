@@ -37,16 +37,28 @@ class IXP
 {
     public const int IPv4 = 4;
     public const int IPv6 = 6;
-
+    
+    public const string sIPv4 = 'ipv4';
+    public const string sIPv6 = 'ipv6';
+    
+    
     public static array $PROTOCOLS = [
         self::IPv4 => 'IPv4',
         self::IPv6 => 'IPv6',
+    ];
+
+    public static array $STRING_TO_INT_PROTOCOLS = [
+        self::sIPv4 => self::IPv4,
+        self::sIPv6 => self::IPv6,
     ];
 
     public static function protocol( int $p ): string {
         return self::$PROTOCOLS[$p] ?? '';
     }
 
+    public static function protocolTextToInt( string $p ): false|int {
+        return self::$STRING_TO_INT_PROTOCOLS[strtolower($p)] ?? false;
+    }
 
 
     /**
@@ -155,7 +167,8 @@ class IXP
      * Scale a size in bytes in human style filesize
      *
      * @param int  $bytes          The value to scale
-     * @return string            Scaled / formatted number / type.
+     *
+     * @return string Scaled / formatted number / type.
      */
     public static function scaleFilesize( int $bytes ): string
     {

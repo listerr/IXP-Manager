@@ -63,9 +63,12 @@ class ContactGroupController extends EloquentController
 
     protected static $route_prefix = "contact-group";
 
+    protected static bool $is_admin_route = true;
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = ( object )[
@@ -124,6 +127,7 @@ class ContactGroupController extends EloquentController
      *
      * @throws
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -139,10 +143,14 @@ class ContactGroupController extends EloquentController
     /**
      * @return RedirectResponse|null
      */
+    #[\Override]
     protected function canList(): ?RedirectResponse
     {
         // are contact groups configured?
-        if( config( 'contact_group.types', false ) === false ) {
+        /** @var false|array $types */
+        $types = config( "contact_group.types", false );
+        
+        if( $types === false ) {
             AlertContainer::push( 'Contact groups are not configured. Please see <a href="https://docs.ixpmanager.org/latest/usage/contacts/#contact-groups">the documentation here</a>.', Alert::INFO );
             return redirect( route( 'contact@list' ) );
         }
@@ -152,10 +160,13 @@ class ContactGroupController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (|ContactGroup)[]
      *
      * @throws
+     *
+     * @psalm-return array{object: ContactGroup, types: }
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -167,13 +178,16 @@ class ContactGroupController extends EloquentController
     /**
      * Display the form to edit an object
      *
-     * @param   int|null $id ID of the row to edit
+     * @param int|null $id ID of the row to edit
      *
-     * @return array
+     * @return (|mixed)[]
      *
      * @throws
+     *
+     * @psalm-return array{object: mixed, types: }
      */
-    protected function editPrepareForm( int $id = null ): array
+    #[\Override]
+    protected function editPrepareForm( ?int $id = null ): array
     {
         $this->object = ContactGroup::findOrFail( $id );
 
@@ -196,10 +210,11 @@ class ContactGroupController extends EloquentController
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -213,10 +228,11 @@ class ContactGroupController extends EloquentController
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = ContactGroup::findOrFail( $id );
@@ -230,13 +246,32 @@ class ContactGroupController extends EloquentController
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [
-            'name'                  => 'required|string|max:255|unique:contact_group,name' . ( $r->id ? ','. $r->id : '' ),
+            'name'                  => 'required|string|max:20|unique:contact_group,name' . ( $r->id ? ','. $r->id : '' ),
             'description'           => 'required|string|max:255',
-            'type'                  => 'required|string|in:' . implode( ',', array_keys( config( 'contact_group.types' ) ) ),
+            'type'                  => 'required|string|max:'.ContactGroup::MAX_TYPE_LENGTH.'|in:' . implode( ',', array_keys( config( 'contact_group.types' ) ) ),
             'limited_to'            => 'required|integer|min:0',
+        ] , [
+            'type.max' => "The key for this contact group exceeds :max characters, and is not allowed due to database constraints. Update your contact_group.php file to use a shorter key."
         ] );
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    #[\Override]
+    protected function preDelete(): bool
+    {
+        $okay = true;
+        if( ( $cnt = $this->object->contacts()->count() ) ) {
+            AlertContainer::push( "You cannot delete this contact group as there are {$cnt} contacts associated with it.", Alert::DANGER );
+            $okay = false;
+        }
+
+        return $okay;
     }
 }

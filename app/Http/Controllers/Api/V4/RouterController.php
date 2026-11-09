@@ -25,7 +25,7 @@ namespace IXP\Http\Controllers\Api\V4;
 
 use Carbon\Carbon;
 
-use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\{DB,Log};
 use IXP\Models\Router;
 
 use IXP\Tasks\Router\ConfigurationGenerator as RouterConfigurationGenerator;
@@ -64,10 +64,10 @@ class RouterController extends Controller
             abort( 404, "Unknown router handle" );
         }
 
-        $configView = ( new RouterConfigurationGenerator( $router ) )->render()->render();
+        $configView = new RouterConfigurationGenerator( $router )->render()->render();
 
         /** @psalm-suppress UndefinedConstant */
-        \Illuminate\Support\Facades\Log::info( sprintf( "Generated router configuration for %s and used %0.1f MB ( %0.1f MB real) of memory in %0.3f seconds.",
+        Log::info( sprintf( "Generated router configuration for %s and used %0.1f MB ( %0.1f MB real) of memory in %0.3f seconds.",
                 $router->handle, memory_get_peak_usage() / 1024 / 1024, memory_get_peak_usage( true ) / 1024 / 1024,
                 microtime( true ) - LARAVEL_START )
         );
@@ -107,24 +107,64 @@ class RouterController extends Controller
      * we can update the router.
      *
      * @param string $handle Handle of the router that we want
-     *
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|JsonResponse|Response
      */
-    public function getUpdateLock( string $handle )
+    public function getUpdateLock( string $handle ): Response|JsonResponse
     {
-        if( !( $r = Router::whereHandle( $handle )->first() ) ) {
-            abort( 404, "Unknown router handle" );
+        $r = null;
+        
+        try {
+            DB::unprepared( 'LOCK TABLES routers WRITE' );
+            
+            if( !( $r = Router::whereHandle( $handle )->first() ) ) {
+                return response( 'Unknown router handle', 404 );
+            }
+            
+            if( $r->canUpdate( true ) ) {
+                return response()->json( $this->lastUpdatedArray( $r ) );
+            }
+        } finally {
+            if( $r && $r->getDirty() ) {
+                $r->save();
+            }
+            DB::unprepared( 'UNLOCK TABLES' );
         }
-
-        if( $r->canUpdate( true ) ) {
-            $r->refresh();
-            return response()->json( $this->lastUpdatedArray( $r ) );
-        }
-
+        
         return response( 'Router not available for update', 423 )
             ->header('Content-Type', 'text/plain');
     }
-
+    
+    /**
+     * Set `last_update_started` to the last update time (or null).
+     *
+     * The update script uses this to release a lock if there is a
+     * non-service affecting (or potential) failure.
+     *
+     * @param string $handle Handle of the router that we want
+     *
+     * @return JsonResponse|Response
+     */
+    public function releaseUpdateLock( string $handle ): Response|JsonResponse
+    {
+        $r = null;
+        
+        try {
+            DB::unprepared( 'LOCK TABLES routers WRITE' );
+            
+            if( !( $r = Router::whereHandle( $handle )->first() ) ) {
+                return response( 'Unknown router handle', 404 );
+            }
+        
+            $r->releaseUpdateLock();
+        } finally {
+            if( $r && $r->getDirty() ) {
+                $r->save();
+            }
+            DB::unprepared( 'UNLOCK TABLES' );
+        }
+        
+        return response()->json( $this->lastUpdatedArray( $r ) );
+    }
+    
     /**
      * Set `last_updated` to the current datetime (now)
      *
@@ -251,7 +291,9 @@ class RouterController extends Controller
      *
      * @param Router $r
      *
-     * @return array
+     * @return (float|int|null|string)[]
+     *
+     * @psalm-return array{last_update_started: null|string, last_update_started_unix: float|int|null|string, last_updated: null|string, last_updated_unix: float|int|null|string}
      */
     private function lastUpdatedArray( Router $r ): array
     {

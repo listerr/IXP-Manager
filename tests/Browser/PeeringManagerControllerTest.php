@@ -1,7 +1,4 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
  * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,11 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
+
 
 use IXP\Models\{
     Aggregators\CustomerAggregator,
@@ -35,7 +37,6 @@ use Laravel\Dusk\Browser;
 
 use Tests\DuskTestCase;
 
-
 /**
  * Test peering manager Controller
  *
@@ -48,49 +49,24 @@ use Tests\DuskTestCase;
  */
 class PeeringManagerControllerTest extends DuskTestCase
 {
-
-    public function tearDown(): void
-    {
-        /** @var Customer $cust */
-        $cust = User::whereUsername( 'hecustadmin' )->get()->first()->customer;
-
-        $peers = CustomerAggregator::getPeeringManagerArrayByType(
-            $cust,
-            Vlan::peeringManager()->orderBy( 'number' )->get(),
-            [ 4, 6 ]
-        );
-
-        foreach( $peers[ "potential" ] as $as => $p ) {
-            if( $p ) {
-                $c = $peers[ "custs" ][ $as ];
-                break;
-            }
-        }
-
-        if( $p = PeeringManager::where( 'custid', $cust->id )->where( 'peerid', $c[ "id" ] )->get()->first() ) {
-            $p->delete();
-        }
-
-        parent::tearDown();
-    }
-
     /**
-     * Test the whole Interfaces functionalities (virtuel, physical, vlan)
+     * Test peering manager, save notes, mark email as sent, mark peering accepted/rejected
      *
      * @return void
      *
-     * @throws
+     * @throws \Throwable
      */
     public function testPeeringManager(): void
     {
         $this->browse( function( Browser $browser ) {
 
             $browser->resize( 1600, 1400 )
+                ->visit( '/logout' )
                 ->visit( '/login' )
                 ->type( 'username', 'hecustadmin' )
                 ->type( 'password', 'travisci' )
                 ->press( '#login-btn' )
-                ->assertPathIs( '/dashboard' );
+                ->waitForLocation( '/dashboard' );
 
 
             $browser->visit( "/peering-manager" )
@@ -134,6 +110,7 @@ class PeeringManagerControllerTest extends DuskTestCase
 
             $browser->waitForText( 'Peering notes updated for ' . $c[ "name" ])
                 ->press( 'Close' );
+
             // the following line is for Laravel Dusk only - model close not works without it
             $browser->driver->executeScript("$('.bootbox').removeClass('show').css({display:'none'});$('.modal-backdrop').remove();");
 
@@ -216,12 +193,7 @@ class PeeringManagerControllerTest extends DuskTestCase
     }
 
     /**
-     * @param Browser $browser
-     * @param PeeringManager $pm
-     * @param array $c
-     * @param string $status
-     *
-     * @throws
+     * @throws \Facebook\WebDriver\Exception\TimeoutException
      */
     public function markPeering( Browser $browser, PeeringManager $pm, array $c, string $status ): void
     {
@@ -229,7 +201,7 @@ class PeeringManagerControllerTest extends DuskTestCase
 
         $browser->press( "#dropdown-mark-peering-" . $c[ "id" ] )
             ->press( $status === "peered" ? "#mark-peered-" . $c[ "id" ] : "#mark-rejected-" . $c[ "id" ] )
-            ->assertPathIs( '/peering-manager' )
+            ->waitForLocation( '/peering-manager' )
             ->assertSee( $status === "peered" ? 'Peered flag set for ' . $c[ "name" ] : 'Ignored / rejected flag set for ' . $c[ "name" ] );
 
         // Check value in DB
@@ -237,11 +209,11 @@ class PeeringManagerControllerTest extends DuskTestCase
         $this->assertEquals( true, $status === "peered" ? $pm->peered : $pm->rejected );
 
         $browser->press( $status === "peered" ? "#peering-peers-li" : "#peering-rejected-li" )
-            ->assertSee( $c[ "name" ] )
+            ->waitForText( $c[ "name" ] )
             ->waitFor( "#dropdown-mark-peering-" . $c[ "id" ] )
             ->press( "#dropdown-mark-peering-" . $c[ "id" ] )
             ->press( $status === "peered" ? "#mark-peered-" . $c[ "id" ] : "#mark-rejected-" . $c[ "id" ] )
-            ->assertPathIs( '/peering-manager' )
+            ->waitForLocation( '/peering-manager' )
             ->assertSee( $status == "peered" ? 'Peered flag cleared for ' . $c[ "name" ] : 'Ignored / rejected flag cleared for ' . $c[ "name" ] );
 
         // Check value in DB

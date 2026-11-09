@@ -48,6 +48,7 @@ use Illuminate\Support\Collection;
  * @property string|null $shortname
  * @property int|null $autsys
  * @property int|null $maxprefixes
+ * @property int|null $maxprefixesv6
  * @property string|null $peeringemail
  * @property string|null $nocphone
  * @property string|null $noc24hphone
@@ -75,115 +76,110 @@ use Illuminate\Support\Collection;
  * @property int $in_manrs
  * @property int $in_peeringdb
  * @property int $peeringdb_oauth
- * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\AtlasMeasurement> $AtlasMeasurementsDest
+ * @property-read EloquentCollection<int, \IXP\Models\AtlasMeasurement> $AtlasMeasurementsDest
  * @property-read int|null $atlas_measurements_dest_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\AtlasMeasurement> $AtlasMeasurementsSource
+ * @property-read EloquentCollection<int, \IXP\Models\AtlasMeasurement> $AtlasMeasurementsSource
  * @property-read int|null $atlas_measurements_source_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\AtlasProbe> $AtlasProbes
+ * @property-read EloquentCollection<int, \IXP\Models\AtlasProbe> $AtlasProbes
  * @property-read int|null $atlas_probes_count
  * @property-read \IXP\Models\CompanyBillingDetail|null $companyBillingDetail
  * @property-read \IXP\Models\CompanyRegisteredDetail|null $companyRegisteredDetail
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\ConsoleServerConnection> $consoleServerConnections
+ * @property-read EloquentCollection<int, \IXP\Models\ConsoleServerConnection> $consoleServerConnections
  * @property-read int|null $console_server_connections_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\Contact> $contacts
+ * @property-read EloquentCollection<int, \IXP\Models\Contact> $contacts
  * @property-read int|null $contacts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\CustomerEquipment> $customerEquipments
+ * @property-read EloquentCollection<int, \IXP\Models\CustomerEquipment> $customerEquipments
  * @property-read int|null $customer_equipments_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\CustomerNote> $customerNotes
+ * @property-read EloquentCollection<int, \IXP\Models\CustomerNote> $customerNotes
  * @property-read int|null $customer_notes_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\CustomerToUser> $customerToUser
+ * @property-read EloquentCollection<int, \IXP\Models\CustomerToUser> $customerToUser
  * @property-read int|null $customer_to_user_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\DocstoreCustomerDirectory> $docstoreCustomerDirectories
+ * @property-read EloquentCollection<int, \IXP\Models\DocstoreCustomerDirectory> $docstoreCustomerDirectories
  * @property-read int|null $docstore_customer_directories_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\DocstoreCustomerFile> $docstoreCustomerFiles
+ * @property-read EloquentCollection<int, \IXP\Models\DocstoreCustomerFile> $docstoreCustomerFiles
  * @property-read int|null $docstore_customer_files_count
  * @property-read \IXP\Models\IrrdbConfig|null $irrdbConfig
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\IrrdbPrefix> $irrdbPrefixes
+ * @property-read EloquentCollection<int, \IXP\Models\IrrdbPrefix> $irrdbPrefixes
  * @property-read int|null $irrdb_prefixes_count
+ * @property-read \IXP\Models\IrrdbUpdateLog|null $irrdbUpdateLog
  * @property-read \IXP\Models\Logo|null $logo
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\PatchPanelPortHistory> $patchPanelPortHistories
+ * @property-read EloquentCollection<int, \IXP\Models\PatchPanelPortHistory> $patchPanelPortHistories
  * @property-read int|null $patch_panel_port_histories_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\PatchPanelPort> $patchPanelPorts
+ * @property-read EloquentCollection<int, \IXP\Models\PatchPanelPort> $patchPanelPorts
  * @property-read int|null $patch_panel_ports_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\RouteServerFilter> $peerRouteServerFilters
+ * @property-read EloquentCollection<int, \IXP\Models\RouteServerFilter> $peerRouteServerFilters
  * @property-read int|null $peer_route_server_filters_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PeeringManager> $peers
+ * @property-read EloquentCollection<int, PeeringManager> $peers
  * @property-read int|null $peers_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, PeeringManager> $peersWith
+ * @property-read EloquentCollection<int, PeeringManager> $peersWith
  * @property-read int|null $peers_with_count
  * @property-read Customer|null $resellerObject
- * @property-read \Illuminate\Database\Eloquent\Collection<int, Customer> $resoldCustomers
+ * @property-read EloquentCollection<int, Customer> $resoldCustomers
  * @property-read int|null $resold_customers_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\RouteServerFilter> $routeServerFilters
+ * @property-read EloquentCollection<int, \IXP\Models\RouteServerFilter> $routeServerFilters
  * @property-read int|null $route_server_filters_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\RouteServerFilterProd> $routeServerFiltersInProduction
+ * @property-read EloquentCollection<int, \IXP\Models\RouteServerFilterProd> $routeServerFiltersInProduction
  * @property-read int|null $route_server_filters_in_production_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\RsPrefix> $rsPrefixes
- * @property-read int|null $rs_prefixes_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\CustomerTag> $tags
+ * @property-read EloquentCollection<int, \IXP\Models\CustomerTag> $tags
  * @property-read int|null $tags_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\TrafficDaily> $trafficDailies
+ * @property-read EloquentCollection<int, \IXP\Models\TrafficDaily> $trafficDailies
  * @property-read int|null $traffic_dailies_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\User> $users
+ * @property-read EloquentCollection<int, \IXP\Models\User> $users
  * @property-read int|null $users_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\VirtualInterface> $virtualInterfaces
+ * @property-read EloquentCollection<int, \IXP\Models\VirtualInterface> $virtualInterfaces
  * @property-read int|null $virtual_interfaces_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\VlanInterface> $vlanInterfaces
+ * @property-read EloquentCollection<int, \IXP\Models\VlanInterface> $vlanInterfaces
  * @property-read int|null $vlan_interfaces_count
- * @method static Builder|Customer active()
- * @method static Builder|Customer addressesForVlan(int $vlanid, int $cust, int $protocol)
- * @method static Builder|Customer associate()
- * @method static Builder|Customer current()
- * @method static Builder|Customer currentActive(bool $trafficing = false, bool $externalOnly = false, bool $connected = true)
- * @method static Builder|Customer internal()
- * @method static Builder|CustomerAggregator newModelQuery()
- * @method static Builder|CustomerAggregator newQuery()
- * @method static Builder|Customer notDeleted()
- * @method static Builder|CustomerAggregator query()
- * @method static Builder|Customer resellerOnly()
- * @method static Builder|Customer trafficking()
- * @method static Builder|CustomerAggregator whereAbbreviatedName($value)
- * @method static Builder|CustomerAggregator whereActivepeeringmatrix($value)
- * @method static Builder|CustomerAggregator whereAutsys($value)
- * @method static Builder|CustomerAggregator whereCompanyBillingDetailsId($value)
- * @method static Builder|CustomerAggregator whereCompanyRegisteredDetailId($value)
- * @method static Builder|CustomerAggregator whereCorpwww($value)
- * @method static Builder|CustomerAggregator whereCreatedAt($value)
- * @method static Builder|CustomerAggregator whereCreator($value)
- * @method static Builder|CustomerAggregator whereDatejoin($value)
- * @method static Builder|CustomerAggregator whereDateleave($value)
- * @method static Builder|CustomerAggregator whereId($value)
- * @method static Builder|CustomerAggregator whereInManrs($value)
- * @method static Builder|CustomerAggregator whereInPeeringdb($value)
- * @method static Builder|CustomerAggregator whereIrrdb($value)
- * @method static Builder|CustomerAggregator whereIsReseller($value)
- * @method static Builder|CustomerAggregator whereLastupdatedby($value)
- * @method static Builder|CustomerAggregator whereMD5Support($value)
- * @method static Builder|CustomerAggregator whereMaxprefixes($value)
- * @method static Builder|CustomerAggregator whereName($value)
- * @method static Builder|CustomerAggregator whereNoc24hphone($value)
- * @method static Builder|CustomerAggregator whereNocemail($value)
- * @method static Builder|CustomerAggregator whereNocfax($value)
- * @method static Builder|CustomerAggregator whereNochours($value)
- * @method static Builder|CustomerAggregator whereNocphone($value)
- * @method static Builder|CustomerAggregator whereNocwww($value)
- * @method static Builder|CustomerAggregator wherePeeringdbOauth($value)
- * @method static Builder|CustomerAggregator wherePeeringemail($value)
- * @method static Builder|CustomerAggregator wherePeeringmacro($value)
- * @method static Builder|CustomerAggregator wherePeeringmacrov6($value)
- * @method static Builder|CustomerAggregator wherePeeringpolicy($value)
- * @method static Builder|CustomerAggregator whereReseller($value)
- * @method static Builder|CustomerAggregator whereShortname($value)
- * @method static Builder|CustomerAggregator whereStatus($value)
- * @method static Builder|CustomerAggregator whereType($value)
- * @method static Builder|CustomerAggregator whereUpdatedAt($value)
- * @property string|null $lastupdated
- * @property string|null $created
- * @method static Builder|CustomerAggregator whereCreated($value)
- * @method static Builder|CustomerAggregator whereLastupdated($value)
- * @property-read \IXP\Models\IrrdbUpdateLog|null $irrdbUpdateLog
+ * @method static Builder<static>|CustomerAggregator active()
+ * @method static Builder<static>|CustomerAggregator addressesForVlan(int $vlanid, int $cust, int $protocol)
+ * @method static Builder<static>|CustomerAggregator associate()
+ * @method static Builder<static>|CustomerAggregator current()
+ * @method static Builder<static>|CustomerAggregator currentActive(bool $trafficing = false, bool $externalOnly = false, bool $connected = true)
+ * @method static Builder<static>|CustomerAggregator internal()
+ * @method static Builder<static>|CustomerAggregator newModelQuery()
+ * @method static Builder<static>|CustomerAggregator newQuery()
+ * @method static Builder<static>|CustomerAggregator notDeleted()
+ * @method static Builder<static>|CustomerAggregator query()
+ * @method static Builder<static>|CustomerAggregator resellerOnly()
+ * @method static Builder<static>|CustomerAggregator trafficking()
+ * @method static Builder<static>|CustomerAggregator whereAbbreviatedName($value)
+ * @method static Builder<static>|CustomerAggregator whereActivepeeringmatrix($value)
+ * @method static Builder<static>|CustomerAggregator whereAutsys($value)
+ * @method static Builder<static>|CustomerAggregator whereCompanyBillingDetailsId($value)
+ * @method static Builder<static>|CustomerAggregator whereCompanyRegisteredDetailId($value)
+ * @method static Builder<static>|CustomerAggregator whereCorpwww($value)
+ * @method static Builder<static>|CustomerAggregator whereCreatedAt($value)
+ * @method static Builder<static>|CustomerAggregator whereCreator($value)
+ * @method static Builder<static>|CustomerAggregator whereDatejoin($value)
+ * @method static Builder<static>|CustomerAggregator whereDateleave($value)
+ * @method static Builder<static>|CustomerAggregator whereId($value)
+ * @method static Builder<static>|CustomerAggregator whereInManrs($value)
+ * @method static Builder<static>|CustomerAggregator whereInPeeringdb($value)
+ * @method static Builder<static>|CustomerAggregator whereIrrdb($value)
+ * @method static Builder<static>|CustomerAggregator whereIsReseller($value)
+ * @method static Builder<static>|CustomerAggregator whereLastupdatedby($value)
+ * @method static Builder<static>|CustomerAggregator whereMD5Support($value)
+ * @method static Builder<static>|CustomerAggregator whereMaxprefixes($value)
+ * @method static Builder<static>|CustomerAggregator whereMaxprefixesv6($value)
+ * @method static Builder<static>|CustomerAggregator whereName($value)
+ * @method static Builder<static>|CustomerAggregator whereNoc24hphone($value)
+ * @method static Builder<static>|CustomerAggregator whereNocemail($value)
+ * @method static Builder<static>|CustomerAggregator whereNocfax($value)
+ * @method static Builder<static>|CustomerAggregator whereNochours($value)
+ * @method static Builder<static>|CustomerAggregator whereNocphone($value)
+ * @method static Builder<static>|CustomerAggregator whereNocwww($value)
+ * @method static Builder<static>|CustomerAggregator wherePeeringdbOauth($value)
+ * @method static Builder<static>|CustomerAggregator wherePeeringemail($value)
+ * @method static Builder<static>|CustomerAggregator wherePeeringmacro($value)
+ * @method static Builder<static>|CustomerAggregator wherePeeringmacrov6($value)
+ * @method static Builder<static>|CustomerAggregator wherePeeringpolicy($value)
+ * @method static Builder<static>|CustomerAggregator whereReseller($value)
+ * @method static Builder<static>|CustomerAggregator whereShortname($value)
+ * @method static Builder<static>|CustomerAggregator whereStatus($value)
+ * @method static Builder<static>|CustomerAggregator whereType($value)
+ * @method static Builder<static>|CustomerAggregator whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class CustomerAggregator extends Customer
@@ -197,7 +193,7 @@ class CustomerAggregator extends Customer
      *
      * @return array
      */
-    public static function getByVlanAndProtocol( int $vlanid = null, int $protocol = null ): array
+    public static function getByVlanAndProtocol( ?int $vlanid = null, ?int $protocol = null ): array
     {
         return self::select( [ 'c.id', 'c.name' ] )
             ->from( 'cust AS c' )
@@ -223,99 +219,100 @@ class CustomerAggregator extends Customer
     }
 
     /**
-     * Build an array of data for the peering matrice
+     * Build an array of data for the peering matrix
      *
      * Sample return:
      *
-     *     [
-     *         "me" => [    "id" => 69
-     *                       "name" => "3 Ireland's"
-     *                       "shortname" => "three"
-     *                       "autsys" => 34218
-     *                       "maxprefixes" => 100
-     *                       "peeringemail" => "io.ip@three.co.uk"
-     *                       "peeringpolicy" => "open"
-     *                       "vlaninterfaces" => [
-     *                               10 => [
-     *                                   0 => [
-     *                                           "ipv4enabled" => true
-     *                                           "ipv6enabled" => false
-     *                                           "rsclient" => true
-     *                                       ]
-     *                               ]
+     * [
+     * "me" => [    "id" => 69
+     * "name" => "3 Ireland's"
+     * "shortname" => "three"
+     * "autsys" => 34218
+     * "maxprefixes" => 100
+     * "peeringemail" => "io.ip@three.co.uk"
+     * "peeringpolicy" => "open"
+     * "vlaninterfaces" => [
+     * 10 => [
+     * 0 => [
+     * "ipv4enabled" => true
+     * "ipv6enabled" => false
+     * "rsclient" => true
+     * ]
+     * ]
      *
-     *                          ]
+     * ]
      *
-     *                  ]
+     * ]
      *
-     *         "potential" => [
-     *               12041 => false
-     *               56767 => false
-     *               196737 => false
-     *          ]
+     * "potential" => [
+     * 12041 => false
+     * 56767 => false
+     * 196737 => false
+     * ]
      *
-     *          "potential_bilat" => [
-     *               12041 => true
-     *               56767 => true
-     *               196737 => false
-     *          ]
+     * "potential_bilat" => [
+     * 12041 => true
+     * 56767 => true
+     * 196737 => false
+     * ]
      *
-     *          "peered" => [
-     *               12041 => true
-     *               56767 => true
-     *               196737 => false
-     *          ]
+     * "peered" => [
+     * 12041 => true
+     * 56767 => true
+     * 196737 => false
+     * ]
      *
-     *          "peered" => [
-     *               12041 => false
-     *               56767 => false
-     *               196737 => false
-     *          ]
+     * "peered" => [
+     * 12041 => false
+     * 56767 => false
+     * 196737 => false
+     * ]
      *
-     *         "peers" => [
-     *               60 => [
-     *                   "id" => 44
-     *                   "custid" => 69
-     *                   "peerid" => 60
-     *                   "email_last_sent" => null
-     *                   "emails_sent" => 0
-     *                   "peered" => false
-     *                   "rejected" => false
-     *                   "notes" => ""
-     *                   "created" => DateTime
-     *                   "updated" => DateTime
-     *                   "email_days" => -1
-     *               ]
-     *           ]
+     * "peers" => [
+     * 60 => [
+     * "id" => 44
+     * "custid" => 69
+     * "peerid" => 60
+     * "email_last_sent" => null
+     * "emails_sent" => 0
+     * "peered" => false
+     * "rejected" => false
+     * "notes" => ""
+     * "created" => DateTime
+     * "updated" => DateTime
+     * "email_days" => -1
+     * ]
+     * ]
      *
-     *          "custs" => [
-     *               12041 => [
-     *                   "id" => 146
-     *                   "name" => "Afilias"
-     *                   "shortname" => "afilias"
-     *                   "autsys" => 12041
-     *                   "maxprefixes" => 500
-     *                   "peeringemail" => "peering@afilias-nst.info"
-     *                   "peeringpolicy" => "open"
-     *                   "vlaninterfaces" => [...]
-     *                   "ispotential" => true
-     *                   10 => [
-     *                   4 => 1
-     *                   ]
-     *               ]
-     *               56767 => [...]
-     *               196737 => [...]
+     * "custs" => [
+     * 12041 => [
+     * "id" => 146
+     * "name" => "Afilias"
+     * "shortname" => "afilias"
+     * "autsys" => 12041
+     * "maxprefixes" => 500
+     * "peeringemail" => "peering@afilias-nst.info"
+     * "peeringpolicy" => "open"
+     * "vlaninterfaces" => [...]
+     * "ispotential" => true
+     * 10 => [
+     * 4 => 1
+     * ]
+     * ]
+     * 56767 => [...]
+     * 196737 => [...]
      *
-     *     ]
+     * ]
      *
      * @param Customer  $cust   Current customer
      * @param Vlan[] $vlans  Array of Vlans
      * @param array     $protos Array of protos
      *
-     * @return array|null
+     * @return ((((int|mixed)[]|mixed|string|true)[]|Vlan|bool|mixed)[]|mixed|null)[]|null
      *
+     * @psalm-return array{me: mixed|null, potential: array<array-key|array<0|1|2>|mixed, bool>, potential_bilat: array<array-key|array<0|1|2>|mixed, bool>, peered: array<array-key|array<0|1|2>|mixed, bool>, rejected: array<array-key|array<0|1|2>|mixed, bool>, peers: array|mixed, custs: array<array<array<0|1|2>|mixed|true>|mixed>, bilat: array<array<int, array|string>>, vlan: array<Vlan>, protos: array}|null
      */
-    public static function getPeeringManagerArrayByType( Customer $cust, $vlans, array $protos ): ?array
+    public static function getPeeringManagerArrayByType( Customer $cust, $vlans, array $protos ): array|null
     {
         if( !count( $vlans ) ) {
             return null;
@@ -455,7 +452,7 @@ class CustomerAggregator extends Customer
      *
      * @param Customer $cust The customer Object
      *
-     * @return bool
+     * @return true
      *
      * @throws
      */
@@ -518,7 +515,12 @@ class CustomerAggregator extends Customer
                 $cb->deleteObject();
             }
             $cust->tags()->detach();
-            
+
+            $cust->routeServerFiltersInProduction()->delete();
+            $cust->routeServerFilters()->delete();
+            $cust->docstoreCustomerFiles()->delete();
+            $cust->docstoreCustomerDirectories()->delete();
+            $cust->irrdbUpdateLog()->delete();
             $cust->delete();
 
             $cust->companyBillingDetail()->delete();
@@ -566,7 +568,7 @@ class CustomerAggregator extends Customer
      *
      * @return Collection
      */
-    public static function withProbesForProtocol( int $protocol = 4, int $vlanid = null, array $includeCust = [], string $orderBy = 'name', int $limit = null ): Collection
+    public static function withProbesForProtocol( int $protocol = 4, ?int $vlanid = null, array $includeCust = [], string $orderBy = 'name', ?int $limit = null ): Collection
     {
         $enabled = $protocol === 4 ? 'v4_enabled' : 'v6_enabled';
 

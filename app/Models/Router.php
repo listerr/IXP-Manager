@@ -28,8 +28,6 @@ use Illuminate\Database\Eloquent\{
     Relations\BelongsTo
 };
 
-use Illuminate\Support\Facades\DB;
-
 use IXP\Traits\Observable;
 
 /**
@@ -67,49 +65,48 @@ use IXP\Traits\Observable;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Router|null $pair
  * @property-read \IXP\Models\Vlan $vlan
- * @method static Builder|Router hasApi()
- * @method static Builder|Router ipv4()
- * @method static Builder|Router ipv6()
- * @method static Builder|Router largeCommunities()
- * @method static Builder|Router newModelQuery()
- * @method static Builder|Router newQuery()
- * @method static Builder|Router notQuarantine()
- * @method static Builder|Router query()
- * @method static Builder|Router routeServer()
- * @method static Builder|Router rpki()
- * @method static Builder|Router whereApi($value)
- * @method static Builder|Router whereApiType($value)
- * @method static Builder|Router whereAsn($value)
- * @method static Builder|Router whereBgpLc($value)
- * @method static Builder|Router whereCreatedAt($value)
- * @method static Builder|Router whereHandle($value)
- * @method static Builder|Router whereId($value)
- * @method static Builder|Router whereLastUpdateStarted($value)
- * @method static Builder|Router whereLastUpdated($value)
- * @method static Builder|Router whereLgAccess($value)
- * @method static Builder|Router whereMgmtHost($value)
- * @method static Builder|Router whereName($value)
- * @method static Builder|Router whereOperatingSystem($value)
- * @method static Builder|Router whereOperatingSystemVersion($value)
- * @method static Builder|Router wherePairId($value)
- * @method static Builder|Router wherePauseUpdates($value)
- * @method static Builder|Router wherePeeringIp($value)
- * @method static Builder|Router whereProtocol($value)
- * @method static Builder|Router whereQuarantine($value)
- * @method static Builder|Router whereRfc1997Passthru($value)
- * @method static Builder|Router whereRouterId($value)
- * @method static Builder|Router whereRpki($value)
- * @method static Builder|Router whereShortname($value)
- * @method static Builder|Router whereSkipMd5($value)
- * @method static Builder|Router whereSoftware($value)
- * @method static Builder|Router whereSoftwareVersion($value)
- * @method static Builder|Router whereTemplate($value)
- * @method static Builder|Router whereType($value)
- * @method static Builder|Router whereUpdatedAt($value)
- * @method static Builder|Router whereVlanId($value)
- * @method static Builder|Router routeCollector()
- * @method static Builder|Router ipvX(int $protocol)
- * @method static Builder|Router ipProtocol(int $protocol)
+ * @method static Builder<static>|Router hasApi()
+ * @method static Builder<static>|Router ipProtocol(int $protocol)
+ * @method static Builder<static>|Router ipv4()
+ * @method static Builder<static>|Router ipv6()
+ * @method static Builder<static>|Router largeCommunities()
+ * @method static Builder<static>|Router newModelQuery()
+ * @method static Builder<static>|Router newQuery()
+ * @method static Builder<static>|Router notQuarantine()
+ * @method static Builder<static>|Router query()
+ * @method static Builder<static>|Router routeCollector()
+ * @method static Builder<static>|Router routeServer()
+ * @method static Builder<static>|Router rpki()
+ * @method static Builder<static>|Router whereApi($value)
+ * @method static Builder<static>|Router whereApiType($value)
+ * @method static Builder<static>|Router whereAsn($value)
+ * @method static Builder<static>|Router whereBgpLc($value)
+ * @method static Builder<static>|Router whereCreatedAt($value)
+ * @method static Builder<static>|Router whereHandle($value)
+ * @method static Builder<static>|Router whereId($value)
+ * @method static Builder<static>|Router whereLastUpdateStarted($value)
+ * @method static Builder<static>|Router whereLastUpdated($value)
+ * @method static Builder<static>|Router whereLgAccess($value)
+ * @method static Builder<static>|Router whereMgmtHost($value)
+ * @method static Builder<static>|Router whereName($value)
+ * @method static Builder<static>|Router whereOperatingSystem($value)
+ * @method static Builder<static>|Router whereOperatingSystemVersion($value)
+ * @method static Builder<static>|Router wherePairId($value)
+ * @method static Builder<static>|Router wherePauseUpdates($value)
+ * @method static Builder<static>|Router wherePeeringIp($value)
+ * @method static Builder<static>|Router whereProtocol($value)
+ * @method static Builder<static>|Router whereQuarantine($value)
+ * @method static Builder<static>|Router whereRfc1997Passthru($value)
+ * @method static Builder<static>|Router whereRouterId($value)
+ * @method static Builder<static>|Router whereRpki($value)
+ * @method static Builder<static>|Router whereShortname($value)
+ * @method static Builder<static>|Router whereSkipMd5($value)
+ * @method static Builder<static>|Router whereSoftware($value)
+ * @method static Builder<static>|Router whereSoftwareVersion($value)
+ * @method static Builder<static>|Router whereTemplate($value)
+ * @method static Builder<static>|Router whereType($value)
+ * @method static Builder<static>|Router whereUpdatedAt($value)
+ * @method static Builder<static>|Router whereVlanId($value)
  * @mixin \Eloquent
  */
 class Router extends Model
@@ -167,13 +164,13 @@ class Router extends Model
     /**
      * CONST PROTOCOL
      */
-    public const PROTOCOL_IPV4                 = '4';
-    public const PROTOCOL_IPV6                 = '6';
+    public const string PROTOCOL_IPV4 = '4';
+    public const string PROTOCOL_IPV6 = '6';
 
     /**
-     * @var array Email ids to classes
+     * @var array Router Protocols
      */
-    public static $PROTOCOLS = [
+    public static array $PROTOCOLS = [
         self::PROTOCOL_IPV4     =>      'IPv4',
         self::PROTOCOL_IPV6     =>      'IPv6'
     ];
@@ -181,15 +178,15 @@ class Router extends Model
     /**
      * CONST TYPES
      */
-    public const TYPE_ROUTE_SERVER                 = 1;
-    public const TYPE_ROUTE_COLLECTOR              = 2;
-    public const TYPE_AS112                        = 3;
-    public const TYPE_OTHER                        = 99;
+    public const int TYPE_ROUTE_SERVER                 = 1;
+    public const int TYPE_ROUTE_COLLECTOR              = 2;
+    public const int TYPE_AS112                        = 3;
+    public const int TYPE_OTHER                        = 99;
 
     /**
-     * @var array Email ids to classes
+     * @var array Router types textual description
      */
-    public static $TYPES = [
+    public static array $TYPES = [
         self::TYPE_ROUTE_SERVER             => 'Route Server',
         self::TYPE_ROUTE_COLLECTOR          => 'Route Collector',
         self::TYPE_AS112                    => 'AS112',
@@ -197,9 +194,9 @@ class Router extends Model
     ];
 
     /**
-     * @var array Email ids to classes
+     * @var array Router types short description
      */
-    public static $TYPES_SHORT = [
+    public static array $TYPES_SHORT = [
         self::TYPE_ROUTE_SERVER             => 'RS',
         self::TYPE_ROUTE_COLLECTOR          => 'RC',
         self::TYPE_AS112                    => 'AS112',
@@ -209,20 +206,22 @@ class Router extends Model
     /**
      * CONST SOFTWARES
      */
-    public const SOFTWARE_BIRD                     = 1;
-    public const SOFTWARE_BIRD2                    = 6;
-    public const SOFTWARE_QUAGGA                   = 2;
-    public const SOFTWARE_FRROUTING                = 3;
-    public const SOFTWARE_OPENBGPD                 = 4;
-    public const SOFTWARE_CISCO                    = 5;
-    public const SOFTWARE_OTHER                    = 99;
+    public const int SOFTWARE_BIRD                     = 1;
+    public const int SOFTWARE_BIRD2                    = 6;
+    public const int SOFTWARE_BIRD3                    = 7;
+    public const int SOFTWARE_QUAGGA                   = 2;
+    public const int SOFTWARE_FRROUTING                = 3;
+    public const int SOFTWARE_OPENBGPD                 = 4;
+    public const int SOFTWARE_CISCO                    = 5;
+    public const int SOFTWARE_OTHER                    = 99;
 
     /**
-     * @var array Email ids to classes
+     * @var array Router softwares textual description
      */
-    public static $SOFTWARES = [
+    public static array $SOFTWARES = [
         self::SOFTWARE_BIRD                 => 'Bird v1',
         self::SOFTWARE_BIRD2                => 'Bird v2',
+        self::SOFTWARE_BIRD3                => 'Bird v3',        
         self::SOFTWARE_QUAGGA               => 'Quagga',
         self::SOFTWARE_FRROUTING            => 'FRRouting',
         self::SOFTWARE_OPENBGPD             => 'OpenBGPd',
@@ -233,14 +232,14 @@ class Router extends Model
     /**
      * CONST SOFTWARES
      */
-    public const API_TYPE_NONE                     = 0;
-    public const API_TYPE_BIRDSEYE                 = 1;
-    public const API_TYPE_OTHER                    = 99;
+    public const int API_TYPE_NONE                     = 0;
+    public const int API_TYPE_BIRDSEYE                 = 1;
+    public const int API_TYPE_OTHER                    = 99;
 
     /**
-     * @var array Email ids to classes
+     * @var array Router API types
      */
-    public static $API_TYPES = [
+    public static array $API_TYPES = [
         self::API_TYPE_NONE                 => 'None',
         self::API_TYPE_BIRDSEYE             => 'Birdseye',
         self::API_TYPE_OTHER                => 'Other'
@@ -248,6 +247,8 @@ class Router extends Model
 
     /**
      * Get the vlan that own the router
+     *
+     * @return BelongsTo<Vlan, Router>
      */
     public function vlan(): BelongsTo
     {
@@ -256,6 +257,8 @@ class Router extends Model
 
     /**
      * Get the router's configuration / isolation pair
+     *
+     * @return BelongsTo<Router, Router>
      */
     public function pair(): BelongsTo
     {
@@ -331,12 +334,12 @@ class Router extends Model
     {
         return $query->where('protocol', self::PROTOCOL_IPV6);
     }
-
+    
     /**
      * Scope a query to match IPvX routers only
      *
      * @param Builder $query
-     *
+     * @param int $protocol
      * @return Builder
      */
     public function scopeIpProtocol( Builder $query, int $protocol ): Builder
@@ -486,7 +489,7 @@ class Router extends Model
      *
      * @param int $threshold
      *
-     * @return bool
+     * @return ?bool
      */
     public function lastUpdatedGreaterThanSeconds( int $threshold ): ?bool
     {
@@ -563,68 +566,124 @@ class Router extends Model
      * 2. It doesn't have a pair and it itself is not mid-update.
      * 3. It does have a pair and neither it nor itself are mid-update.
      *
+     *  For testing, we are not including database read/write locks here.
+     *  This function should be run in the following way:
+     *
+     *  try {
+     *      DB::unprepared( 'LOCK TABLES routers WRITE' );
+     *
+     *      if( !( $r = Router::whereHandle( $handle )->first() ) ) {
+     *          return response( 'Unknown router handle', 404 );
+     *      }
+     *
+     *      if( $r->canUpdate( true ) ) {
+     *          return response()->json( $this->lastUpdatedArray( $r ) );
+     *      }
+     *  } finally {
+     *      if( $r->getDirty() ) {
+     *          $r->save();
+     *      }
+     *      DB::unprepared( 'UNLOCK TABLES' );
+     *  }
+ *
      * The lock parameter should be set to true to take an update lock (i.e. to
      * set last_update_started).
      *
      * @param bool $lock As well as querying the update status, we should lock it also.
      * @return bool
      */
-    public function canUpdate( bool $lock = false ): ?bool
+    public function canUpdate( bool $lock = false ): bool
     {
         // if we're paused, we don't need to check anything else
         if( $this->pause_updates ) {
             return false;
         }
-
+        
+        // check for pairs first
+        if( $this->pair && $this->pair->isUpdating() ) {
+            return false;
+        }
+        
         $canUpdate = false;
 
-        try {
-            // get a total lock on the table so only this thread can read and write
-            DB::raw( 'LOCK TABLES routers WRITE' );
+        // Got to assume yes here as we're asking the question.
+        if( !$this->last_updated && !$this->last_update_started ) {
+            $canUpdate = true;
+        }
 
-            // Got to assume yes here as we're asking the question.
-            if( !$this->last_updated && !$this->last_update_started ) {
-                $canUpdate = true;
-            }
+        else if( !$this->isUpdating() ) {
+            $canUpdate = true;
+        }
 
-            // else if I don't have a pair and I'm not updating or I have a pair but neither of us are updating
-            else if( ( !$this->pair || !$this->pair->isUpdating() ) && !$this->isUpdating() ) {
-                $canUpdate = true;
-            }
+        if( $canUpdate && $lock ) {
 
-        } finally {
-            // finally is always executed even when we return() out of the try.
-
-            if( $canUpdate && $lock ) {
-
-                // need to avoid a same-second race condition
-                while( $this->last_updated?->format('Y-m-d H:i:s') == now()->format('Y-m-d H:i:s') ) {
+            // need to avoid a same-second race condition
+            if( $this->last_updated ) {
+                while( $this->last_updated->format('U') >= now()->format('U') ) {
                     sleep(1);
                 }
-
-                $this->last_update_started = now();
-                $this->save();
             }
 
-            DB::raw('UNLOCK TABLES');
-
-            // do not return out of finally or any exception will be silently handled.
+            $this->last_update_started = now();
         }
 
         return $canUpdate;
     }
-
-
-
-
+    
+    
+    /**
+     * This function releases an update lock.
+     *
+     * For testing, we are not including database read/write locks here.
+     * This function should be run in the following way:
+     *
+     * try {
+     *     DB::unprepared( 'LOCK TABLES routers WRITE' );
+     *
+     *     if( !( $r = Router::whereHandle( $handle )->first() ) ) {
+     *         return response( 'Unknown router handle', 404 );
+     *     }
+     *
+     *     $r->releaseUpdateLock();
+     * } finally {
+     *     if( $r->getDirty() ) {
+     *         $r->save();
+     *     }
+     *     DB::unprepared( 'UNLOCK TABLES' );
+     * }
+     *
+     * It always returns true, including if there is no current lock.
+     *
+     * @return true
+     */
+    public function releaseUpdateLock(): true
+    {
+        if( !$this->isUpdating() ) {
+            return true;
+        }
+        
+        if( !$this->last_updated && !$this->last_update_started ) {
+            return true;
+        }
+        
+        if( !$this->last_updated && $this->last_update_started ) {
+            $this->last_update_started = null;
+        } else {
+            $this->last_update_started = $this->last_updated;
+        }
+        
+        return true;
+    }
+    
+    
     /**
      * String to describe the model being updated / deleted / created
      *
-     * @param Model $model
+     * @param Router $model
      *
      * @return string
      */
-    public static function logSubject( Model $model ): string
+    public static function logSubject( Router $model ): string
     {
         return sprintf(
             "Router [id:%d] '%s' belonging to Vlan [id:%d] '%s'",

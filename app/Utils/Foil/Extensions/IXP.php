@@ -23,6 +23,7 @@ namespace IXP\Utils\Foil\Extensions;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+use IXP\Models\Customer;
 use IXP\Utils\View\Alert\Container as AlertContainer;
 
 use Foil\Contracts\ExtensionInterface;
@@ -30,6 +31,7 @@ use Foil\Contracts\ExtensionInterface;
 use Illuminate\Support\Facades\Auth;
 
 use PragmaRX\Google2FALaravel\Support\Authenticator as GoogleAuthenticator;
+use Countries;
 use function count;
 
 /**
@@ -51,22 +53,46 @@ class IXP implements ExtensionInterface
      */
     private $args;
 
+    /**
+     * @return void
+     */
+    #[\Override]
+    /**
+     * @return void
+     */
     public function setup( array $args = [] )
     {
         $this->args = $args;
     }
 
+    /**
+     * @return array
+     *
+     * @psalm-return array<never, never>
+     */
+    #[\Override]
+    /**
+     * @return array
+     *
+     * @psalm-return array<never, never>
+     */
     public function provideFilters(): array
     {
        return [];
     }
 
+    /**
+     * @return array<string, array>
+     */
+    #[\Override]
     public function provideFunctions(): array
     {
         return [
             'alerts'                 => [ AlertContainer::class, 'html' ],
             'as112UiActive'          => [ $this, 'as112UiActive' ],
             'asNumber'               => [ $this, 'asNumber' ],
+            'getCountriesSelection'  => [ $this, 'getCountriesSelection' ],
+            'getSelectOptions'       => [ $this, 'getSelectOptions' ],
             'google2faAuthenticator' => [ $this, 'google2faAuthenticator' ],
             'logoManagementEnabled'  => [ $this, 'logoManagementEnabled' ],
             'maxFileUploadSize'      => [ $this, 'maxFileUploadSize' ],
@@ -79,6 +105,9 @@ class IXP implements ExtensionInterface
             'scaleFilesize'          => [ $this, 'scaleFilesize' ],
             'softwrap'               => [ $this, 'softwrap' ],
             'whoisPrefix'            => [ $this, 'whoisPrefix' ],
+            'mapToSelectOptions'     => [ $this, 'mapToSelectOptions' ],
+            'isBilledByReseller'     => [ $this, 'isBilledByReseller' ],
+            'isBilledByIXP'          => [ $this, 'isBilledByIXP' ],
         ];
     }
 
@@ -93,12 +122,16 @@ class IXP implements ExtensionInterface
     {
         static $max_size = null;
 
-        $parseSize = function( $size ) {
+        $parseSize = /**
+         * @return numeric-string
+         */
+        function( $size ): string {
             $unit = preg_replace( '/[^bkmgtpezy]/i', '', $size ); // Remove the non-unit characters from the size.
             $size = preg_replace( '/[^0-9\.]/',      '', $size ); // Remove the non-numeric characters from the size.
 
             if( $unit ) {
                 // Find the position of the unit in the ordered string which is the power of magnitude to multiply a kilobyte by.
+                /** @psalm-suppress InvalidLiteralArgument - we intend the literal argument here */
                 return (string)round( $size * ( 1024 ** stripos( 'bkmgtpezy', $unit[0] ) ) );
             }
 
@@ -225,7 +258,8 @@ class IXP implements ExtensionInterface
      * Scale a size in bytes in human style filesize
      *
      * @param int  $bytes          The value to scale
-     * @return string            Scaled / formatted number / type.
+     *
+     * @return string Scaled / formatted number / type.
      */
     public function scaleFilesize( int $bytes ): string
     {
@@ -262,10 +296,10 @@ class IXP implements ExtensionInterface
      *
     * @return string            Scaled / formatted number / type.
     */
-    public function softwrap( array $data, int $perline, string $elementSeparator, string $lineEnding, int $indent = 0, int $pad = 0 ): string
+    public function softwrap( array $data, int $perline, string $elementSeparator, string $lineEnding, int $indent = 0, int $pad = 0, string $terminator = "" ): string
     {
         if( !( $cnt = count( $data ) ) ) {
-            return '';
+            return '' . $terminator;
         }
 
         $itrn = 0;
@@ -288,6 +322,8 @@ class IXP implements ExtensionInterface
 
             $itrn++;
         }
+        
+        $str .= str_contains( $str, "\n" ) && $terminator != "" ? "\n$terminator" : $terminator;
 
         return $str;
     }
@@ -320,7 +356,7 @@ class IXP implements ExtensionInterface
      */
     public function resellerMode(): bool
     {
-        return (bool)config( 'ixp.reseller.enabled', false );
+        return config( 'ixp.reseller.enabled', false );
     }
 
     /**
@@ -332,7 +368,8 @@ class IXP implements ExtensionInterface
      */
     public function logoManagementEnabled(): bool
     {
-        return !(bool)config( 'ixp_fe.frontend.disabled.logo' );
+        /** @psalm-suppress RedundantCast */
+        return !config( 'ixp_fe.frontend.disabled.logo' );
     }
 
     /**
@@ -346,7 +383,7 @@ class IXP implements ExtensionInterface
      */
     public function as112UiActive(): bool
     {
-        return (bool)config( 'ixp.as112.ui_active', false );
+        return config( 'ixp.as112.ui_active', false );
     }
 
     /**
@@ -387,13 +424,12 @@ class IXP implements ExtensionInterface
      * Takes a URL with https://xxx/ and returns xxx
      *
      * @param  string $url      The URL
-     *
      * @return string
      */
     public function nakedUrl( string $url ): string
     {
         $url = preg_replace( '/^http[s]?:\/\//', '', $url );
-        return preg_replace( '/\/$/', '', $url );
+        return preg_replace( '/\/$/', '', $url ) ?? '';
     }
 
     /**
@@ -404,5 +440,61 @@ class IXP implements ExtensionInterface
     public function google2faAuthenticator(): GoogleAuthenticator
     {
         return new GoogleAuthenticator( request() );
+    }
+
+
+    /**
+     * Get an array of countries for a select dropdown.
+     *
+     * @return array in form [ISO 2-letter Code] => "Name"
+     */
+    public function getCountriesSelection(): array {
+        $countries = Countries::getList();
+        $list = [];
+        foreach($countries as $country) {
+            $list[$country['iso_3166_2']] = $country['name'];
+        }
+        return $list;
+    }
+
+    /**
+     * Create an option list for a select input element
+     *
+     * @return array
+     */
+    public function getSelectOptions( string $model, string $key, string $value  ): array {
+
+        /** @var \Illuminate\Database\Eloquent\Model $model */
+        return $model::select( $key, $value )->pluck( $value, $key )->toArray();
+    }
+
+    /**
+     * Convert an key=>value array to a format for Former
+     * @param array $array
+     * @return array
+     */
+    public function mapToSelectOptions( array $array ): array
+    {
+        $list = [];
+        foreach( $array as $k => $v ) {
+            $list[] = ['id' => $k, 'text' => $v];
+        }
+        return $list;
+    }
+
+    /**
+     * Whether the customer is billed by a reseller
+     */
+    public function isBilledByReseller( Customer $customer ): bool
+    {
+        return config('ixp.reseller.enabled') && config('ixp.reseller.no_billing') && $customer->reseller !== null;
+    }
+
+    /**
+     * Whether the customer is billed by the IXP
+     */
+    public function isBilledByIXP( Customer $customer ): bool
+    {
+        return !$this->isBilledByReseller( $customer );
     }
 }

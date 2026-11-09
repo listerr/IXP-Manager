@@ -3,7 +3,7 @@
 namespace IXP\Http\Controllers\PatchPanel;
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -25,6 +25,7 @@ namespace IXP\Http\Controllers\PatchPanel;
 
 use Former;
 
+use IXP\Http\Requests\TogglePatchPanelActive;
 use Illuminate\Http\{
     RedirectResponse,
     Request
@@ -32,11 +33,7 @@ use Illuminate\Http\{
 
 use Illuminate\View\View;
 
-use IXP\Models\{
-    Cabinet,
-    Location,
-    PatchPanel
-};
+use IXP\Models\{Cabinet, Location, PatchPanel, PatchPanelPort, PatchPanelPortHistory};
 
 use IXP\Http\Controllers\Controller;
 use IXP\Http\Requests\StorePatchPanel;
@@ -53,7 +50,7 @@ use IXP\Utils\View\Alert\{
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers\PatchPanel
- * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class PatchPanelController extends Controller
@@ -93,6 +90,11 @@ class PatchPanelController extends Controller
      */
     public function create(): View
     {
+        Former::populate( [
+            'active'             => 1,
+            'initial_port_state' => PatchPanelPort::STATE_AVAILABLE,
+        ] );
+
         return view( 'patch-panel/edit' )->with([
             'pp'            => false,
             'cabinets'      => Cabinet::selectRaw( "id, concat( name, ' [', colocation, ']') AS name" )
@@ -111,13 +113,17 @@ class PatchPanelController extends Controller
     {
         $pp = PatchPanel::create( $r->merge( [
                 'location_notes' => clean( $r->location_notes ),
-                'active' => true,
                 'port_prefix' => $r->port_prefix ?? '',
             ])->all()
         );
 
-        // create the patch panel ports
+        // Create and initialise the patch panel ports.
         $pp->createPorts( $r->numberOfPorts );
+        $pp->setUnusedPortsState( (int)$r->input( 'initial_port_state', PatchPanelPort::STATE_AVAILABLE ) );
+
+        if( $r->boolean( 'create_ports_as_duplex' ) ) {
+            $pp->pairUnusedPortsAsDuplex();
+        }
         return redirect( route( 'patch-panel-port@list-for-patch-panel', [ "pp" => $pp->id ] )  );
     }
 
@@ -134,6 +140,7 @@ class PatchPanelController extends Controller
         Former::populate([
             'cabinet_id'                => $r->old( 'cabinet_id',          (string)$pp->cabinet_id          ),
             'name'                      => $r->old( 'name',                $pp->name                ),
+            'active'                    => $r->old( 'active',              $pp->active              ),
             'colo_reference'            => $r->old( 'colo_reference',      $pp->colo_reference      ),
             'cable_type'                => $r->old( 'cable_type',          (string)$pp->cable_type          ),
             'connector_type'            => $r->old( 'connector_type',      (string)$pp->connector_type      ),
@@ -163,6 +170,13 @@ class PatchPanelController extends Controller
      */
     public function update( StorePatchPanel $r, PatchPanel $pp): RedirectResponse
     {
+        // Prevent modification of active status if there are ports in use
+        if ($pp->active != $r->active && $pp->patchPanelPorts()->count() !== $pp->availableForUsePortCount()) {
+            $status = $r->active ? 'active' : 'inactive';
+            AlertContainer::push( 'To make a patch panel ' . $status . ', all ports must be available for use.', Alert::DANGER );
+            return redirect()->back()->withInput();
+        }
+
         $r->merge( [ 'location_notes' => clean( $r->location_notes ) ]);
         $pp->update( $r->all() );
 
@@ -174,23 +188,94 @@ class PatchPanelController extends Controller
     /**
      * Change the status to active or inactive for a patch panel
      *
-     * @param PatchPanel    $pp
-     * @param int           $active
+     * @param PatchPanel              $pp
+     * @param TogglePatchPanelActive  $request
      *
      * @return RedirectResponse
      */
-    public function changeStatus( PatchPanel $pp, int $active ): RedirectResponse
+    public function changeStatus( PatchPanel $pp, TogglePatchPanelActive $request ): RedirectResponse
     {
-        $status = $active ? 'active' : 'inactive';
+        $status = $request->active ? 'active' : 'inactive';
 
         if( $pp->patchPanelPorts()->count() === $pp->availableForUsePortCount() ) {
-            $pp->update( [ 'active' => (bool)$active ] );
+            $pp->update( [ 'active' => (bool)$request->active ] );
             AlertContainer::push( 'The patch panel has been marked as ' . $status, Alert::SUCCESS );
         } else {
             AlertContainer::push( 'To make a patch panel ' . $status . ', all ports must be available for use.', Alert::DANGER );
         }
 
         return redirect( route( "patch-panel@list" ) );
+    }
+
+    /**
+     * Set a scoped group of unused ports to an allowed state.
+     *
+     * @param PatchPanel $pp
+     * @param string     $scope
+     * @param int        $state
+     *
+     * @return RedirectResponse
+     */
+    public function setUnusedPortsState( PatchPanel $pp, string $scope, int $state ): RedirectResponse
+    {
+        if( !array_key_exists( $state, PatchPanelPort::$INITIAL_PORT_STATES ) ) {
+            AlertContainer::push( 'The port state is invalid.', Alert::DANGER );
+            return redirect()->back();
+        }
+
+        switch( $scope ) {
+            case 'all':
+                $includeStates = [];
+                $excludeStates = [ PatchPanelPort::STATE_BROKEN ];
+                $description   = 'unused';
+                break;
+
+            case 'reserved':
+                $includeStates = [ PatchPanelPort::STATE_RESERVED ];
+                $excludeStates = [];
+                $description   = 'unused reserved';
+                break;
+
+            case 'unreserved':
+                $includeStates = [];
+                $excludeStates = [ PatchPanelPort::STATE_RESERVED, PatchPanelPort::STATE_BROKEN ];
+                $description   = 'unused unreserved';
+                break;
+
+            default:
+                AlertContainer::push( 'The unused port scope is invalid.', Alert::DANGER );
+                return redirect()->back();
+        }
+
+        $updated = $pp->setUnusedPortsState( $state, $includeStates, $excludeStates );
+        AlertContainer::push( $updated . ' ' . $description . ' port(s) set to ' . PatchPanelPort::$STATES[ $state ] . '.', Alert::SUCCESS );
+
+        return redirect()->back();
+    }
+
+    /**
+     * Set all unused ports as duplex pairs or simplex ports.
+     *
+     * @param PatchPanel $pp
+     * @param string     $mode
+     *
+     * @return RedirectResponse
+     */
+    public function setUnusedPortsDuplex( PatchPanel $pp, string $mode ): RedirectResponse
+    {
+        if( $mode === 'duplex' ) {
+            $updated = $pp->pairUnusedPortsAsDuplex();
+            $message = $updated . ' unused port pair(s) set as duplex.';
+        } else if( $mode === 'simplex' ) {
+            $updated = $pp->setUnusedPortsAsSimplex();
+            $message = $updated . ' unused port pair(s) set as simplex.';
+        } else {
+            AlertContainer::push( 'The duplex mode is invalid.', Alert::DANGER );
+            return redirect()->back();
+        }
+
+        AlertContainer::push( $message, Alert::SUCCESS );
+        return redirect()->back();
     }
 
     /**
@@ -206,4 +291,84 @@ class PatchPanelController extends Controller
             'pp'    => $pp->load([ 'cabinet', 'patchPanelPorts' ] )
         ]);
     }
+
+
+
+    /**
+     * Allow to display the form to edit a patch panel
+     *
+     * @param Request       $r
+     * @param PatchPanel    $pp      the patch panel
+     *
+     * @return  View
+     */
+    public function expunge( Request $r, PatchPanel $pp ): View
+    {
+        Former::populate([
+            'cabinet_id'                => $r->old( 'cabinet_id',          (string)$pp->cabinet_id          ),
+            'name'                      => $r->old( 'name',                $pp->name                ),
+            'colo_reference'            => $r->old( 'colo_reference',      $pp->colo_reference      ),
+            'cable_type'                => $r->old( 'cable_type',          (string)$pp->cable_type          ),
+            'connector_type'            => $r->old( 'connector_type',      (string)$pp->connector_type      ),
+            'installation_date'         => $r->old( 'installation_date',   $pp->installation_date   ),
+            'port_prefix'               => $r->old( 'port_prefix',         $pp->port_prefix         ),
+            'location_notes'            => $r->old( 'location_notes',      $pp->location_notes      ),
+            'u_position'                => $r->old( 'u_position',          (string)$pp->u_position          ),
+            'colo_pp_type'              => $r->old( 'colo_pp_type',        (string)$pp->colo_pp_type        ),
+            'mounted_at'                => $r->old( 'mounted_at',          (string)$pp->mounted_at          ),
+            'numberOfPorts'             => $r->old( 'numberOfPorts','0'                         ),
+        ]);
+
+        return view( 'patch-panel/expunge' )->with([
+            'pp'            => $pp,
+            'cabinets'      => Cabinet::selectRaw( "id, concat( name, ' [', colocation, ']') AS name" )
+                ->orderBy( 'name' )->get(),
+        ]);
+    }
+
+
+
+    /**
+     * Allow to display the form to edit a patch panel
+     *
+     * @param Request       $r
+     * @param PatchPanel    $pp      the patch panel
+     *
+     * @return RedirectResponse
+     */
+    public function doExpunge( Request $r, PatchPanel $pp ): RedirectResponse
+    {
+        PatchPanelPortHistory::whereIn( 'patch_panel_port_id', $pp->patchPanelPorts->pluck('id') )
+            ->update( [ 'duplex_master_id' => null ] );
+
+        PatchPanelPort::where( 'patch_panel_id', $pp->id )
+            ->update( [ 'duplex_master_id' => null ] );
+
+
+        foreach( $pp->patchPanelPorts as $ppp ) {
+
+            foreach( $ppp->patchPanelPortHistories as $ppph ) {
+
+                foreach( $ppph->patchPanelPortHistoryFiles as $ppphf ) {
+                    @unlink( $ppphf->path() );
+                    $ppphf->delete();
+                }
+
+                $ppph->delete();
+            }
+
+            foreach( $ppp->patchPanelPortFiles as $pppf ) {
+                @unlink( $pppf->path() );
+                $pppf->delete();
+            }
+
+            $ppp->delete();
+        }
+
+        $pp->delete();
+
+        AlertContainer::push( 'The patch panel has been expunged.', Alert::SUCCESS );
+        return redirect( route( "patch-panel@list-inactive" ) );
+    }
+
 }

@@ -1,4 +1,6 @@
 <?php
+    use IXP\Models\PatchPanelPort;
+
     /** @var Foil\Template\Template $t */
     $this->layout( 'layouts/ixpv4' );
 ?>
@@ -41,7 +43,7 @@
                                     <select id="adv-search-select-locations" name="location" class="form-control">
                                         <option value="all">All Facilities</option>
                                         <?php foreach( $t->locations as $l ): ?>
-                                            <option value="<?= $l->id ?>"><?= $l->name ?></option>
+                                            <option value="<?= $l->id ?>"><?= $t->ee( $l->name ) ?></option>
                                         <?php endforeach; ?>
                                     </select>
 
@@ -139,7 +141,7 @@
                                 Action
                             </th>
                         </tr>
-                    <thead>
+                    </thead>
                     <tbody>
                         <?php foreach( $t->patchPanels as $pp ):
                             /** @var \IXP\Models\PatchPanel $pp */
@@ -187,25 +189,70 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
-                                        <a class="btn btn-white" href="<?= route( 'patch-panel@view' , [ 'pp' =>  $pp->id ] ) ?>" title="Preview">
-                                            <i class="fa fa-eye"></i>
-                                        </a>
-                                        <a class="btn btn-white" href="<?= route( 'patch-panel@edit' , [ 'pp' =>  $pp->id ] ) ?>" title="Edit">
+                                        <a class="btn btn-white" href="<?= route( 'patch-panel@edit', [ 'pp' => $pp->id ] ) ?>" title="Edit">
                                             <i class="fa fa-pencil"></i>
                                         </a>
-
-                                        <?php if( $pp->active ): ?>
-                                            <a class="btn btn-white btn-delete" id='list-delete-<?= $pp->id ?>' href="<?= route( 'patch-panel@change-status' , [ 'pp' => $pp->id, 'active' => ( $pp->active ? '0' : '1' ) ] ) ?>" title="Make Inactive">
-                                                <i class="fa fa-trash"></i>
-                                            </a>
-                                        <?php else: ?>
-                                            <a class="btn btn-white" id='list-reactivate-<?= $pp->id ?>' href="<?= route( 'patch-panel@change-status' , [ 'pp' => $pp->id, 'active' => ( $pp->active ? '0' : '1' ) ] ) ?>" title="Reactive">
-                                                <i class="fa fa-repeat"></i>
-                                            </a>
-                                        <?php endif; ?>
-                                        <a class="btn btn-white" href="<?= route ( 'patch-panel-port@list-for-patch-panel' , [ 'pp' => $pp->id ] ) ?>" title="See Ports">
+                                        <a class="btn btn-white" href="<?= route( 'patch-panel-port@list-for-patch-panel', [ 'pp' => $pp->id ] ) ?>" title="See Ports">
                                             <i class="fa fa-th"></i>
                                         </a>
+
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="d-flex btn btn-white dropdown-toggle extra-action center-dd-caret" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Action
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-right">
+                                                <a class="dropdown-item" href="<?= route( 'patch-panel@view', [ 'pp' => $pp->id ] ) ?>">View</a>
+                                                <div class="dropdown-divider"></div>
+
+                                                <li class="dropdown-submenu">
+                                                    <a class="dropdown-item submenu" tabindex="-1" href="#">
+                                                        Change unused ports <i class="fa fa-caret-down"></i>
+                                                    </a>
+                                                    <ul class="dropdown-menu dropdown-menu-l">
+                                                        <li class="dropdown-submenu">
+                                                            <a class="dropdown-item submenu" tabindex="-1" href="#">
+                                                                Set duplex <i class="fa fa-caret-down"></i>
+                                                            </a>
+                                                            <ul class="dropdown-menu dropdown-menu-l">
+                                                                <?php foreach( [ 'duplex' => 'Duplex', 'simplex' => 'Simplex' ] as $mode => $name ): ?>
+                                                                    <a class="dropdown-item btn-set-unused-ports" tabindex="-1" href="<?= route( 'patch-panel@set-unused-ports-duplex', [ 'pp' => $pp->id, 'mode' => $mode ] ) ?>">
+                                                                        <?= $name ?>
+                                                                    </a>
+                                                                <?php endforeach; ?>
+                                                            </ul>
+                                                        </li>
+
+                                                        <?php foreach( [
+                                                            'all'        => 'Set status',
+                                                            'reserved'   => 'Set reserved ports',
+                                                            'unreserved' => 'Set unreserved ports',
+                                                        ] as $scope => $label ): ?>
+                                                            <li class="dropdown-submenu">
+                                                                <a class="dropdown-item submenu" tabindex="-1" href="#">
+                                                                    <?= $label ?> <i class="fa fa-caret-down"></i>
+                                                                </a>
+                                                                <ul class="dropdown-menu dropdown-menu-l">
+                                                                    <?php foreach( PatchPanelPort::$INITIAL_PORT_STATES as $state => $name ): ?>
+                                                                        <?php if( $scope === 'reserved' && $state === PatchPanelPort::STATE_RESERVED ) { continue; } ?>
+                                                                        <a class="dropdown-item btn-set-unused-ports" tabindex="-1" href="<?= route( 'patch-panel@set-unused-ports-state', [ 'pp' => $pp->id, 'scope' => $scope, 'state' => $state ] ) ?>">
+                                                                            <?= $t->ee( $name ) ?>
+                                                                        </a>
+                                                                    <?php endforeach; ?>
+                                                                </ul>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    </ul>
+                                                </li>
+
+                                                <div class="dropdown-divider"></div>
+                                                <?php if( $pp->active ): ?>
+                                                    <a class="dropdown-item btn-change-status" id="list-deactivate-<?= $pp->id ?>" href="<?= route( 'patch-panel@change-status', [ 'pp' => $pp->id ] ) ?>" data-active="0">Make Inactive</a>
+                                                <?php else: ?>
+                                                    <a class="dropdown-item btn-change-status" id="list-reactivate-<?= $pp->id ?>" href="<?= route( 'patch-panel@change-status', [ 'pp' => $pp->id ] ) ?>" data-active="1">Reactivate</a>
+                                                    <a class="dropdown-item text-danger" id="list-expunge-<?= $pp->id ?>" href="<?= route( 'patch-panel@expunge', [ 'pp' => $pp->id ] ) ?>">Expunge</a>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

@@ -23,6 +23,7 @@ namespace IXP\Services\Grapher\Backend;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+use IXP\Models\VlanInterface;
 use Log;
 
 use IXP\Contracts\Grapher\Backend as GrapherBackendContract;
@@ -31,10 +32,12 @@ use IXP\Exceptions\Services\Grapher\CannotHandleRequestException;
 use IXP\Exceptions\Utils\Grapher\FileError as FileErrorException;
 
 use IXP\Services\Grapher\Backend as GrapherBackend;
+use IXP\Services\Grapher\Graph\MultiP2p as MultiP2pGraph;
 use IXP\Services\Grapher\Graph;
 
 use IXP\Utils\Grapher\{
-    Rrd  as RrdUtil
+    Rrd  as RrdUtil,
+    MultiRrd  as MultiRrdUtil,
 };
 
 /**
@@ -54,6 +57,7 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @return string
      */
+    #[\Override]
     public function name(): string
     {
         return 'sflow';
@@ -66,6 +70,7 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @return bool
      */
+    #[\Override]
     public function isConfigurationRequired(): bool
     {
         return false;
@@ -76,8 +81,9 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @see \IXP\Contracts\Grapher::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return false
      */
+    #[\Override]
     public function isMonolithicConfigurationSupported(): bool
     {
         return false;
@@ -88,8 +94,9 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @see \IXP\Contracts\Grapher::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return false
      */
+    #[\Override]
     public function isMultiFileConfigurationSupported(): bool
     {
         return false;
@@ -104,7 +111,10 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      * @param array $options
      *
      * @return array
+     *
+     * @psalm-return array<never, never>
      */
+    #[\Override]
     public function generateConfiguration( int $type = self::GENERATED_CONFIG_TYPE_MONOLITHIC, array $options = [] ): array
     {
         return [];
@@ -115,8 +125,12 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * {inheritDoc}
      *
-     * @return array
+     * @return string[][][]
+     *
+     * @psalm-return array{vlan: array{protocols: array{ipv4: 'ipv4', ipv6: 'ipv6'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, vlaninterface: array{protocols: array{ipv4: 'ipv4', ipv6: 'ipv6'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, p2p: array{protocols: array{ipv4: 'ipv4', ipv6: 'ipv6'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year', custom: 'custom'}, types: array<string, string>}, multip2p: array{protocols: array{all: 'all', ipv4: 'ipv4', ipv6: 'ipv6'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year', custom: 'custom'}, types: array<string, string>}
+     *     }
      */
+    #[\Override]
     public static function supports(): array
     {
         $graphProtocols = Graph::PROTOCOLS;
@@ -144,11 +158,16 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
                 'periods'     => Graph::PERIODS_EXTENDED,
                 'types'       => Graph::TYPES,
             ],
+            'multip2p' => [
+                'protocols'   => Graph::PROTOCOLS,
+                'categories'  => Graph::CATEGORIES_BITS_PKTS,
+                'periods'     => Graph::PERIODS_EXTENDED,
+                'types'       => [  Graph::TYPE_PNG  => Graph::TYPE_PNG,
+                                    Graph::TYPE_LOG  => Graph::TYPE_LOG,
+                                    Graph::TYPE_JSON => Graph::TYPE_JSON, ],
+            ],
         ];
     }
-
-
-
 
     /**
      * Get the data points for a given graph
@@ -161,14 +180,29 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @throws
      */
+    #[\Override]
     public function data( Graph $graph ): array
     {
+        if ( !$graph instanceof Graph\MultiP2p ) {
+            try {
+                $rrd = new RrdUtil( $this->resolveFilePath( $graph, 'rrd' ), $graph );
+                return $rrd->data();
+            } catch( FileErrorException $e ) {
+                Log::notice( "[Grapher] {$this->name()} data(): could not load file {$this->resolveFilePath( $graph, 'rrd' )}" );
+                return [];
+            }
+        }
+
         try {
-            $rrd = new RrdUtil( $this->resolveFilePath( $graph, 'rrd' ), $graph );
+            $paths = $graph->getVlan() === null
+                ? $this->resolveMultiP2pFilePath( $graph )
+                : $this->resolveMultiP2pVlanFilePaths( $graph, $graph->getVlan() );
+            $rrd = new MultiRrdUtil( $paths, $graph );
             return $rrd->data();
-        } catch( FileErrorException $e ) {
-            Log::notice("[Grapher] {$this->name()} data(): could not load file {$this->resolveFilePath( $graph, 'rrd' )}");
-            return [];
+        } catch ( FileErrorException $e ) {
+            Log::notice("[Grapher] {$this->name()} data(): could not load one or more file(s) " .
+                ( isset( $rrd ) ? implode( ', ', $rrd->localfiles() ) : '???' ) );
+            return []; // FIXME check handling of this
         }
     }
 
@@ -183,6 +217,7 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @throws
      */
+    #[\Override]
     public function dataPath( Graph $graph ): string
     {
         return $this->resolveFilePath( $graph, 'rrd' );
@@ -195,17 +230,32 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @param Graph $graph
      *
-     * @return string
-     *
-     * @throws
+     * @return false|string
      */
-    public function png( Graph $graph ): string
+    #[\Override]
+    public function png( Graph $graph ): false|string
     {
+        if (!$graph instanceof Graph\MultiP2p) {
+            try {
+                $rrd = new RrdUtil( $this->resolveFilePath( $graph, 'rrd' ), $graph );
+                return @file_get_contents( $rrd->png() );
+            } catch( FileErrorException $e ) {
+                Log::notice("[Grapher] {$this->name()} png(): could not load rrd file " . ( isset( $rrd ) ? $rrd->file() : '???' ) );
+                return ''; // FIXME check handling of this
+            }
+        }
+
         try {
-            $rrd = new RrdUtil( $this->resolveFilePath( $graph, 'rrd' ), $graph );
+            if ($graph->getVlan() === null) {
+                $paths = $this->resolveMultiP2pFilePath($graph);
+            } else {
+                $paths = $this->resolveMultiP2pVlanFilePaths($graph, $graph->getVlan());
+            }
+            $rrd = new MultiRrdUtil( $paths, $graph );
             return @file_get_contents( $rrd->png() );
-        } catch( FileErrorException $e ) {
-            Log::notice("[Grapher] {$this->name()} png(): could not load rrd file " . ( isset( $rrd ) ? $rrd->file() : '???' ) );
+        } catch ( FileErrorException $e ) {
+            Log::notice("[Grapher] {$this->name()} png(): could not load one or more file(s) " .
+                ( isset( $rrd ) ? implode( ', ', $rrd->localfiles() ) : '???' ) );
             return ''; // FIXME check handling of this
         }
     }
@@ -218,9 +268,8 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      * @param Graph $graph
      *
      * @return string
-     *
-     * @throws
      */
+    #[\Override]
     public function rrd( Graph $graph ): string
     {
         try {
@@ -240,7 +289,7 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @return string
      */
-    private function translateCategory( $c ): string
+    private function translateCategory( string $c ): string
     {
         if( $c === Graph::CATEGORY_BITS ) {
             return 'bytes';
@@ -259,7 +308,7 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      *
      * @throws
      */
-    private function resolveFileName( Graph $graph, $type ): string
+    private function resolveFileName( Graph $graph, string $type ): string
     {
         switch( $graph->classType() ) {
             case 'Vlan':
@@ -291,8 +340,10 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
      * @return string
      *
      * @throws
+     *
+     * @psalm-param 'rrd' $type
      */
-    private function resolveFilePath( Graph $graph, $type ): string
+    private function resolveFilePath( Graph $graph, string $type ): string
     {
         $config = config('grapher.backends.sflow');
 
@@ -315,5 +366,94 @@ class Sflow extends GrapherBackend implements GrapherBackendContract
             default:
                 throw new CannotHandleRequestException("Backend asserted it could process but cannot handle graph of type: {$graph->type()}" );
         }
+    }
+
+    private function resolveMultiP2pFileName( MultiP2pGraph $graph, VlanInterface $svli, VlanInterface $dvli, string $protocol ): string
+    {
+        return sprintf("p2p.%s.%s.src-%05d.dst-%05d.rrd",
+            $protocol, $this->translateCategory( $graph->category() ), $svli->id, $dvli->id);
+    }
+
+    /**
+     * @param MultiP2pGraph $graph
+     * @return string[]
+     */
+    private function resolveMultiP2pFilePath ( MultiP2pGraph $graph ): array
+    {
+        $config = config('grapher.backends.sflow');
+
+        $protocols = match( $graph->protocol() ) {
+            Graph::PROTOCOL_IPV4 => [ 4 ],
+            Graph::PROTOCOL_IPV6 => [ 6 ],
+            Graph::PROTOCOL_ALL  => [ 4, 6 ],
+        };
+
+        $graph->srcCustomer()->load('virtualInterfaces.vlanInterfaces');
+        $graph->dstCustomer()->load('virtualInterfaces.vlanInterfaces');
+
+        $files = [];
+
+        foreach( $graph->srcCustomer()->virtualInterfaces as $svi ) {
+            foreach( $svi->vlanInterfaces as $svli ) {
+                foreach( $protocols as $protocol ) {
+
+                    if( !$svli->ipvxEnabled($protocol) ) {
+                        continue;
+                    }
+
+                    foreach( $graph->dstCustomer()->virtualInterfaces as $dvi ) {
+                        foreach( $dvi->vlanInterfaces as $dvli ) {
+
+                            // Take only dvli's matching this vlanid, which have the required protocol enabled
+                            if( $svli->vlanid !== $dvli->vlanid || !$dvli->ipvxEnabled($protocol)) {
+                                continue;
+                            }
+
+                            $files[] = sprintf("%s/%s/%s/p2p/src-%05d/%s", $config['root'],
+                                'ipv' . $protocol, $this->translateCategory( $graph->category() ), $svli->id,
+                                $this->resolveMultiP2pFileName( $graph, $svli, $dvli, 'ipv' . $protocol ));
+                        }
+                    }
+                }
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * @param MultiP2pGraph $graph
+     * @param int $vlan
+     * @return string[]
+     */
+    private function resolveMultiP2pVlanFilePaths ( MultiP2pGraph $graph, int $vlan ): array
+    {
+        $config = config('grapher.backends.sflow');
+
+        $srcVlis = $graph->srcCustomer()->vlanInterfaces()->where('vlaninterface.vlanid', $vlan)->get();
+        $dstVlis = $graph->dstCustomer()->vlanInterfaces()->where('vlaninterface.vlanid', $vlan)->get();
+
+        $files = [];
+
+        foreach( $srcVlis as $svli ) {
+            foreach( $dstVlis as $dvli ) {
+
+                if ( ( $graph->protocol() === Graph::PROTOCOL_IPV4 || $graph->protocol() === Graph::PROTOCOL_ALL ) &&
+                    ($svli->ipvxEnabled(4) && $dvli->ipvxEnabled(4))) {
+                    $files[] = sprintf("%s/%s/%s/p2p/src-%05d/%s", $config['root'],
+                        'ipv4', $this->translateCategory( $graph->category() ), $svli->id,
+                        $this->resolveMultiP2pFileName( $graph, $svli, $dvli, 'ipv4' ));
+                }
+
+                if ( ( $graph->protocol() === Graph::PROTOCOL_IPV6 || $graph->protocol() === Graph::PROTOCOL_ALL ) &&
+                    ($svli->ipvxEnabled(6) && $dvli->ipvxEnabled(6))) {
+                    $files[] = sprintf("%s/%s/%s/p2p/src-%05d/%s", $config['root'],
+                        'ipv6', $this->translateCategory( $graph->category() ), $svli->id,
+                        $this->resolveMultiP2pFileName( $graph, $svli, $dvli, 'ipv6' ));
+                }
+            }
+        }
+
+        return $files;
     }
 }

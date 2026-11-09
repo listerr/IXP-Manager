@@ -78,43 +78,41 @@ use \OSS_SNMP\MIBS\Iface as SNMPIface;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \IXP\Models\Cabinet|null $cabinet
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\ConsoleServerConnection> $consoleServerConnections
- * @property-read int|null $console_server_connections_count
  * @property-read \IXP\Models\Infrastructure|null $infrastructureModel
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\SwitchPort> $switchPorts
  * @property-read int|null $switch_ports_count
  * @property-read \IXP\Models\Vendor|null $vendor
- * @method static Builder|Switcher newModelQuery()
- * @method static Builder|Switcher newQuery()
- * @method static Builder|Switcher query()
- * @method static Builder|Switcher whereActive($value)
- * @method static Builder|Switcher whereAsn($value)
- * @method static Builder|Switcher whereCabinetid($value)
- * @method static Builder|Switcher whereCreatedAt($value)
- * @method static Builder|Switcher whereHostname($value)
- * @method static Builder|Switcher whereId($value)
- * @method static Builder|Switcher whereInfrastructure($value)
- * @method static Builder|Switcher whereIpv4addr($value)
- * @method static Builder|Switcher whereIpv6addr($value)
- * @method static Builder|Switcher whereLastPolled($value)
- * @method static Builder|Switcher whereLoopbackIp($value)
- * @method static Builder|Switcher whereLoopbackName($value)
- * @method static Builder|Switcher whereMauSupported($value)
- * @method static Builder|Switcher whereMgmtMacAddress($value)
- * @method static Builder|Switcher whereModel($value)
- * @method static Builder|Switcher whereName($value)
- * @method static Builder|Switcher whereNotes($value)
- * @method static Builder|Switcher whereOs($value)
- * @method static Builder|Switcher whereOsDate($value)
- * @method static Builder|Switcher whereOsVersion($value)
- * @method static Builder|Switcher wherePoll($value)
- * @method static Builder|Switcher whereSerialNumber($value)
- * @method static Builder|Switcher whereSnmpEngineBoots($value)
- * @method static Builder|Switcher whereSnmpEngineTime($value)
- * @method static Builder|Switcher whereSnmpSystemUptime($value)
- * @method static Builder|Switcher whereSnmppasswd($value)
- * @method static Builder|Switcher whereUpdatedAt($value)
- * @method static Builder|Switcher whereVendorid($value)
+ * @method static Builder<static>|Switcher newModelQuery()
+ * @method static Builder<static>|Switcher newQuery()
+ * @method static Builder<static>|Switcher query()
+ * @method static Builder<static>|Switcher whereActive($value)
+ * @method static Builder<static>|Switcher whereAsn($value)
+ * @method static Builder<static>|Switcher whereCabinetid($value)
+ * @method static Builder<static>|Switcher whereCreatedAt($value)
+ * @method static Builder<static>|Switcher whereHostname($value)
+ * @method static Builder<static>|Switcher whereId($value)
+ * @method static Builder<static>|Switcher whereInfrastructure($value)
+ * @method static Builder<static>|Switcher whereIpv4addr($value)
+ * @method static Builder<static>|Switcher whereIpv6addr($value)
+ * @method static Builder<static>|Switcher whereLastPolled($value)
+ * @method static Builder<static>|Switcher whereLoopbackIp($value)
+ * @method static Builder<static>|Switcher whereLoopbackName($value)
+ * @method static Builder<static>|Switcher whereMauSupported($value)
+ * @method static Builder<static>|Switcher whereMgmtMacAddress($value)
+ * @method static Builder<static>|Switcher whereModel($value)
+ * @method static Builder<static>|Switcher whereName($value)
+ * @method static Builder<static>|Switcher whereNotes($value)
+ * @method static Builder<static>|Switcher whereOs($value)
+ * @method static Builder<static>|Switcher whereOsDate($value)
+ * @method static Builder<static>|Switcher whereOsVersion($value)
+ * @method static Builder<static>|Switcher wherePoll($value)
+ * @method static Builder<static>|Switcher whereSerialNumber($value)
+ * @method static Builder<static>|Switcher whereSnmpEngineBoots($value)
+ * @method static Builder<static>|Switcher whereSnmpEngineTime($value)
+ * @method static Builder<static>|Switcher whereSnmpSystemUptime($value)
+ * @method static Builder<static>|Switcher whereSnmppasswd($value)
+ * @method static Builder<static>|Switcher whereUpdatedAt($value)
+ * @method static Builder<static>|Switcher whereVendorid($value)
  * @mixin \Eloquent
  */
 class Switcher extends Model
@@ -173,14 +171,14 @@ class Switcher extends Model
     /**
      * Constants for the list mode dropdown in the swtiches list
      */
-    public const VIEW_MODE_DEFAULT     = 'view_mode_default';
-    public const VIEW_MODE_OS          = 'view_mode_os';
-    public const VIEW_MODE_L3          = 'view_mode_l3';
+    public const string VIEW_MODE_DEFAULT     = 'view_mode_default';
+    public const string VIEW_MODE_OS          = 'view_mode_os';
+    public const string VIEW_MODE_L3          = 'view_mode_l3';
 
     /**
      * @var array Textual representations of the list mode
      */
-    public static $VIEW_MODES = [
+    public static array $VIEW_MODES = [
         self::VIEW_MODE_DEFAULT     => 'Default',
         self::VIEW_MODE_OS          => 'OS View',
         self::VIEW_MODE_L3          => 'L3 View',
@@ -194,7 +192,7 @@ class Switcher extends Model
      * @see snmpPoll() below
      * @var array Elements for SNMP polling via the OSS_SNMP library
      */
-    public static $SNMP_SWITCH_ELEMENTS = [
+    public static array $SNMP_SWITCH_ELEMENTS = [
         'Model'         => [ 'fn' => 'model' ],
         'Os'            => [ 'fn' => 'os' ],
         'OsDate'        => [ 'fn' => 'osDate' ],
@@ -204,6 +202,8 @@ class Switcher extends Model
 
     /**
      * Get the infrastructure that own the switcher
+     *
+     * @return BelongsTo<Infrastructure, Switcher>
      */
     public function infrastructureModel(): BelongsTo
     {
@@ -212,6 +212,8 @@ class Switcher extends Model
 
     /**
      * Get the cabinet that own the switcher
+     *
+     * @return BelongsTo<Cabinet, Switcher>
      */
     public function cabinet(): BelongsTo
     {
@@ -220,6 +222,8 @@ class Switcher extends Model
 
     /**
      * Get the vendor that own the switcher
+     *
+     * @return BelongsTo<Vendor, Switcher>
      */
     public function vendor(): BelongsTo
     {
@@ -228,18 +232,12 @@ class Switcher extends Model
 
     /**
      * Get the switch ports for the switcher
+     *
+     * @return HasMany<SwitchPort, Switcher>
      */
     public function switchPorts(): HasMany
     {
         return $this->hasMany(SwitchPort::class, 'switchid');
-    }
-
-    /**
-     * Get the console server connections for the switcher
-     */
-    public function consoleServerConnections(): HasMany
-    {
-        return $this->hasMany(ConsoleServerConnection::class, 'switchid');
     }
 
     /**
@@ -281,12 +279,12 @@ class Switcher extends Model
      * @param SNMP  $host       An instance of \OSS_SNMP\SNMP for this switch
      * @param bool  $logger     An instance of the logger or false
      *
-     * @return Switcher For fluent interfaces
+     * @return static For fluent interfaces
      */
-    public function snmpPoll( $host, bool $logger = false, bool $nosave = false ): Switcher
+    public function snmpPoll( $host, bool $logger = false, bool $nosave = false ): static
     {
         // utility to format dates
-        $formatDate = function( $d ) {
+        $formatDate = function( $d ): string {
             return $d instanceof DateTime ? $d->format( 'Y-m-d H:i:s' ) : 'Unknown';
         };
 
@@ -356,13 +354,13 @@ class Switcher extends Model
      * beginning -1 if the port only exists in the database). The contents of this
      * associative array is:
      *
-     *     "port"   => \Models\SwitchPort object
-     *     "bullet" =>
-     *         - false for existing ports
-     *         - "new" for newly found ports
-     *         - "db" for ports that exist in the database only
+     * "port"   => \Models\SwitchPort object
+     * "bullet" =>
+     * - false for existing ports
+     * - "new" for newly found ports
+     * - "db" for ports that exist in the database only
      *
-     * **Note:** It is assumed that the Doctrine2 Entity Manager is available in the
+     * Note:** It is assumed that the Doctrine2 Entity Manager is available in the
      * Zend registry as ``d2em`` in this function.
      *
      * @param SNMP $host An instance of \OSS_SNMP\SNMP for this switch
@@ -370,14 +368,14 @@ class Switcher extends Model
      * @param bool $result
      * @param bool $nosave Do we need to save the object in DB ?
      *
-     * @return Switcher For fluent interfaces
-     *
      * @throws
      */
-    public function snmpPollSwitchPorts( $host, $logger = false, bool|array &$result = false, bool $nosave = false ): Switcher
+    public function snmpPollSwitchPorts( SNMP $host, bool $logger = false, bool|array &$result = false, bool $nosave = false ): static
     {
         // clone the ports currently known to this switch as we'll be playing with this array
         $existingPorts = clone $this->switchPorts;
+
+        $foundIfIndexes = [];
 
         // iterate over all the ports discovered on the switch:
         foreach( $host->useIface()->indexes() as $index ) {
@@ -385,6 +383,13 @@ class Switcher extends Model
             if( isset( $host->useIface()->types()[ $index ] ) && !in_array( $host->useIface()->types()[ $index ], config('ixp.snmp.allowed_interface_types') ) ) {
                 continue;
             }
+
+            // https://github.com/inex/IXP-Manager/issues/840 suggested duplicate ports were being added.
+            // Track found indexes to avoid this.
+            if( in_array( $index, $foundIfIndexes ) ) {
+                continue;
+            }
+            $foundIfIndexes[] = $index;
 
             // find the matching switch port that may already be in the database (or create a new one)
             $sp = false;
@@ -447,7 +452,10 @@ class Switcher extends Model
 
     /**
      * Return an array of core bundles
-     * @return CoreBundle[]
+     *
+     * @return (CoreBundle|null)[]
+     *
+     * @psalm-return list<IXP\Models\CoreBundle|null>
      */
     public function getCoreBundles(): array
     {
@@ -479,7 +487,9 @@ class Switcher extends Model
      *
      * Checks for recent reboots and missed snmp polling.
      *
-     * @return array
+     * @return (bool|null|string|string[])[]
+     *
+     * @psalm-return array{name: null|string, status: bool, msgs: list{0: string, 1?: 'CRITICAL: rebooted within the last hour (probably).'|'Switch does not support reboot checks.', 2?: 'Switch does not support reboot checks.'}}
      */
     public function status(): array
     {

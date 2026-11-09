@@ -1,7 +1,7 @@
 <?php $this->layout( 'layouts/ixpv4' ) ?>
 
 <?php $this->section( 'page-header-preamble' ) ?>
-    Router / <?=  $t->rt  ? 'Edit : '. $t->rt->name : 'Create' ?></li>
+    Router / <?=  $t->rt  ? 'Edit : '. $t->ee( $t->rt->name ) : 'Create' ?></li>
 <?php $this->append() ?>
 
 <?php $this->section( 'page-header-postamble' ) ?>
@@ -10,7 +10,7 @@
             Documentation
         </a>
         <a class="btn btn-white" href="<?= route('router@list' ) ?>" title="list">
-            <i class="fa fa-th-list"></i>
+            <i class="fa fa-table-list"></i>
         </a>
         <?php if( $t->rt ): ?>
             <a class="btn btn-white" href="<?= route ('router@create' ) ?>" title="create">
@@ -60,9 +60,9 @@
 
                     <?= Former::select( 'pair_id' )
                         ->label( 'Pair With' )
-                        ->fromQuery( \IXP\Models\Router::pluck('handle', 'id')->toArray() )
+                        ->fromQuery( \IXP\Models\Router::select( [ 'handle', 'id' ] )->get()->toArray() , fn ( $model ) => $t->ee( $model->handle ) )
                         ->placeholder( 'Production pairing / reconfigure isolation' )
-                        ->addClass( 'chzn-select' )
+                        ->addClass( 'chzn-select-deselect' )
                         ->blockHelp( 'The stock router configuration update scripts that ship with IXP Manager (>=v6.3.0) will '
                             . 'look to ensure that only one router in a pair can be updated at the one time and will pause '
                             . 'updating if either has not reported that the last update was successful. The idea being that '
@@ -75,7 +75,7 @@
 
                     <?= Former::select( 'vlan_id' )
                         ->label( 'Vlan' )
-                        ->fromQuery( $t->vlans, 'name' )
+                        ->fromQuery( $t->vlans, fn ( $model ) => $t->ee( $model->name ) )
                         ->placeholder( 'Choose a VLAN' )
                         ->addClass( 'chzn-select' );
                     ?>
@@ -245,18 +245,17 @@
                     starting at either the <code>resources/views</code> or <code>resources/skins/\$skin</code>. It is best
                     to read the documentation for this but examples of route server, route collector and AS112 configs as
                     used at INEX can be used with the bundled templates by entering one of the following:<br><br>
-                        &middot; <code>api/v4/router/server/bird2/standard</code><br>
-                        &middot; <code>api/v4/router/collector/bird2/standard</code><br>
+                        &middot; <code>api/v4/router/server/bird2-2025/standard</code> (BIRD 2 &gt;=v2.14)<br>
+                        &middot; <code>api/v4/router/collector/bird2-2025/standard</code> (BIRD 2 &gt;=v2.14)<br>
                         &middot; <code>api/v4/router/as112/bird2/standard</code><br>
-                        &middot; <code>api/v4/router/server/bird/standard</code><br>
-                        &middot; <code>api/v4/router/collector/bird/standard</code><br>
-                        &middot; <code>api/v4/router/as112/bird/standard</code><br><br>
+                        &middot; <code>api/v4/router/server/bird2/standard</code> (BIRD 2 &lt;v2.14)<br>
+                        &middot; <code>api/v4/router/collector/bird2/standard</code> (BIRD 2 &lt;v2.14)<br>
                         
                         <b>NB: only <code>bird2</code> templates support RPKI and advanced looking glass features.</b>
                     " );
                     ?>
 
-                    <?= $t->rt ? '<input type="hidden" name="db_id" value="' . $this->rt->id . '">' : '' ?>
+                    <?= $t->rt ? '<input type="hidden" name="db_id" value="' . $this->ee( $this->rt->id, 'attr' ) . '">' : '' ?>
 
                     <?=Former::actions( Former::primary_submit( $t->rt ? 'Save Changes' : 'Create' )->id('btn-submit-form')->class( "mb-2 mb-sm-0"),
                         Former::secondary_link( 'Cancel' )->href( route( 'router@list' ) )->class( "mb-2 mb-sm-0"),

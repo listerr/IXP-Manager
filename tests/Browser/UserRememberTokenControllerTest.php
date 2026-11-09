@@ -1,7 +1,4 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
  * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,11 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
+
 
 use Auth ;
 
@@ -52,7 +54,7 @@ class UserRememberTokenControllerTest extends DuskTestCase
      *
      * @return void
      *
-     * @throws
+     * @throws \Throwable
      */
     public function testAdd(): void
     {
@@ -66,10 +68,10 @@ class UserRememberTokenControllerTest extends DuskTestCase
                     ->type('username', $user->username )
                     ->type('password', 'travisci' )
                     ->press('#login-btn' )
-                    ->assertPathIs( '/admin' );
+                    ->waitForLocation( '/admin/dashboard' );
 
             /**
-             * Check that the remember cookie and DB entry is not existing as we didn't checked the remember me checkbox
+             * Check that the remember cookie and DB entry is not existing as we didn't check the remember me checkbox
              */
             $listUrt = UserRememberToken::whereUserId( $user->id )->get();
 
@@ -85,7 +87,7 @@ class UserRememberTokenControllerTest extends DuskTestCase
                     ->type('password', 'travisci' )
                     ->check( '#remember-me')
                     ->press('#login-btn' )
-                    ->assertPathIs( '/admin' );
+                    ->waitForLocation( '/admin/dashboard' );
 
             /**
              * Check that the remember cookie and DB entry is existing as we checked the remember me checkbox
@@ -105,7 +107,7 @@ class UserRememberTokenControllerTest extends DuskTestCase
                 ->type('password', 'travisci' )
                 ->check( '#remember-me')
                 ->press('#login-btn' )
-                ->assertPathIs( '/admin' );
+                ->waitForLocation( '/admin/dashboard' );
 
             /**
              * Check that the remember cookie exist in the new browser
@@ -131,7 +133,7 @@ class UserRememberTokenControllerTest extends DuskTestCase
             $browser->press("#d2f-list-delete-" . $lastUrt->id)
                 ->waitForText( 'Do you really want to delete this active login session?' )
                 ->press('Delete')
-                ->assertPathIs('/active-sessions/list' )
+                ->waitForLocation('/active-sessions/list' )
                 ->assertSee( 'Active Login Session deleted.' );
 
             $listUrt = UserRememberToken::whereUserId( $user->id )->get();
@@ -141,17 +143,19 @@ class UserRememberTokenControllerTest extends DuskTestCase
              * Refresh the second browser and check that we have been logged out
              */
             $browser2->refresh()
+                    //->pause(500)
                     ->assertPathIs( '/login' );
 
             /**
              * Refresh the first browser and check that we are still logged in
              */
             $browser->refresh()
+                //->pause(500)
                 ->assertPathIs( '/active-sessions/list' );
 
 
             /**
-             * Delete the user remember token left for the user and check that the user is loggued out
+             * Delete the user remember token left for the user and check that the user is logged out
              */
             // Get the user remember token left for the user
             $urt = UserRememberToken::whereUserId( $user->id )->first();
@@ -159,8 +163,8 @@ class UserRememberTokenControllerTest extends DuskTestCase
             $browser->press("#d2f-list-delete-" . $urt->id )
                 ->waitForText( 'Do you really want to delete this active login session?' )
                 ->press('Delete')
-                ->assertPathIs('/login' )
-                ->assertSee( 'You have been logged out.' );
+                ->waitForLocation('/login' )
+                ->assertSee( 'You deleted your active remember me token and have been logged out.' );
         });
     }
 }

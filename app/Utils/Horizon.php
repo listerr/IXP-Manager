@@ -14,7 +14,7 @@ namespace IXP\Utils;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -40,8 +40,10 @@ class Horizon
      * Returns with Horizon's current status: 'inactive', 'paused' or 'running'
      *
      * @return string
+     *
+     * @psalm-return 'inactive'|'paused'|'running'
      */
-    public static function status()
+    public static function status(): string
     {
         if( !$masters = app(MasterSupervisorRepository::class )->all() ) {
             return self::STATUS_INACTIVE;

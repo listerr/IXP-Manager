@@ -6,11 +6,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * 
- *
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog query()
  * @property int $id
  * @property int $cust_id
  * @property \Illuminate\Support\Carbon|null $prefix_v4
@@ -19,14 +14,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon|null $asn_v6
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereAsnV4($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereAsnV6($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereCustId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog wherePrefixV4($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog wherePrefixV6($value)
- * @method static \Illuminate\Database\Eloquent\Builder|IrrdbUpdateLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereAsnV4($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereAsnV6($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereCustId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog wherePrefixV4($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog wherePrefixV6($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|IrrdbUpdateLog whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class IrrdbUpdateLog extends Model
@@ -49,8 +47,11 @@ class IrrdbUpdateLog extends Model
     /**
      * Get the attributes that should be cast.
      *
-     * @return array<string, string>
+     * @return string[]
+     *
+     * @psalm-return array{prefix_v4: 'datetime', prefix_v6: 'datetime', asn_v4: 'datetime', asn_v6: 'datetime'}
      */
+    #[\Override]
     protected function casts(): array
     {
         return [
@@ -68,9 +69,8 @@ class IrrdbUpdateLog extends Model
      * - relevant: if customer is not v6 enabled, ignore these fields
      *
      * @param Customer $c
-     * @return Carbon
      */
-    public static function lastUpdatedMax( Customer $c ): ?Carbon
+    public static function lastUpdatedMax( Customer $c ): \Illuminate\Support\Carbon|null
     {
         /** @var IrrdbUpdateLog $log */
         $log = self::firstWhere('cust_id', $c->id);

@@ -14,7 +14,7 @@ namespace IXP\Exceptions;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -27,9 +27,9 @@ use Exception;
 use IXP\Utils\View\Alert\Alert;
 use IXP\Utils\View\Alert\Container as AlertContainer;
 
-class IrrdbManage extends Exception
+final class IrrdbManage extends Exception
 {
-    final public function render()
+    final public function render(): \Illuminate\Http\RedirectResponse
     {
         AlertContainer::push( $this->getMessage(), Alert::DANGER );
         return redirect()->back();

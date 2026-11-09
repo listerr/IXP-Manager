@@ -58,9 +58,12 @@ class CustKitController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = (object)[
@@ -75,16 +78,16 @@ class CustKitController extends EloquentController
                 'id'        => [ 'title' => 'DB ID', 'display' => false ],
                 'name'      => 'Name',
                 'customer'  => [
-                    'title'         => 'Customer',
+                    'title'         => ucfirst( config( 'ixp_fe.lang.customer.one' ) ),
                     'type'          => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller'    => 'customer',
+                    'controller'    => 'admin/customer',
                     'action'        => 'overview',
                     'idField'       => 'custid'
                 ],
                 'cabinet'  => [
                     'title'      => 'Rack',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'rack',
+                    'controller' => 'admin/rack',
                     'action'     => 'view',
                     'idField'    => 'cabinetid'
                 ],
@@ -117,6 +120,7 @@ class CustKitController extends EloquentController
      *
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -133,8 +137,11 @@ class CustKitController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (CustomerEquipment|mixed)[]
+     *
+     * @psalm-return array{object: CustomerEquipment, cabinets: mixed, custs: mixed}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -150,10 +157,11 @@ class CustKitController extends EloquentController
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doStore( Request $r )
     {
         $this->checkForm( $r );
@@ -166,10 +174,13 @@ class CustKitController extends EloquentController
     /**
      * Display the form to edit an object
      *
-     * @param   int $id ID of the row to edit
+     * @param int $id ID of the row to edit
      *
      * @return array
+     *
+     * @psalm-return array{object: mixed, cabinets: mixed, custs: mixed}
      */
+    #[\Override]
     protected function editPrepareForm( int $id ): array
     {
         $this->object = CustomerEquipment::findOrFail( $id );
@@ -195,10 +206,11 @@ class CustKitController extends EloquentController
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id )
     {
         $this->object = CustomerEquipment::findOrFail( $id );
@@ -214,6 +226,7 @@ class CustKitController extends EloquentController
      *
      * @param $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [

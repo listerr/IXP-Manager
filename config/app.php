@@ -140,9 +140,16 @@ return [
     |
     */
 
-    'key' => env('APP_KEY', 'SomeRandomString'),
+    'key' => env('APP_KEY'),
 
     'cipher' => 'AES-256-CBC',
+
+    'previous_keys' => [
+        ...array_filter(
+            explode(',', (string) env('APP_PREVIOUS_KEYS', ''))
+        ),
+    ],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -158,8 +165,8 @@ return [
     */
 
     'maintenance' => [
-        'driver' => 'file',
-        // 'store'  => 'redis',
+        'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
+        'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
     /*
@@ -200,6 +207,7 @@ return [
          Illuminate\Translation\TranslationServiceProvider::class,
          Illuminate\Validation\ValidationServiceProvider::class,
          Illuminate\View\ViewServiceProvider::class,
+         Illuminate\Concurrency\ConcurrencyServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -215,10 +223,13 @@ return [
         IXP\Providers\GrapherServiceProvider::class,
         IXP\Providers\LookingGlassServiceProvider::class,
         IXP\Providers\FoilServiceProvider::class,
+        IXP\Providers\IrrQuerierServiceProvider::class,
         IXP\Providers\IXFServiceProvider::class,
         IXP\Providers\PeeringDbServiceProvider::class,
         IXP\Providers\IxpServiceProvider::class,
         IXP\Providers\RipeAtlasProvider::class,
+        IXP\Providers\RipeRestApiProvider::class,
+        IXP\Providers\ValidationServiceProvider::class,
 
         IXP\Providers\DiagnosticsServiceProvider::class,
 
@@ -230,8 +241,6 @@ return [
         IXP\Providers\ParsedownServiceProvider::class,
 
         Former\FormerServiceProvider::class,
-
-        //LukeTowers\Purifier\PurifierServiceProvider::class,
 
         Webpatser\Countries\CountriesServiceProvider::class,
 
@@ -294,11 +303,12 @@ return [
         'Validator' => 'Illuminate\Support\Facades\Validator',
         'View'      => 'Illuminate\Support\Facades\View',
 
-        'Grapher'   => IXP\Support\Facades\Grapher::class,
+        'Grapher'     => IXP\Support\Facades\Grapher::class,
+        'RipeRestApi' => IXP\Support\Facades\RipeRestApi::class,
+        
         'Image'     => Intervention\Image\Facades\Image::class,
 
         'Former'    => Former\Facades\Former::class,
-        //'Purifier'  => LukeTowers\Purifier\Facades\Purifier::class,
         'PDF'       => Barryvdh\DomPDF\Facade::class,
 
         'Countries' => Webpatser\Countries\CountriesFacade::class,

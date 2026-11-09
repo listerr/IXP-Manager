@@ -23,8 +23,6 @@ namespace IXP\Console\Commands\MailingList;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
-use Ds\Set;
-
 use Illuminate\Support\Collection;
 use IXP\Utils\MailingList as ML;
 
@@ -62,13 +60,11 @@ class Init extends MailingList
      * First sets a user preference for ALL users *WITHOUT* a mailing list sub for this list to unsub'd.
      *
      * Then takes a list of *existing* mailing list addresses from stdin and:
-     *   - is a user does not exist with same email, skips
-     *   - if a user does exist with same email, sets his mailing list preference
+     * - is a user does not exist with same email, skips
+     * - if a user does exist with same email, sets his mailing list preference
      *
      * NB: This function is NON-DESTRUCTIVE. It will *NOT* affect any users with *EXISTING* settings
      * but set those without a setting to on / off as appropriate.
-     *
-     * @return mixed
      *
      * @throws
      */

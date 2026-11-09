@@ -14,7 +14,7 @@ namespace IXP\Providers;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -63,6 +63,7 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function boot(): void
     {
         parent::boot();
@@ -206,13 +207,28 @@ class RouteServiceProvider extends ServiceProvider
              'middleware'   => [
                  'web',
                  'api/v4',
-                 'assert.privilege:' . User::AUTH_SUPERUSER
+                 'assert.privilege:' . User::AUTH_SUPERUSER,
              ],
              'namespace'    => $this->namespace . '\\Api\\V4',
-             'prefix'       => 'api/v4',
+             'prefix'       => 'admin/api/v4',
         ], function () {
             require base_path('routes/apiv4-auth-superuser.php');
         });
+        
+        if( config( 'ixp_api.unsecured_api_access' ) ) {
+            Route::group( [
+                'middleware' => [
+                    'apideprecated',
+                    'web',
+                    'api/v4',
+                    'assert.privilege:' . User::AUTH_SUPERUSER,
+                ],
+                'namespace'  => $this->namespace . '\\Api\\V4',
+                'prefix'     => 'api/v4',
+            ], function() {
+                require base_path( 'routes/apiv4-auth-superuser.php' );
+            } );
+        }
     }
 
 
@@ -231,10 +247,24 @@ class RouteServiceProvider extends ServiceProvider
                 'assert.privilege:' . User::AUTH_SUPERUSER
             ],
             'namespace'     => $this->namespace . '\\Api\\V4',
-            'prefix'        => 'api/v4',
+            'prefix'        => 'admin/api/v4',
         ], function () {
             require base_path('routes/apiv4-ext-auth-superuser.php');
         });
+        
+        if( config( 'ixp_api.unsecured_api_access' ) ) {
+            Route::group( [
+                'middleware' => [
+                    'apideprecated',
+                    'api/v4',
+                    'assert.privilege:' . User::AUTH_SUPERUSER,
+                ],
+                'namespace'  => $this->namespace . '\\Api\\V4',
+                'prefix'     => 'api/v4',
+            ], function() {
+                require base_path( 'routes/apiv4-ext-auth-superuser.php' );
+            } );
+        }
     }
 
 

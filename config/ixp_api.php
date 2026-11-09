@@ -60,10 +60,13 @@ return [
     */
     'rir' => [
         'password' => env( 'IXP_API_RIR_PASSWORD', 'xxxxx' ),
+        
         'email'    => [
             'from' => env( 'IXP_API_RIR_EMAIL_FROM', null ),
             'to'   => env( 'IXP_API_RIR_EMAIL_TO',   null ),
         ],
+        
+        'ripe_api_key' => env( 'IXP_RIPE_API_KEY', null ),
     ],
 
 
@@ -92,18 +95,25 @@ return [
     |
     */
     'peeringDB' => [
-        'username'        => env( 'IXP_API_PEERING_DB_USERNAME', null ),
-        'password'        => env( 'IXP_API_PEERING_DB_PASSWORD', null ),
         'api-key'         => env( 'IXP_API_PEERING_DB_API_KEY',  null ),
         // you should not need to change this. The %s is either "$un:$pw@" or an empty string
-        'url'             => env( 'IXP_API_PEERING_DB_URL',      "https://%swww.peeringdb.com/api" ),
+        'url'             => env( 'IXP_API_PEERING_DB_URL',      "https://www.peeringdb.com/api" ),
 
-        'fac_api'         => env( 'IXP_API_PEERING_DB_FAC_URL',  "https://api.peeringdb.com/api/fac" ),
-        'ixp_api'         => env( 'IXP_API_PEERING_DB_IXP_URL',  "https://api.peeringdb.com/api/ix"  ),
-        'ixp_www'         => env( 'IXP_WWW_PEERING_DB_IXP_URL',  "https://www.peeringdb.com/ix"  ),
+        'ixp_www'         => env( 'IXP_WWW_PEERING_DB_IXP_URL',  "https://www.peeringdb.com/ix/%%COL%%"  ),
 
         'api_cache_ttl'   => 3600,      // how long to cache /ix results
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | IXP Manager .org
+    |--------------------------------------------------------------------------
+    |
+    */
+    'ixp-manager-dotorg' => [
+        'base_url' => env( 'IXP_MANAGER_DOTORG_BASE_URL', "https://www.ixpmanager.org" ),
+    ],
+
 
     /*
     |--------------------------------------------------------------------------
@@ -113,7 +123,7 @@ return [
     */
     'IXPDB' => [
         'ixp_api'         => env( 'IXP_API_IXPDB_IXP_URL',  "https://api.ixpdb.net/v1/provider/list"  ),
-        'ixp_www'         => env( 'IXP_WWW_IXPDB_IXP_URL',  "https://ixpdb.euro-ix.net/en/ixpdb/ixp" ),
+        'ixp_www'         => env( 'IXP_WWW_IXPDB_IXP_URL',  "https://ixpdb.euro-ix.net/en/explore/ixp/%%COL%%/" ),
     ],
 
     /*
@@ -127,7 +137,6 @@ return [
         // all responses cached for:
         'cache_ttl' => env( 'IXP_API_WHOIS_CACHE_TTL', 60 * 60 * 12 ),
 
-
         'asn' => [
             'host' => env( 'IXP_API_WHOIS_ASN_HOST',    'whois.peeringdb.com' ),
             'port' => env( 'IXP_API_WHOIS_ASN_PORT',    43 ),
@@ -139,7 +148,7 @@ return [
         ],
 
         'prefix' => [
-            'host' => env( 'IXP_API_WHOIS_PREFIX_HOST', 'whois.bgpmon.net' ),
+            'host' => env( 'IXP_API_WHOIS_PREFIX_HOST', 'bgp.tools' ),
             'port' => env( 'IXP_API_WHOIS_PREFIX_PORT', 43 ),
         ],
     ],
@@ -151,4 +160,34 @@ return [
     |
     */
     'atlas_measurement_key' => env( 'ATLAS_MEASUREMENT_KEY', '' ),
+    
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Unsecured API paths
+    |--------------------------------------------------------------------------
+    |
+    | IXP Manager v7.1.0 introduced an admin/ prepend on APIs for securing them.
+    |
+    | The default was switched from true to false in v7.2.0.
+    |
+    | See: https://docs.ixpmanager.org/latest/install/security/
+    */
+
+    'unsecured_api_access' => env( 'UNSECURED_API_ACCESS', false ),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow API Keys to be provided via GET parameter in URL.
+    |--------------------------------------------------------------------------
+    |
+    | This previously supported authentication mode is being deprecated in favour of
+    | providing the key via HTTP Headers. A log will be generated when an API Key uses
+    | this feature.
+    |
+    | The setting defaults to off as of v7.4.0.
+    |
+    | See: https://docs.ixpmanager.org/latest/features/api/
+    */
+    'allow_apikeys_get_parameter' => env( 'IXP_ALLOW_DEPRECATED_APIKEYS_VIA_GET', false ),
 ];

@@ -56,7 +56,7 @@
                             Action
                         </th>
                     </tr>
-                <thead>
+                </thead>
                 <tbody>
                     <?php foreach( $t->users as $u ): ?>
                         <tr>
@@ -80,9 +80,13 @@
                                           Multiple (<?= $u['nbC2U'] ?>)
                                         </a>
                                     <?php else: ?>
-                                        <a href="<?=  route( "customer@overview" , [ 'cust' => $u[ 'custid' ] ] ) ?>">
-                                            <?= $t->ee( $u['customer'] ) ?>
-                                        </a>
+                                        <?php if( !$u['customer'] || !$u[ 'custid' ] ): ?>
+                                            <span class="badge badge-warning">DB Issue?</span> User not affiliated to a customer.
+                                        <?php else: ?>
+                                            <a href="<?=  route( "customer@overview" , [ 'cust' => $u[ 'custid' ] ] ) ?>">
+                                                <?= $t->ee( $u['customer'] ) ?>
+                                            </a>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                             <?php endif; ?>
@@ -90,13 +94,15 @@
                                 <?= \IXP\Models\User::$PRIVILEGES_TEXT_VSHORT[ $u[ "privileges" ] ] ?? 'X' ?>
                                 <?= ( $u[ 'nbC2U' ] > 1 ) ? "*": "" ?>
                             </td>
-                            <td>
+                            <td data-sort="<?= $u[ 'u2fa_enabled' ] ? 1 : 0 ?>">
                                 <?php if( $u[ 'u2fa_enabled' ] ): ?>
                                     <span class="badge badge-success">2FA</span>
+                                <?php else: ?>
+                                    <span class="badge badge-danger">2FA</span>
                                 <?php endif; ?>
 
                                 <?php if( config( 'auth.peeringdb.enabled' ) && $u['peeringdb_id'] ): ?>
-                                    <span class="badge badge-success">OAuth</span>
+                                    <span class="badge badge-info">OAuth</span>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -134,7 +140,7 @@
                                                 Login history
                                             </a>
                                             <?php if( $u['c2uid'] ): ?>
-                                                <a id="d2f-option-login-as-<?= $u[ 'id' ] ?>" class="dropdown-item <?= $u[ 'disabled' ] || $authId  === $u['id'] ? "disabled" : "" ?>" href="<?= route( "switch-user@switch", [ "c2u" => $u['c2uid'] ] ) ?>">
+                                                <a id="d2f-option-login-as-<?= $u[ 'id' ] ?>" class="dropdown-item <?= $u[ 'disabled' ] || $authId  === $u['id'] || session()->exists('switched_user_from') ? "disabled" : "" ?>" href="<?= route( "switch-user@switch", [ "c2u" => $u['c2uid'] ] ) ?>">
                                                     Login as
                                                 </a>
                                             <?php endif; ?>
@@ -155,8 +161,8 @@
         </div>
     </div>
 
-    <div class="tw-mt-16 tw-border-2 tw-border-gray-400 tw-rounded-lg">
-        <p class="tw-p-6 tw-m-0">
+    <div class="tw:mt-16 tw:border-2 tw:border-gray-400 tw:rounded-lg">
+        <p class="tw:p-6 tw:m-0">
             <b>Privileges:</b> CU - Cust User; CA - Cust Admin; SU - Super User.<br>
             <b>Flags:</b> <span class="badge badge-success">2FA</span> - Two-factor authentication is enabled; <span class="badge badge-success">OAuth</span> - user created via PeeringDB OAuth.<br>
             <b>Disabled Users:</b> - identified with <span class="badge badge-danger">X</span> badge beside username.

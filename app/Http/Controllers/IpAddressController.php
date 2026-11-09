@@ -61,6 +61,7 @@ use IXP\Utils\View\Alert\{
  *
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers
  * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
@@ -75,8 +76,10 @@ class IpAddressController extends Controller
      * @param boolean   $model      Do we need to return the $model ?
      *
      * @return int|string
+     *
+     * @psalm-return IPv4Address::class|IPv6Address::class|int
      */
-    private function processProtocol( int $protocol , bool $model = true ): int|string
+    private function processProtocol( int $protocol , bool $model = true ): string|int
     {
         if( !in_array( $protocol, [ 4,6 ] ) ) {
             abort( 404 , 'Unknown protocol');
@@ -93,13 +96,11 @@ class IpAddressController extends Controller
      * Display the list of the IP Address (IPv4 or IPv6)
      *
      * @param int       $protocol   Protocol of the IP address
-     * @param int|null  Vlan        ID of the vlan
+     * @param int|null  $vid        ID of the vlan
      *
-     * @return view
-     *
-     * @throws
+     * @return View
      */
-    public function list( int $protocol, int $vid = null ): View
+    public function list( int $protocol, ?int $vid = null ): View
     {
         $vlan = false;
         if( $vid ) {
@@ -143,7 +144,7 @@ class IpAddressController extends Controller
      *
      * @param int   $protocol   Protocol of the IP address
      *
-     * @return view
+     * @return View
      */
     public function create( int $protocol ): View
     {
@@ -295,9 +296,11 @@ class IpAddressController extends Controller
      * @param bool           $decimal
      * @param bool           $overflow
      *
-     * @return array Generated addresses (string[])
+     * @return string[]
      *
      * @throws
+     *
+     * @psalm-return list<string>
      */
     private static function generateSequentialAddresses( IPToolsNetwork $network, bool $decimal = false, bool $overflow = true ): array
     {

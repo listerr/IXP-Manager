@@ -1,9 +1,6 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
- * Copyright (C) 2009 - 2024 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,10 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
 
 use IXP\Models\Cabinet;
 
@@ -36,25 +37,11 @@ use Tests\DuskTestCase;
  * @author     Laszlo Kiss <laszlo@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Tests\Browser
- * @copyright  Copyright (C) 2009 - 2024 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class CabinetControllerTest extends DuskTestCase
 {
-    /**
-     * @throws
-     */
-    public function tearDown(): void
-    {
-        foreach( [ 'Cabinet Test', 'Cabinet Test2' ] as $name ) {
-            if( $c = Cabinet::whereName( $name )->first() ) {
-                $c->delete();
-            }
-        }
-
-        parent::tearDown();
-    }
-
     /**
      * Cabinet list, add, edit, remove test
      *
@@ -65,24 +52,25 @@ class CabinetControllerTest extends DuskTestCase
     {
         $this->browse( function( Browser $browser ) {
             $browser->resize( 1600, 1200 )
+                ->visit( '/logout' )
                 ->visit( '/login' )
                 ->type( 'username', 'travis' )
                 ->type( 'password', 'travisci' )
                 ->press( '#login-btn' )
-                ->assertPathIs( '/admin' );
+                ->waitForLocation( '/admin/dashboard' );
 
-            $browser->visit( '/rack/list' )
+            $browser->visit( route( 'rack@list' ) )
                 ->assertSee( 'Racks' )
                 ->assertSee( 'Cabinet 1' );
 
-            $browser->visit( '/rack/create' )
+            $browser->visit( route( 'rack@create' ) )
                 ->assertSee( 'Racks / Create Rack' );
 
             $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
 
             // 1. test add empty inputs
             $browser->press( 'Create' )
-                ->assertPathIs( '/rack/create' )
+                ->waitForLocation( route( 'rack@create' ) )
                 ->assertSee( "The name field is required." )
                 ->assertSee( "The locationid field is required." )
                 ->assertSee( "The colocation field is required." )
@@ -100,7 +88,7 @@ class CabinetControllerTest extends DuskTestCase
             $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
 
             $browser->press( 'Create' )
-                ->assertPathIs( '/rack/list' )
+                ->waitForLocation( route( 'rack@list' ) )
                 ->assertSee( "Rack created." );
 
             $cabinet = Cabinet::whereName( 'Cabinet Test' )->first();
@@ -118,7 +106,7 @@ class CabinetControllerTest extends DuskTestCase
 
             // 4. browse to edit infrastructure object:
             $browser->click( '#e2f-list-edit-' . $cabinet->id )
-                ->assertSee( 'Racks / Edit Rack' );
+                ->waitForText( 'Racks / Edit Rack' );
 
             // 5. test that form contains settings as above using assertChecked(), assertNotChecked(), assertSelected(), assertInputValue, ...
             $browser->assertInputValue( 'name', 'Cabinet Test' )
@@ -135,7 +123,7 @@ class CabinetControllerTest extends DuskTestCase
             $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
 
             $browser->press( 'Save Changes' )
-                ->assertPathIs( '/rack/list' )
+                ->waitForLocation( route( 'rack@list' ) )
                 ->assertSee( "Rack updated" );
 
 
@@ -152,7 +140,7 @@ class CabinetControllerTest extends DuskTestCase
 
 
             // 8. edit again and assert that all checkboxes are unchecked and assert select values are as expected
-            $browser->visit( '/rack/edit/' . $cabinet->id )
+            $browser->visit( route( 'rack@edit', $cabinet->id ) )
                 ->assertSee( 'Racks / Edit Rack' );
 
             $browser->assertInputValue( 'name', 'Cabinet Test' )
@@ -167,7 +155,7 @@ class CabinetControllerTest extends DuskTestCase
 
             // 9. submit with no changes and verify no changes in database
             $browser->press( 'Save Changes' )
-                ->assertPathIs( '/rack/list' );
+                ->waitForLocation( route( 'rack@list' ) );
 
 
             // 10. repeat database load and database object check for new values (repeat 2)
@@ -182,7 +170,7 @@ class CabinetControllerTest extends DuskTestCase
             $this->assertEquals( 'test notes', $cabinet->notes );
 
             // 11. edit object
-            $browser->visit( '/rack/edit/' . $cabinet->id )
+            $browser->visit( route( 'rack@edit', $cabinet->id ) )
                 ->assertSee( 'Racks / Edit Rack' );
 
             $browser->type( 'name', 'Cabinet Test2' )
@@ -195,7 +183,7 @@ class CabinetControllerTest extends DuskTestCase
             $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
 
             $browser->press( 'Save Changes' )
-                ->assertPathIs( '/rack/list' );
+                ->waitForLocation( route( 'rack@list' ) );
 
 
             // 12. verify object values
@@ -210,12 +198,12 @@ class CabinetControllerTest extends DuskTestCase
             $this->assertEquals( 'test notes new', $cabinet->notes );
 
             // 13. delete the router in the UI and verify via success message text and location
-            $browser->visit( '/rack/list/' )
+            $browser->visit( route( 'rack@list' ) )
                 ->click( '#e2f-list-delete-' . $cabinet->id )
                 ->waitForText( 'Do you really want to delete this rack' )
                 ->press( 'Delete' );
 
-            $browser->assertSee( 'Rack deleted.' );
+            $browser->waitForText( 'Rack deleted.' );
 
             // 14. do a D2EM findOneBy and verify false/null
             $this->assertTrue( Cabinet::whereName( 'Cabinet Test2' )->doesntExist() );

@@ -66,7 +66,10 @@ class SetPassword extends Command
      * Execute the console command.
      *
      * @return int
+     *
      * @throws \Exception
+     *
+     * @psalm-return -1|0
      */
     public function handle(): int
     {
@@ -112,6 +115,7 @@ class SetPassword extends Command
             $this->validateOrExit( $this->rules['password'], 'password', $password );
         }
 
+        /** @var User $user */
         $user->password = Hash::make( $password );
         $user->save();
 

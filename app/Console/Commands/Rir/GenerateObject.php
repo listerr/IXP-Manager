@@ -3,7 +3,7 @@
 namespace IXP\Console\Commands\Rir;
 
 /*
- * Copyright (C) 2009 - 2020 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -26,16 +26,18 @@ use Cache, Mail;
 
 use IXP\Console\Commands\Command;
 
+use IXP\Mail\Raw;
+use IXP\Support\Facades\RipeRestApi;
 use IXP\Tasks\Rir\Generator as RirGenerator;
 
 /**
  * RIR Update command
  *
  * @see https://docs.ixpmanager.org/latest/features/rir-objects/
+ * @author      Barry O'Donovan     <barry@opensolutions.ie>
  * @author      Yann Robin          <yann@islandbridgenetworks.ie>
- * @author      Barry O'Donovan     <barry@islandbridgenetworks.ie>
  * @package     IXP\Console\Commands\Rir
- * @copyright   Copyright (C) 2009 - 2020 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright   Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license     http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class GenerateObject extends Command
@@ -47,76 +49,124 @@ class GenerateObject extends Command
      */
 
     protected $signature = 'rir:generate-object
-                        {object       : The RIR object template to use}
-                        {--send-email : Rather than printing to screen, sends and email for updating a RIR automatically}
-                        {--force      : Send email even if it matches the cached version}
-                        {--to=        : The email address to send the object to (if not specified then uses IXP_API_RIR_EMAIL_TO)}
-                        {--from=      : The email address from which the email is sent (if not specified, tries IXP_API_RIR_EMAIL_FROM and then defaults to IDENTITY_EMAIL)}';
+                        {object             : The RIR object template to use}
+                        {--send-email       : Rather than printing to screen, sends an email for updating a RIR automatically}
+                        {--update-ripe-db   : Update the RIPE database with the generated object, using the RIPE REST API}
+                        {--force            : Send email/update RIPE even if the generated object matches the cached version}
+                        {--to=              : The email address to send the object to (if not specified then uses IXP_API_RIR_EMAIL_TO)}
+                        {--from=            : The email address from which the email is sent (if not specified, tries IXP_API_RIR_EMAIL_FROM and then defaults to IDENTITY_EMAIL)}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This command will generate and display a RIR object (and optionally send by email)';
+    protected $description = 'This command will generate and display a RIR object (and optionally send by email/post to RIPE)';
 
     /**
      * Execute the console command.
      *
-     * @return mixed
-     *
      * @throws
+     *
+     * @psalm-return 0|1
      */
-    public function handle()
+    public function handle(): int
     {
+        if( $this->option( "update-ripe-db" ) && $this->option( "send-email" ) ) {
+            $this->error( "Cannot update RIPE database and send email at the same time." );
+            return 1;
+        }
+        
         $gen = new RirGenerator( $this->argument ('object' ) );
 
         $obj = $gen->generate();
-
+        
         $key = 'rir-object-' . $this->argument ('object' );
         $cobj = Cache::store('file' )->get( $key );
-
-        if( $this->option( "send-email" ) && ( $this->option( "force" ) || $obj !== $cobj ) ) {
-            if( !$this->option( "to" ) && !config( 'ixp_api.rir.email.to' )   ){
-                $this->error( "Please specify the TO email address" );
-                exit( -1 );
-            }
-
-            Mail::raw( $obj, function( $m ) {
-                $m->to( $this->checkEmail( 'to', $this->option( "to" ) ?? config( 'ixp_api.rir.email.to' ) ) )
-                    ->from( $this->checkEmail( 'from', ( $this->option( "from" ) ?: config( 'ixp_api.rir.email.from' ) ) ?: config( 'mail.from.address' ) ) )
-                    ->subject( "Changes to {$this->argument ('object' )} via IXP Manager" );
-            } );
-
-            if( !$this->isVerbosityQuiet() ) {
-                $this->info( "Email sent." );
-            }
-
-            if( $obj !== $cobj ) {
-                Cache::store('file')->forever( $key, $obj );
-            }
-
-        } else if( !$this->option( "send-email" ) ) {
-            echo $obj;
+        
+        if( !$this->isVerbosityQuiet() && !$this->option( "force" ) && $obj === $cobj ) {
+            $this->warn( "Generated RIR object is identical to cached version, use --force to update anyway." );
         }
 
+        if( $this->option( "send-email" ) && ( $this->option( "force" ) || $obj !== $cobj ) ) {
+            $this->sendEmail( $obj );
+        } else if( $this->option( "update-ripe-db" ) && ( $this->option( "force" ) || $obj !== $cobj ) ) {
+            $this->updateRipeDb( $gen->generateJson() );
+        } else if( !$this->option( "send-email" ) && !$this->option( "update-ripe-db" ) ) {
+            $this->line($obj);
+        }
+        
+        if( $obj !== $cobj ) {
+            Cache::store('file')->forever( $key, $obj );
+        }
+        
         return 0;
     }
-
+    
     /**
+     * Update the RIPE database with the generated object, using the RIPE REST API
      *
-     * @param string $w
-     * @param string $e
-     *
-     * @return string|null
+     * @param array $jsonData
+     * @return void
+     * @throws \Illuminate\Http\Client\ConnectionException
      */
-    private function checkEmail( string $w, string $e ): ?string
+    private function updateRipeDb( array $jsonData ): void {
+        
+        $response = RipeRestApi::updateObject( $jsonData );
+
+        if( $response->json( 'errormessages.errormessage') ) {
+            foreach( $response->json( 'errormessages.errormessage') as $em ) {
+                
+                $msg = "[" . $response->status() . "] " . vsprintf( $em['text'], array_map(
+                            function( $v ) { return $v['value']; }, $em['args'] ?? []
+                ) );
+
+                if( $em['severity'] === 'Warning' ) {
+                    $this->warn( 'Warning ' . $msg );
+                } else {
+                    $this->fail( $msg );
+                }
+            }
+        }
+        
+        if( !$this->isVerbosityQuiet() ) {
+            $this->info( "RIPE DB Updated" );
+        }
+    }
+    
+    /**
+     * Send an email with the generated object
+     * @param string $obj
+     * @return void
+     */
+    private function sendEmail( string $obj ): void
+    {
+        if( !$this->option( "to" ) && config( 'ixp_api.rir.email.to' ) === null ){
+            $this->fail( "Please specify the TO email address" );
+        }
+
+        Mail::send(
+            (new Raw($obj) )
+                ->to( $this->checkEmail( 'to', $this->option( "to" ) ?? config( 'ixp_api.rir.email.to' ) ) )
+                ->from( $this->checkEmail( 'from', ( $this->option( "from" ) ?: config( 'ixp_api.rir.email.from' ) ) ?: config( 'mail.from.address' ) ) )
+                ->subject( "Changes to {$this->argument ('object' )} via IXP Manager" )
+        );
+
+        if( !$this->isVerbosityQuiet() ) {
+            $this->info( "Email sent." );
+        }
+    }
+    
+    
+    /**
+     * Validates the provided email address
+     */
+    private function checkEmail( string $w, string $e ): string
     {
         if( filter_var( $e, FILTER_VALIDATE_EMAIL ) ) {
             return $e;
         }
 
-        $this->error( "Invalid {$w} email address: {$e}" );
-        exit( -1 );
+        $this->fail( "Invalid $w email address: $e" );
     }
 }

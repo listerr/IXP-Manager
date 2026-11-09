@@ -1,9 +1,6 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,10 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
 
 use IXP\Models\Location;
 
@@ -36,47 +37,34 @@ use Tests\DuskTestCase;
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Tests\Browser
- * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class LocationControllerTest extends DuskTestCase
 {
     /**
-     * @throws
-     */
-    public function tearDown(): void
-    {
-        foreach( [ 'Infrastructure Test', 'Infrastructure Test2' ] as $name ) {
-            if( $c = Location::whereName( $name )->first() ) {
-                $c->delete();
-            }
-        }
-
-        parent::tearDown();
-    }
-
-    /**
-     * A Dusk test example.
+     * Test location controller - list, see CI seeded default location, create, edit with + without changes, and delete
      *
      * @return void
      *
-     * @throws
+     * @throws \Throwable
      */
     public function testAdd(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->resize( 1600,1200 )
+                    ->visit('/logout')
                     ->visit('/login')
                     ->type( 'username', 'travis'    )
                     ->type( 'password', 'travisci'  )
                     ->press( '#login-btn'   )
-                    ->assertPathIs( '/admin'    );
+                    ->waitForLocation( '/admin/dashboard'    );
 
-            $browser->visit( '/facility/list'   )
+            $browser->visit( route( 'facility@list' )   )
                     ->assertSee( 'Facilities'   )
                     ->assertSee( 'Location 1'   );
 
-            $browser->visit( '/facility/create'     )
+            $browser->visit( route( 'facility@create' )     )
                     ->assertSee( 'Create Facility' )
                     ->waitForText( "Choose the matching PeeringDB facility..." );
 
@@ -84,7 +72,7 @@ class LocationControllerTest extends DuskTestCase
 
             // 1. test add empty inputs
             $browser->press('Create' )
-                ->assertPathIs('/facility/create' )
+                ->waitForLocation( route( 'facility@create' ) )
                 ->waitForText( "Choose the matching PeeringDB facility..." )
                 ->assertSee( "The name field is required." )
                 ->assertSee( "The shortname field is required." )
@@ -109,7 +97,7 @@ class LocationControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press('Create')
-                    ->assertPathIs('/facility/create')
+                    ->waitForLocation( route( 'facility@create' ) )
                     ->assertSee( "The shortname has already been taken" )
                     ->assertSee( "The nocemail must be a valid email address" )
                     ->assertSee( "The officeemail must be a valid email address" )
@@ -120,7 +108,7 @@ class LocationControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press('Create')
-                    ->assertPathIs('/facility/list')
+                    ->waitForLocation( route( 'facility@list' ) )
                     ->assertSee( "Facility created" );
 
             $location = Location::whereName( 'Infrastructure Test' )->first();
@@ -144,7 +132,8 @@ class LocationControllerTest extends DuskTestCase
             $this->assertEquals( 'test notes',                 $location->notes             );
 
             // 3. browse to edit infrastructure object:
-            $browser->click( '#e2f-list-edit-' .  $location->id );
+            $browser->click( '#e2f-list-edit-' .  $location->id )
+                ->waitForLocation( route( 'facility@edit', $location->id ) );
 
             // 4. test that form contains settings as above using assertChecked(), assertNotChecked(), assertSelected(), assertInputValue, ...
             $browser->assertInputValue('name',                  'Infrastructure Test' )
@@ -168,7 +157,7 @@ class LocationControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press('Save Changes'  )
-                    ->assertPathIs('/facility/list' )
+                    ->waitForLocation( route( 'facility@list' ) )
                     ->assertSee( "Facility updated" );
 
 
@@ -192,7 +181,7 @@ class LocationControllerTest extends DuskTestCase
 
 
             // 7. edit again and assert that all checkboxes are unchecked and assert select values are as expected
-            $browser->visit( '/facility/edit/' .  $location->id )
+            $browser->visit( route( 'facility@edit', $location->id ) )
                 ->assertSee( 'Edit Facility' );
 
             $browser->assertInputValue('name',              'Infrastructure Test')
@@ -212,7 +201,7 @@ class LocationControllerTest extends DuskTestCase
 
             // 8. submit with no changes and verify no changes in database
             $browser->press('Save Changes')
-                ->assertPathIs('/facility/list');
+                ->waitForLocation( route( 'facility@list' ) );
 
 
             // 6. repeat database load and database object check for new values (repeat 2)
@@ -234,7 +223,7 @@ class LocationControllerTest extends DuskTestCase
             $this->assertEquals( 'test notes',              $location->notes            );
 
             // 9. edit object
-            $browser->visit( '/facility/edit/' .  $location->id )
+            $browser->visit( route( 'facility@edit', $location->id ) )
                 ->assertSee( 'Edit Facility' );
 
             $browser->type( 'name',         'Infrastructure Test2')
@@ -255,7 +244,7 @@ class LocationControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press('Save Changes')
-                    ->assertPathIs('/facility/list');
+                    ->waitForLocation( route( 'facility@list' ) );
 
 
             // 10. verify object values
@@ -277,15 +266,66 @@ class LocationControllerTest extends DuskTestCase
             $this->assertEquals( 'test notes2',                 $location->notes            );
 
             // 11. delete the router in the UI and verify via success message text and location
-            $browser->visit( '/facility/list/' )
+            $browser->visit( route( 'facility@list' ) )
                 ->click('#e2f-list-delete-' . $location->id )
                 ->waitForText( 'Do you really want to delete this facility' )
                 ->press('Delete' );
 
-            $browser->assertSee( 'Facility deleted.' );
+            $browser->waitForText( 'Facility deleted.' );
 
             // 12. do a D2EM findOneBy and verify false/null
             $this->assertTrue( Location::whereName( 'Infrastructure Test2' )->doesntExist() );
+        });
+    }
+
+
+    /**
+     * Tests scenario where location country is null - pages should not error
+     * @throws \Throwable
+     */
+    public function testEditformWhenCountryIsNull(): void
+    {
+        $this->browse(function (Browser $browser) {
+            $browser->resize( 1600, 1200 )
+                ->visit( '/logout' )
+                ->visit( '/login' )
+                ->type( 'username', 'travis' )
+                ->type( 'password', 'travisci' )
+                ->press( '#login-btn' )
+                ->waitForLocation( '/admin/dashboard' );
+
+            $location = new Location();
+            $location->name = "Test Location";
+            $location->shortname = "SHRTX";
+            $location->city = "Pago Pago";
+            $location->tag = "um";
+            $location->officephone = "1234567890";
+            $location->save();
+
+            $browser->visit( route( 'facility@list' ) )
+                ->assertSee( 'Facilities' )
+                ->assertSee( 'Location 1' )
+                ->assertSee( 'Test Location' )
+            ;
+
+            $browser->click("#e2f-list-edit-" . $location->id )
+                ->waitForLocation( route( 'facility@edit', [ 'id' => $location->id ] ) )
+                ->assertSee("Edit Facility")
+                ->type("nocemail", "invalid")
+                ->press("Save Changes")
+                ->waitForLocation( route( 'facility@edit', [ 'id' => $location->id ] ) )
+                ->assertSee("The nocemail must be a valid email address.")
+                ->assertSee("The country field is required.")
+            ;
+
+            $browser
+                ->type("nocemail", "test@ixp.local")
+                ->select("country", "AM")
+                ->press("Save Changes")
+                ->waitForLocation( route( 'facility@list' ) )
+                ->assertSee( "Facility updated" )
+            ;
+
         });
     }
 }

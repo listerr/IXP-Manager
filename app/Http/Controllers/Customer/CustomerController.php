@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Customer;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -26,8 +26,12 @@ namespace IXP\Http\Controllers\Customer;
 use App, Auth, Cache, Countries, Former, Mail;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder;
 
+use Illuminate\Support\Facades\Log;
+use IXP\Exceptions\GeneralException;
+use IXP\Utils\CountryUtils;
 use Illuminate\Http\{
     JsonResponse,
     RedirectResponse,
@@ -109,6 +113,30 @@ class CustomerController extends Controller
             $type = $r->session()->get( "cust-list-type" );
         }
 
+        $resellerTypes = [
+            'resold'               => 'Resold',
+            'reseller'             => 'Reseller',
+            'not-resold'           => 'Not resold',
+            'not-reseller'         => 'Not reseller',
+            'not-resold-reseller'  => 'Not resold/reseller',
+        ];
+
+        if( !$this->resellerMode() ) {
+            $resellerType = false;
+            $r->session()->remove( 'cust-list-reseller-type' );
+        } elseif( ( $resellerType = $r->input( 'reseller-type' ) ) !== null ) {
+            if( isset( $resellerTypes[ $resellerType ] ) ) {
+                $r->session()->put( 'cust-list-reseller-type', $resellerType );
+            } else {
+                $resellerType = false;
+                $r->session()->remove( 'cust-list-reseller-type' );
+            }
+        } elseif( $r->session()->exists( 'cust-list-reseller-type' ) ) {
+            $resellerType = $r->session()->get( 'cust-list-reseller-type' );
+        } else {
+            $resellerType = false;
+        }
+
         if( ( $showCurrentOnly = $r->input( 'current-only' ) ) !== null ) {
             $r->session()->put( "cust-list-current-only", $showCurrentOnly );
         } else if( $r->session()->exists( "cust-list-current-only" ) ) {
@@ -136,6 +164,8 @@ class CustomerController extends Controller
         return view( 'customer/list' )->with([
             'state'                 => $state           ?? false,
             'type'                  => $type            ?? false,
+            'resellerType'          => $resellerType,
+            'resellerTypes'         => $resellerTypes,
             'showCurrentOnly'       => $showCurrentOnly ?? false,
             'tag'                   => $tid ?? false,
             'tags'                  => $tags,
@@ -147,6 +177,17 @@ class CustomerController extends Controller
                     return $q->where( 'cust.status', $state );
                 } )->when( $type && isset( Customer::$CUST_TYPES_TEXT[ $type ] ), function( Builder $q ) use( $type ) {
                     return $q->where( 'cust.type', $type );
+                } )->when( $resellerType === 'resold', function( Builder $q ) {
+                    return $q->whereNotNull( 'cust.reseller' );
+                } )->when( $resellerType === 'reseller', function( Builder $q ) {
+                    return $q->where( 'cust.isReseller', true );
+                } )->when( $resellerType === 'not-resold', function( Builder $q ) {
+                    return $q->whereNull( 'cust.reseller' );
+                } )->when( $resellerType === 'not-reseller', function( Builder $q ) {
+                    return $q->where( 'cust.isReseller', false );
+                } )->when( $resellerType === 'not-resold-reseller', function( Builder $q ) {
+                    return $q->whereNull( 'cust.reseller' )
+                        ->where( 'cust.isReseller', false );
                 } )->when( $showCurrentOnly, function( Builder $q ) {
                     return $q->whereRaw( Customer::SQL_CUST_CURRENT );
                 } )->orderByRaw( 'cust.name' )->get(),
@@ -223,7 +264,8 @@ class CustomerController extends Controller
             'MD5Support'            => $r->old( 'MD5Support',          $cust->MD5Support            ),
             'abbreviatedName'       => $r->old( 'abbreviatedName',     $cust->abbreviatedName       ),
             'autsys'                => $r->old( 'autsys',              (string) $cust->autsys       ),
-            'maxprefixes'           => $r->old( 'maxprefixes',         (string) $cust->maxprefixes           ),
+            'maxprefixes'           => $r->old( 'maxprefixes',         (string) $cust->maxprefixes   ),
+            'maxprefixesv6'         => $r->old( 'maxprefixesv6',       (string) $cust->maxprefixesv6 ),
             'peeringpolicy'         => $r->old( 'peeringpolicy',       $cust->peeringpolicy         ),
             'peeringemail'          => $r->old( 'peeringemail',        $cust->peeringemail          ),
             'peeringmacro'          => $r->old( 'peeringmacro',        $cust->peeringmacro          ),
@@ -320,7 +362,7 @@ class CustomerController extends Controller
             'address3'                  => $r->old( 'address3',                   $crd->address3 ) ,
             'townCity'                  => $r->old( 'townCity',                   $crd->townCity ),
             'postcode'                  => $r->old( 'postcode',                   $crd->postcode ),
-            'country'                   => $r->old( 'country',            in_array( $crd->country,  array_values( Countries::getListForSelect( 'iso_3166_2' ) ), false ) ? $crd->country : null ),
+            'country'                   => $r->old( 'country',                    CountryUtils::isKnownBy($crd->country) ? $crd->country : null ),
             'notes'                     => $r->old( 'notes',                      $crd->notes ),
         ];
 
@@ -328,7 +370,7 @@ class CustomerController extends Controller
 
         return view( 'customer/billing-registration' )->with([
             'c'                             => $cust,
-            'juridictions'                  => CompanyRegisteredDetail::select( 'jurisdiction' )
+            'jurisdictions'                 => CompanyRegisteredDetail::select( 'jurisdiction' )
                 ->where( 'jurisdiction', '!=', '' )->distinct()->get()->toArray(),
             'countries'                     => Countries::getList('name' )
         ]);
@@ -423,14 +465,14 @@ class CustomerController extends Controller
     /**
      * Display the customer overview
      *
-     * @param   Customer    $cust   the customer
-     * @param   string|null $tab    Tab from the overview selected
+     * @param Customer $cust the customer
+     * @param string|null $tab Tab from the overview selected
      *
      * @return  View
-     *
-     * @throws
+     * @throws GeneralException
+     * @throws BindingResolutionException
      */
-    public function overview( Customer $cust, string $tab = null ) : View
+    public function overview( Customer $cust, ?string $tab = null ) : View
     {
         $grapher = App::make( Grapher::class );
 
@@ -533,8 +575,6 @@ class CustomerController extends Controller
      *
      * @param WelcomeEmailRequest   $r
      * @param Customer              $cust
-     *
-     * @return RedirectResponse|View
      */
     public function sendWelcomeEmail( WelcomeEmailRequest $r, Customer $cust ): RedirectResponse|View
     {
@@ -548,6 +588,7 @@ class CustomerController extends Controller
         }
 
         Mail::send( $mailable );
+        Log::notice("Welcome email sent for {$cust->id}|{$cust->name}");
         AlertContainer::push( "Welcome email sent.", Alert::SUCCESS );
         return redirect( route( "customer@overview", [ "cust" => $cust->id ] ) );
     }
@@ -561,25 +602,12 @@ class CustomerController extends Controller
      */
     public function deleteRecap( Customer $cust ): RedirectResponse|View
     {
-        // cannot delete a customer with active cross connects:
-        if( $cust->patchPanelPorts->isNotEmpty() ) {
-            AlertContainer::push( "This customer has active patch panel ports. Please cease "
-                . "these (or set them to awaiting cease and unset the customer link in the patch panel "
-                . "port) to proceed with deleting this customer.", Alert::DANGER
-            );
-            return redirect( route( "customer@overview", [ 'cust' => $cust->id ] ) );
-        }
-
-        // cannot delete a customer with fan out ports:
-        if( Customer::leftJoin( 'virtualinterface AS vi', 'vi.custid', 'cust.id' )
-            ->leftJoin( 'physicalinterface AS pi', 'pi.virtualinterfaceid', 'vi.id' )
-            ->whereNotNull( 'pi.fanout_physical_interface_id' )
-            ->whereNotNull( 'reseller' )->where( 'cust.id', $cust->id )->count() ){
-                        AlertContainer::push( "This customer has is a resold customer with fan out physical "
-                            . "interfaces. Please delete these manually before proceeding with deleting the customer.",
-                            Alert::DANGER
-                        );
-                        return redirect( route( "customer@overview", [ 'cust' => $cust->id ] ) );
+        if ($redirect = $this->redirectIfCustomerHasResellerCustomers($cust)) {
+            return $redirect;
+        } else if ($redirect = $this->redirectIfCustomerHasActiveCrossConnects($cust)) {
+            return $redirect;
+        } else if ($redirect = $this->redirectIfCustomerHasActiveFanoutPorts($cust)) {
+            return $redirect;
         }
 
         return view( 'customer/delete' )->with([
@@ -598,6 +626,14 @@ class CustomerController extends Controller
      */
     public function delete( Customer $cust ) : RedirectResponse
     {
+        if ($redirect = $this->redirectIfCustomerHasResellerCustomers($cust)) {
+            return $redirect;
+        } else if ($redirect = $this->redirectIfCustomerHasActiveCrossConnects($cust)) {
+            return $redirect;
+        } else if ($redirect = $this->redirectIfCustomerHasActiveFanoutPorts($cust)) {
+            return $redirect;
+        }
+
         if( CustomerAggregator::deleteObject( $cust ) ) {
             AlertContainer::push( "Customer <em>{$cust->getFormattedName()}</em> deleted.", Alert::SUCCESS );
             Cache::forget( 'admin_home_customers' );
@@ -605,5 +641,43 @@ class CustomerController extends Controller
             AlertContainer::push( "Customer could not be deleted. Please open a GitHub bug report.", Alert::DANGER );
         }
         return redirect( route( "customer@list" ) );
+    }
+
+    private function redirectIfCustomerHasResellerCustomers( Customer $cust ): ?RedirectResponse
+    {
+        if( $cust->isReseller && Customer::whereReseller( $cust->id )->notDeleted()->count() > 0 ) {
+            AlertContainer::push( "This customer is a reseller still associated with active resold customers. Please ".
+                " disassociate their customers before proceeding with deleting the reselling customer.", Alert::DANGER );
+            return redirect( route( "customer@overview", [ 'cust' => $cust->id ] ) );
+        }
+        return null;
+    }
+
+    private function redirectIfCustomerHasActiveCrossConnects( Customer $cust ): ?RedirectResponse
+    {
+        if( $cust->patchPanelPorts->isNotEmpty() ) {
+            AlertContainer::push( "This customer has active patch panel ports. Please cease "
+                . "these (or set them to awaiting cease and unset the customer link in the patch panel "
+                . "port) to proceed with deleting this customer.", Alert::DANGER
+            );
+            return redirect( route( "customer@overview", [ 'cust' => $cust->id ] ) );
+        }
+        return null;
+    }
+
+    private function redirectIfCustomerHasActiveFanoutPorts( Customer $cust ): ?RedirectResponse
+    {
+        // cannot delete a customer with fan out ports:
+        if( Customer::leftJoin( 'virtualinterface AS vi', 'vi.custid', 'cust.id' )
+            ->leftJoin( 'physicalinterface AS pi', 'pi.virtualinterfaceid', 'vi.id' )
+            ->whereNotNull( 'pi.fanout_physical_interface_id' )
+            ->whereNotNull( 'reseller' )->where( 'cust.id', $cust->id )->count() ){
+            AlertContainer::push( "This customer has is a resold customer with fan out physical "
+                . "interfaces. Please delete these manually before proceeding with deleting the customer.",
+                Alert::DANGER
+            );
+            return redirect( route( "customer@overview", [ 'cust' => $cust->id ] ) );
+        }
+        return null;
     }
 }

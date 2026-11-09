@@ -53,6 +53,7 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @return string
      */
+    #[\Override]
     public function name(): string
     {
         return 'dummy';
@@ -65,6 +66,7 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @return bool
      */
+    #[\Override]
     public function isConfigurationRequired(): bool
     {
         return false;
@@ -75,8 +77,9 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @see Dummy::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return false
      */
+    #[\Override]
     public function isMonolithicConfigurationSupported(): bool
     {
         return false;
@@ -87,8 +90,9 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @see Dummy::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return false
      */
+    #[\Override]
     public function isMultiFileConfigurationSupported(): bool
     {
         return false;
@@ -103,7 +107,10 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      * @param array             $options
      *
      * @return array
+     *
+     * @psalm-return array<never, never>
      */
+    #[\Override]
     public function generateConfiguration( int $type = self::GENERATED_CONFIG_TYPE_MONOLITHIC, array $options = [] ): array
     {
         return [];
@@ -114,8 +121,9 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * {inheritDoc}
      *
-     * @return array
+     * @return array<string, array<string,array>>
      */
+    #[\Override]
     public static function supports(): array
     {
         return [
@@ -185,6 +193,12 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
                 'periods'     => Graph::PERIODS,
                 'types'       => Graph::TYPES
             ],
+            'multip2p' => [
+                'protocols'   => Graph::PROTOCOLS,
+                'categories'  => Graph::CATEGORIES,
+                'periods'     => Graph::PERIODS,
+                'types'       => Graph::TYPES
+            ],
         ];
     }
 
@@ -198,7 +212,10 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      * @return array
      *
      * @throws
+     *
+     * @psalm-return array<int<0, max>, mixed>
      */
+    #[\Override]
     public function data( Graph $graph ): array
     {
         $dummy = new DummyFile( $this->resolveFilePath( $graph, 'log' ) );
@@ -212,11 +229,10 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @param Graph $graph
      *
-     * @return string
-     *
-     * @throws
+     * @return false|string
      */
-    public function png( Graph $graph ): string
+    #[\Override]
+    public function png( Graph $graph ): false|string
     {
         return @file_get_contents( $this->resolveFilePath( $graph, 'png' ) );
     }
@@ -229,8 +245,11 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      * @param Graph $graph
      *
      * @return string
+     *
+     * @psalm-return ''
      */
-    public function rrd( Graph $graph ): string
+    #[\Override]
+    public function rrd( Graph $graph ): false|string
     {
         return '';
     }
@@ -246,6 +265,7 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      *
      * @throws CannotHandleRequestException
      */
+    #[\Override]
     public function dataPath( Graph $graph ): string
     {
         return $this->resolveFilePath( $graph, 'log' );
@@ -261,8 +281,10 @@ class Dummy extends GrapherBackend implements GrapherBackendContract
      * @return string
      *
      * @throws
+     *
+     * @psalm-param 'log'|'png' $type
      */
-    private function resolveFilePath( Graph $graph, $type ): string
+    private function resolveFilePath( Graph $graph, string $type ): string
     {
         $config = config('grapher.backends.dummy');
 

@@ -3,12 +3,12 @@
     "description": "An application by INEX to manage Internet Exchange Points (IXPs) - https://www.ixpmanager.org/",
     "type": "project",
     "keywords": ["ixp manager", "ixpm", "inex", "ixp"],
-    "homepage": "https://github.com/inex/IXP-Manager/wiki",
+    "homepage": "https://github.com/inex/IXP-Manager",
     "license": "GPL-2.0",
     "authors": [
         {
             "name": "Barry O'Donovan",
-            "email": "barry.odonovan@inex.ie",
+            "email": "barry@opensolutions.ie",
             "homepage": "https://www.ixpmanager.org/"
         },
         {
@@ -17,56 +17,43 @@
             "homepage": "https://www.ixpmanager.org/"
         }
     ],
-    "repositories":[
-        {
-            "type": "vcs",
-            "url": "git@github.com:barryo/Purifier.git"
-        }
-    ],
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "ext-json": "*",
-        "anahkiasen/former": "^4.6",
-        "bacon/bacon-qr-code": "^2.0.3",
-        "barryvdh/laravel-dompdf": "^2.0.0",
-        "doctrine/dbal": "^3.8",
+        "laravel/framework": "^12.0",
+        "anahkiasen/former": "^5.1.1",
+        "bacon/bacon-qr-code": "^3.0.0",
+        "barryvdh/laravel-dompdf": "^3.0.0",
         "erusev/parsedown": "^1.7",
-        "foil/foil": "^0.6.7",
-        "guzzlehttp/guzzle": "^7.8",
+        "opensolutions/foil": "^0.7.2",
         "intervention/image": "^2.7",
-        "laravel/framework": "^11.0",
         "laravel/horizon": "^5.7",
         "laravel/telescope": "^5.0",
-        "laravel/tinker": "^2.7",
+        "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.0",
         "mews/purifier": "^3.4",
         "opensolutions/oss-snmp": "^1.0",
-        "php-ds/php-ds": "^1.5",
-        "pragmarx/google2fa-laravel": "^1.4.1",
+        "php-ds/php-ds": "^1.7.0",
+        "pragmarx/google2fa-laravel": "^2.3.0",
         "s1lentium/iptools": "^1.2",
-        "socialiteproviders/manager": "^4.6",
-        "spatie/laravel-ignition": "^2.7",
+        "socialiteproviders/manager": "^4.8",
         "webpatser/laravel-countries": "^1.5.4",
         "wolfcast/browser-detection": "^2.9.5",
         "zendesk/zendesk_api_client_php": "^2.2.10"
     },
     "require-dev": {
-        "barryvdh/laravel-ide-helper": "^3.0",
-        "beyondcode/laravel-dump-server": "^2.0",
+        "barryvdh/laravel-ide-helper": "^3.5.1",
         "fakerphp/faker": "^1.23",
+        "laravel/boost": "^2.1",
         "laravel/dusk": "^8.0",
-        "laravel/pint": "^1.15",
-        "laravel/sail": "^1.29",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.1",
-        "phpunit/phpunit": "^10.5.1",
-        "psalm/plugin-laravel": "^2.11",
-        "sebastian/diff": "^5.0",
+        "phpunit/phpunit": "^12.5",
+        "psalm/plugin-laravel": "^3.0.0",
         "staudenmeir/dusk-updater": "^1.5",
-        "vimeo/psalm": "^5.0"
+        "vimeo/psalm": "^6.0"
     },
     "support": {
-        "issues": "https://www.ixpmanager.org/support.php",
+        "issues": "https://www.ixpmanager.org/support",
         "forum": "https://www.inex.ie/mailman/listinfo/ixpmanager",
         "docs": "https://docs.ixpmanager.org/",
         "source": "https://github.com/inex/IXP-Manager"
@@ -80,14 +67,11 @@
         "files": [
             "app/Support/helpers.php"
         ]
-     },
-     "autoload-dev": {
-         "classmap": [
-             "tests/TestCase.php"
-         ],
-         "psr-4": {
-             "Tests\\": "tests/"
-         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "extra": {
         "laravel": {
@@ -95,21 +79,14 @@
         }
     },
     "scripts": {
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate"
-        ],
         "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan config:clear",
+            "@php artisan clear-compiled",
             "@php artisan package:discover"
         ],
 
         "post-install-cmd": [
-            "@php artisan clear-compiled",
-            "@./vendor/bin/phpunit --migrate-configuration",
-            "@./vendor/bin/phpunit -c phpunit.dusk.xml --migrate-configuration"
+            "@php artisan clear-compiled"
         ],
 
         "post-update-cmd": [
@@ -117,7 +94,7 @@
             "Illuminate\\Foundation\\ComposerScripts::postUpdate",
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:meta --filename=.phpstorm.meta.php/laravel.meta.php",
-            "@php artisan ide-helper:models -W",
+            "@php artisan ide-helper:models -RW",
             "@php artisan telescope:publish",
             "@php artisan horizon:install"
         ]
@@ -130,7 +107,7 @@
             "pestphp/pest-plugin": true
         },
         "platform": {
-            "php": "8.3.0"
+            "php": "8.4.11"
         }
     },
    "minimum-stability": "dev",

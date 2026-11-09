@@ -10,7 +10,7 @@ namespace IXP\Services\Diagnostics\Suites;
  *
  * IXP Manager is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, version v2.0 of the License.
+ * Software Foundation, version v2.0 of the Licensefinal .
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -55,12 +55,12 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
 
     private VirtualInterface $vi;
 
-    private SNMP|bool $snmpClient;
+    private SNMP|bool|null $snmpClient = null;
 
     private bool $stale = true;
 
-    private static string $badgeStale = '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-red-50   tw-px-1.5 tw-py-0.5 tw-text-xs tw-font-medium tw-text-red-700   tw-ring-1 tw-ring-inset tw-ring-red-600/10"  >Stale</span>';
-    private static string $badgeLive  = '<span class="tw-inline-flex tw-items-center tw-rounded-full tw-bg-green-50 tw-px-1.5 tw-py-0.5 tw-text-xs tw-font-medium tw-text-green-700 tw-ring-1 tw-ring-inset tw-ring-green-600/20">Live</span>';
+    private static string $badgeStale = '<span class="tw:inline-flex tw:items-center tw:rounded-full tw:bg-red-50   tw:px-1.5 tw:py-0.5 tw:text-xs tw:font-medium tw:text-red-700   tw:ring-1 tw:ring-inset tw:ring-red-600/10"  >Stale</span>';
+    private static string $badgeLive  = '<span class="tw:inline-flex tw:items-center tw:rounded-full tw:bg-green-50 tw:px-1.5 tw:py-0.5 tw:text-xs tw:font-medium tw:text-green-700 tw:ring-1 tw:ring-inset tw:ring-green-600/20">Live</span>';
 
 
 
@@ -69,29 +69,46 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
     ) {
 
         if( $pi?->switchPort ) {
-            $this->name = $pi->switchPort->switcher->name . ' :: ' . $pi->switchPort->name . ' [Physical Interface #' . $pi->id . ']';
+            $this->name = $pi->switchPort->switcher->name . ' :: ' . $pi->switchPort->name . ' / Physical Interface #' . $pi->id;
         } else {
             $this->name        = 'Physical Interface #' . $pi->id;
         }
 
         $this->description = 'Physical Interfaces general diagnostics.';
         $this->type        = 'INTERFACE';
-
-        if( empty( $pi?->switchPort->switcher->snmppasswd ) ) {
-            $this->snmpClient = false;
-        } else {
-            $this->snmpClient = new SNMP( $pi->switchPort->switcher->hostname, $pi->switchPort->switcher->snmppasswd );
-        }
+        $this->link        = route( 'virtual-interface@edit', ['vi' => $pi->virtualInterface] );;
 
         parent::__construct();
     }
 
     /**
+     * Get / instantiate the snmp client
+     *
+     * @return SNMP|bool
+     */
+    private function snmpClient(PhysicalInterface $pi): bool|SNMP|null {
+
+        if( $this->snmpClient === null ) {
+            if( empty( $pi?->switchPort->switcher->snmppasswd ) ) {
+                $this->snmpClient = false;
+            } else {
+                $this->snmpClient = new SNMP( $pi->switchPort->switcher->hostname, $pi->switchPort->switcher->snmppasswd );
+            }
+        }
+
+        return $this->snmpClient;
+    }
+
+
+    /**
      * Run the diagnostics suite
      */
-    public function run(): PhysicalInterfaceDiagnosticSuite
+    public function run(): static
     {
         $this->results->add( $this->switchportLastPoll() );
+
+        // We want to poll the port now to (a) make sure we can and (b) use live data
+        // for the remaining tests without making multiple snmp get requests.
         $this->results->add( $this->switchportCanPoll() );
 
         $this->results->add( new DiagnosticResult(
@@ -115,14 +132,6 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
         return $this;
     }
 
-
-    private function snmpReachError($mainName) {
-        return new DiagnosticResult(
-            name: $mainName,
-            result: DiagnosticResult::TYPE_WARN,
-            narrative: "SNMP host cannot be reached",
-        );
-    }
 
     /**
      * Examine the physical interface last poll and provide information on it.
@@ -166,23 +175,35 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
             sleep(1);
         }
 
-        $this->pi->switchPort->snmpUpdate( $this->snmpClient );
+        try {
 
-        if( $before !== $this->pi->switchPort->lastSnmpPoll->format('Y-m-d H:i:s') ) {
-            $this->stale = false;
+            $this->pi->switchPort->snmpUpdate( $this->snmpClient($this->pi) );
+
+            if( $before !== $this->pi->switchPort->lastSnmpPoll->format('Y-m-d H:i:s') ) {
+                $this->stale = false;
+                return new DiagnosticResult(
+                    name: $mainName . " Yes, refreshed successfully now",
+                    result: DiagnosticResult::TYPE_DEBUG,
+                    narrative: "SNMP information has been retrieved for this port.",
+                );
+            }
+
+            $this->stale = true;
             return new DiagnosticResult(
-                name: $mainName . " Yes, refreshed successfully now",
-                result: DiagnosticResult::TYPE_DEBUG,
-                narrative: "SNMP information has been retrieved for this port.",
+                name: $mainName . " No, could not poll the switch port",
+                result: DiagnosticResult::TYPE_FATAL,
+                narrative: "As we could not poll the switch port via SNMP, all other diagnostics tests relying on this information may not be accurate.",
             );
-        }
 
-        $this->stale = true;
-        return new DiagnosticResult(
-            name: $mainName . " No, could not poll the switch port",
-            result: DiagnosticResult::TYPE_FATAL,
-            narrative: "As we could not poll the switch port via SNMP, all other diagnostics tests relying on this information may not be accurate.",
-        );
+        } catch(\Exception $e) {
+
+            return new DiagnosticResult(
+                name: $mainName . ' - diagnostic failed to run',
+                result: DiagnosticResult::TYPE_UNKNOWN,
+                narrativeHtml: $e->getMessage(),
+            );
+
+        }
 
     }
 
@@ -294,7 +315,7 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
      */
     private function switchPortActive():  DiagnosticResult
     {
-        $mainName = 'Within IXP Manager, the phsyical interface is '
+        $mainName = 'Within IXP Manager, the physical interface is '
             . ( $this->pi->status ? 'enabled' : 'disabled' )
             . ' and the switchport is '
             . ( $this->pi->switchPort->active ? 'active' : 'inactive' );
@@ -380,9 +401,9 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
      */
     private function speed():  DiagnosticResult
     {
-        $mainName = "Switch port speed configured as {$this->pi->speed()}; actual switch port speed: " . ( PhysicalInterface::$SPEED[$this->pi->switchPort->ifSpeed] ?? $this->pi->switchPort->ifSpeed ?? 'null' );
+        $mainName = "Switch port speed configured as {$this->pi->speed()}; actual switch port speed: " . ( PhysicalInterface::$SPEED[ $this->pi->switchPort->ifHighSpeed] ?? $this->pi->switchPort->ifHighSpeed ?? 'null' );
 
-        if( $this->pi->switchPort->ifSpeed == $this->pi->speed ) {
+        if( $this->pi->switchPort->ifHighSpeed == $this->pi->speed ) {
 
             return new DiagnosticResult(
                 name: $mainName,
@@ -408,6 +429,8 @@ class PhysicalInterfaceDiagnosticSuite extends DiagnosticSuite
      * Examine the Switch Port physical speed and provide information on it.
      *
      * @return DiagnosticResult[]
+     *
+     * @psalm-return list{0: DiagnosticResult, 1?: DiagnosticResult, 2?: DiagnosticResult}
      */
     private function mauState():  array
     {

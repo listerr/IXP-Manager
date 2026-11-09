@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Auth;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -27,7 +27,6 @@ use Former, Hash;
 
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\{
-    JsonResponse,
     RedirectResponse
 };
 
@@ -51,6 +50,7 @@ use IXP\Utils\View\Alert\{
  *
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers\Auth
  * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
@@ -92,28 +92,30 @@ class ResetPasswordController extends Controller
      *
      * If no token is present, display the link request form.
      *
-     * @param Request       $r
-     * @param  string|null  $token
+     * @param Request       $request
+     * @param string|null   $token
      *
      * @return View
      */
-    public function showResetForm( Request $r, string $token = null ): View
+    public function showResetForm( Request $request, #[\SensitiveParameter] ?string $token = null ): View
     {
         Former::populate( [
-            'username'      => request()->old( 'username',  $r->username    ),
-            'token'         => request()->old( 'token',     $token          ),
+            'username'      => request()->old( 'username',  $request->username    ),
+            'token'         => request()->old( 'token',     $token                ),
         ] );
 
         return view('auth/reset-password')->with( [
             'token'     => $token,
-            'username'  => $r->username
+            'username'  => $request->username
         ] );
     }
 
     /**
      * Get the password reset validation rules.
      *
-     * @return array
+     * @return ((Password|string)[]|string)[]
+     *
+     * @psalm-return array{token: 'required', username: 'required|string', password: list{'required', 'confirmed', Password}}
      */
     protected function rules(): array
     {
@@ -145,10 +147,8 @@ class ResetPasswordController extends Controller
      * @param  string   $password
      *
      * @return void
-     *
-     * @throws
      */
-    protected function resetPassword( User $user, string $password ): void
+    protected function resetPassword( User $user, #[\SensitiveParameter] string $password ): void
     {
         $user->password = Hash::make( $password );
         $user->save();
@@ -156,6 +156,7 @@ class ResetPasswordController extends Controller
         event( new PasswordResetEvent( $user ) );
         $this->redirectTo = route("login@showForm" ) . '?username=' . $user->username ;
     }
+
     /**
      * Get the response for a failed password reset.
      *
@@ -174,11 +175,9 @@ class ResetPasswordController extends Controller
      * Get the response for a successful password reset.
      *
      * @param Request   $r
-     * @param  string   $response
-     *
-     * @return RedirectResponse|JsonResponse
+     * @param string   $response
      */
-    protected function sendResetResponse( Request $r, string $response )
+    protected function sendResetResponse( Request $r, string $response ): RedirectResponse
     {
         AlertContainer::push( trans( $response ) , Alert::SUCCESS );
         return redirect( $this->redirectPath() );

@@ -14,7 +14,7 @@ use PragmaRX\Google2FALaravel\Support\Authenticator as GoogleAuthenticator;
         // hide most things until 2fa complete:
         $authenticator = new GoogleAuthenticator( request() );
 
-        if( !Auth::getUser()->user2FA || !Auth::getUser()->user2FA->enabled || $authenticator->isAuthenticated() ):
+        if( !Auth::getUser()->user2FA || !Auth::getUser()->user2FA->isEnabled() || $authenticator->isAuthenticated() ):
     ?>
 
 
@@ -97,13 +97,13 @@ use PragmaRX\Google2FALaravel\Support\Authenticator as GoogleAuthenticator;
                         </a>
                     <?php endif; ?>
 
-                    <?php if( is_numeric( config( 'grapher.access.location' ) ) && config( 'grapher.access.location' ) === \IXP\Models\User::AUTH_PUBLIC ): ?>
+                    <?php if( is_numeric( config( 'grapher.access.location' ) ) && (int)config( 'grapher.access.location' ) === \IXP\Models\User::AUTH_PUBLIC ): ?>
                         <a class="dropdown-item <?= !request()->is( 'statistics/location' ) ?: 'active' ?>" href="<?= route('statistics@location' ) ?>">
                             Facility Graphs
                         </a>
                     <?php endif; ?>
 
-                    <?php if( is_numeric( config( 'grapher.access.trunk' ) ) && config( 'grapher.access.trunk' ) === \IXP\Models\User::AUTH_PUBLIC ): ?>
+                    <?php if( is_numeric( config( 'grapher.access.trunk' ) ) && (int)config( 'grapher.access.trunk' ) === \IXP\Models\User::AUTH_PUBLIC ): ?>
                         <?php if( count( config( 'grapher.backends.mrtg.trunks' ) ?? [] ) ): ?>
                             <a class="dropdown-item <?= !request()->is( 'statistics/trunk*' ) ?: 'active' ?>" href="<?= route('statistics@trunk') ?>">
                                 Inter-Switch / PoP Graphs
@@ -158,7 +158,7 @@ use PragmaRX\Google2FALaravel\Support\Authenticator as GoogleAuthenticator;
 
             <li class="nav-item">
                 <?php if( session()->exists( "switched_user_from" ) ): ?>
-                    <a class="nav-link" href="<?= route( 'switch-user@switchBack' ) ?>">
+                    <a id="nav-item-switch-user-back" class="nav-link" href="<?= route( 'switch-user@switchBack' ) ?>">
                         Switch Back
                     </a>
                 <?php else: ?>

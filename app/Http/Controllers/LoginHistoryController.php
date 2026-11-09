@@ -57,9 +57,12 @@ class LoginHistoryController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         /** @var User $us */
@@ -69,7 +72,7 @@ class LoginHistoryController extends EloquentController
             'model'             => UserLoginHistory::class,
             'pagetitle'         => 'Login History',
             'titleSingular'     => 'Login History',
-            'nameSingular'      => 'a Login History',
+            'nameSingular'      => 'login history',
             'listOrderBy'       => 'last_login_date',
             'listOrderByDir'    => 'DESC',
             'readonly'          => 'true',
@@ -78,9 +81,9 @@ class LoginHistoryController extends EloquentController
                 'username'          =>  'Username',
                 'email'             =>  'Email',
                 'cust_name'  => [
-                    'title'      => 'Customer',
+                    'title'      => ucfirst( config( 'ixp_fe.lang.customer.one' ) ),
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'customer',
+                    'controller' => 'admin/customer',
                     'action'     => 'overview',
                     'idField'    => 'cust_id'
                 ],
@@ -110,9 +113,10 @@ class LoginHistoryController extends EloquentController
     /**
      * @inheritdoc
      */
+    #[\Override]
     public static function routes(): void
     {
-        Route::group( [ 'prefix' => 'login-history' ], function() {
+        Route::group( [ 'prefix' => 'admin/login-history' ], function() {
             Route::get(  'list',                'LoginHistoryController@list'   )->name( 'login-history@list'   );
             Route::get(  'view/{id}',           'LoginHistoryController@view'   )->name( 'login-history@view'   );
         });
@@ -125,6 +129,7 @@ class LoginHistoryController extends EloquentController
      *
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -153,6 +158,7 @@ class LoginHistoryController extends EloquentController
      *
      * @return View
      */
+    #[\Override]
     public function view( Request $r, int $id ): View
     {
         $u = User::findOrFail( $id );

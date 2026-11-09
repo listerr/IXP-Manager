@@ -31,6 +31,7 @@ use IXP\Exceptions\GeneralException;
  * Originally written 17 Feb 2014
  *
  * @author Barry O'Donovan <barry@opensolutions.ie>
+ * @author Thomas Kerin <thomas@islandbridgenetworks.ie>
  */
 class OUI
 {
@@ -38,7 +39,7 @@ class OUI
      * Where to get the OUI list from
      * @var string Where to get the OUI list from
      */
-    public $file = 'http://standards.ieee.org/develop/regauth/oui/oui.txt';
+    public $file = 'https://standards-oui.ieee.org/oui/oui.txt';
 
     /**
      * Raw OUI data
@@ -57,7 +58,7 @@ class OUI
      *
      * @param string|null $file Where to get the OUI list from
      */
-    public function __construct( string $file = null )
+    public function __construct( ?string $file = null )
     {
         if( $file ) {
             $this->file = $file;
@@ -67,11 +68,11 @@ class OUI
     /**
      * Load the raw OUI data from the specified location
      *
-     * @return OUI An instance of this class for fluent interfaces
+     * @return static An instance of this class for fluent interfaces
      *
      * @throws GeneralException
      */
-    public function loadList(): OUI
+    public function loadList(): static
     {
         $this->raw = @file_get_contents( $this->file );
 
@@ -85,9 +86,11 @@ class OUI
     /**
      * @param false $data
      *
-     * @return array
+     * @return string[]
      *
      * @throws GeneralException
+     *
+     * @psalm-return array<string, string>
      */
     public function processRawData( $data = false ): array
     {

@@ -33,6 +33,7 @@ use IXP\Models\{
     Customer,
     User
 };
+use IXP\Rules\IsPhone;
 
 /**
  * Store FormRequest
@@ -47,7 +48,7 @@ use IXP\Models\{
 class Store extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the user is authorised to make this request.
      *
      * @return bool
      */
@@ -62,7 +63,9 @@ class Store extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return array{name: 'required|string|max:255', username: string, email: 'required|email|max:255', authorisedMobile: array{'nullable', 'string', 'max:25', \IXP\Rules\IsPhone}, custid: 'required|integer|exists:cust,id', privs: string}
      */
     public function rules(): array
     {
@@ -70,7 +73,7 @@ class Store extends FormRequest
             'name'                      => 'required|string|max:255',
             'username'                  => 'required|string|min:3|max:255|regex:/^[a-z0-9\-_\.]{3,255}$/|unique:user,username' . ( $this->id ? ',' . $this->id : '' ),
             'email'                     => 'required|email|max:255',
-            'authorisedMobile'          => 'nullable|string|max:50',
+            'authorisedMobile'          => ['nullable', 'string', 'max:25', new IsPhone()],
             'custid'                    => 'required|integer|exists:cust,id',
             'privs'                     => 'required|integer|in:' . implode( ',', array_keys( User::$PRIVILEGES ) ),
         ];
@@ -79,7 +82,7 @@ class Store extends FormRequest
     /**
      * @param Validator $validator
      *
-     * @return bool
+     * @return false
      */
     public function withValidator( Validator $validator ): bool
     {

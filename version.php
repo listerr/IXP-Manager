@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -25,7 +25,21 @@
 # Basic version information
 #
 
-define( 'APPLICATION_VERSION', '6.4.1' );
-define( 'APPLICATION_VERDATE', '2024060900' );
-define( 'DOCUMENTATION_VERSION', '6.4' );
-
+define( 'APPLICATION_VERSION', '7.4.1' );
+define( 'APPLICATION_VERDATE', '2026092800' );
+define( 'DOCUMENTATION_VERSION', '7.4' );
+define( 'APPLICATION_MANIFEST', [
+    'php_version' => [
+        'min' => '8.4.0',
+        'recommended' => '8.4.',
+        'max' => null,
+    ],
+    'mysql_version' => [
+        'min' => '8.0.0',
+        'recommended' => '8.0.',
+        'max' => null,
+    ],
+    'laravel_required_extensions' => [
+        'filter', 'hash', 'mbstring', 'openssl', 'pcre', 'pdo', 'pdo_mysql', 'session', 'tokenizer', 'xml', 'ds',
+    ],
+]);

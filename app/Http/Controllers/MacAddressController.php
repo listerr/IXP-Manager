@@ -49,6 +49,9 @@ class MacAddressController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
+
     /**
      * Is this a read only controller?
      *
@@ -59,20 +62,21 @@ class MacAddressController extends EloquentController
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = (object)[
             'model'             => MacAddress::class,
             'pagetitle'         => 'Discovered MAC Addresses',
             'titleSingular'     => 'MAC Address',
-            'nameSingular'      => 'a MAC address',
+            'nameSingular'      => 'MAC address',
             'listOrderBy'       => 'abbreviatedName',
             'listOrderByDir'    => 'ASC',
             'viewFolderName'    => 'mac-address',
             'readonly'          => self::$read_only,
             'documentation'     => 'https://docs.ixpmanager.org/latest/features/layer2-addresses/',
             'listColumns'       => [
-                'customer'       => 'Customer',
+                'customer'       => ucfirst( config( 'ixp_fe.lang.customer.one' ) ),
                 'switchport'     => 'Interface(s)',
                 'ip4'            => 'IPv4',
                 'ip6'            => 'IPv6',
@@ -92,6 +96,7 @@ class MacAddressController extends EloquentController
 
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;

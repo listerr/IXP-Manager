@@ -72,9 +72,9 @@
                                     <?php if( !is_array( $cconf ) || !isset( $cconf[ 'display'] ) ||  $cconf[ 'display']   ):?>
                                         <th>
                                             <?php if( is_array( $cconf ) ) :?>
-                                                <?= $cconf[ 'title' ] ?>
+                                                <?= $t->ee( $cconf[ 'title' ] ) ?>
                                             <?php else: ?>
-                                                <?= $cconf ?>
+                                                <?= $t->ee( $cconf ) ?>
                                             <?php endif;?>
                                         </th>
                                     <?php endif;?>
@@ -116,12 +116,22 @@
                                                         <?php $params = '/' . $nameIdParam . $row[ $cconf['idField'] ] ; ?>
 
                                                         <?php if( isset( $cconf['nameIdOptionalParam'] ) ): ?>
-                                                            <?php $params = '?' . $cconf['nameIdOptionalParam'] . '=' . $row[ $cconf['idField'] ] ; ?>
+                                                            <?php $params = '?' . $cconf['nameIdOptionalParam'] . '=' . urlencode($row[ $cconf['idField'] ]) ; ?>
                                                         <?php endif; ?>
+                            
+                                                        <?php if( isset( $cconf['route'] ) ): ?>
 
-                                                        <a href="<?= url( $cconf[ 'controller'] . '/' . $cconf[ 'action'] . $params ) ?>">
-                                                            <?= $t->ee( $row[$col] ) ?>
-                                                        </a>
+                                                            <a href="<?= route( $cconf[ 'route'], $row[ $cconf['idField'] ] ) ?>">
+                                                                <?= $t->ee( $row[$col] ) ?>
+                                                            </a>
+                                                        
+                                                        <?php else: ?>
+
+                                                            <a href="<?= url( $cconf[ 'controller'] . '/' . $cconf[ 'action'] . $params ) ?>">
+                                                                <?= $t->ee( $row[$col] ) ?>
+                                                            </a>
+                            
+                                                        <?php endif; ?>
 
                                                     <?php elseif( $cconf[ 'type'] === $t->data[ 'col_types' ][ 'XLATE'] ): ?>
 
@@ -227,7 +237,7 @@
                                                         <?php endif; ?>
                                                     <?php elseif( $cconf[ 'type'] === $t->data[ 'col_types' ][ 'ARRAY'] ): ?>
 
-                                                        <?= $cconf[ 'source' ][ $row[ $col ] ] ?? $row[ $col ] ?>
+                                                        <?= $this->ee( $cconf[ 'source' ][ $row[ $col ] ] ?? $row[ $col ] ) ?>
 
                                                     <?php elseif( $cconf[ 'type'] === $t->data[ 'col_types' ][ 'INTEGER'] ): ?>
 
@@ -235,7 +245,7 @@
 
                                                     <?php elseif( $cconf[ 'type'] === $t->data[ 'col_types' ][ 'LIMIT'] ): ?>
 
-                                                        <?= Str::limit( $row[ $col ], $cconf[ 'limitTo'] )?>
+                                                        <?= $t->ee( Str::limit( $row[ $col ], $cconf[ 'limitTo'] ) ) ?>
 
                                                     <?php elseif( $cconf[ 'type'] === $t->data[ 'col_types' ][ 'TEXT'] ): ?>
 

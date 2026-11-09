@@ -25,11 +25,10 @@ namespace IXP\Console\Commands\User;
 
 use Illuminate\Support\Facades\Hash;
 use IXP\Console\Commands\Command;
-use Illuminate\Database\Eloquent\Builder;
 use IXP\Events\User\UserCreated as UserCreatedEvent;
-use IXP\Models\Customer;
 use IXP\Models\CustomerToUser;
 use IXP\Models\User;
+use IXP\Rules\IsPhone;
 
 /**
  * Artisan command to create a new user
@@ -50,14 +49,14 @@ class Create extends Command
      * @var string
      */
     protected $signature = "user:create
-                        {--e|email= : User's email}
-                        {--na|name= : User's name}
-                        {--u|username= : User's username}
-                        {--m|mobile= : User's mobile number}
-                        {--c|custid= : User's customer}
-                        {--pr|priv= : User's privilege}
-                        {--pa|password= : User's password}
-                        {--s|send-welcome-email : Should we send the welcome email to the user?}";
+                        {--email= : User's email}
+                        {--name= : User's name}
+                        {--username= : User's username}
+                        {--mobile= : User's mobile number}
+                        {--custid= : User's customer}
+                        {--priv= : User's privilege}
+                        {--password= : User's password}
+                        {--send-welcome-email : Should we send the welcome email to the user?}";
 
     /**
      * The console command description.
@@ -66,20 +65,18 @@ class Create extends Command
      */
     protected $description = 'Create a new user.';
 
-    /**
-     * Validator rules
-     *
-     * @var array
-     */
-    protected $rules = [
-        'email'             => 'required|email|unique:user,email',
-        'name'              => 'required|string|max:255',
-        'username'          => 'required|string|min:3|max:255|regex:/^[a-z0-9\-_\.]{3,255}$/|unique:user,username',
-        'mobile'            => 'nullable|string|max:50',
-        'custid'            => 'required|integer|exists:cust,id',
-        'priv'              => 'required|integer|in:' . User::AUTH_SUPERUSER . ',' . User::AUTH_CUSTADMIN  . ',' . User::AUTH_CUSTUSER ,
-        'password'          => 'required|string|min:8|max:255',
-    ];
+    private function getRules(): array
+    {
+        return [
+            'email'             => 'required|email|unique:user,email',
+            'name'              => 'required|string|max:255',
+            'username'          => 'required|string|min:3|max:255|regex:/^[a-z0-9\-_\.]{3,255}$/|unique:user,username',
+            'mobile'            => ['nullable', 'string', 'max:25', new IsPhone()],
+            'custid'            => 'required|integer|exists:cust,id',
+            'priv'              => 'required|integer|in:' . User::AUTH_SUPERUSER . ',' . User::AUTH_CUSTADMIN  . ',' . User::AUTH_CUSTUSER ,
+            'password'          => 'required|string|min:8|max:255',
+        ];
+    }
 
     /**
      * Execute the console command.
@@ -105,7 +102,7 @@ class Create extends Command
             //${$option} = $value;
 
             if( $option !== 'send-welcome-email' ){
-                $validator = \Validator::make( [ $option => $value], [$option => $this->rules[ $option ] ] );
+                $validator = \Validator::make( [ $option => $value], [$option => $this->getRules()[ $option ] ] );
                 if( $value && $validator->fails() ) {
                     $this->error( $validator->errors()->first( $option ) );
                     return 0;
@@ -117,7 +114,7 @@ class Create extends Command
 
                 if( !$value ) {
                     if( $option === 'custid' ){
-                        $result = $this->ask('Search Customer by ASN or Name' );
+                        while (! $result = $this->ask('Search Customer by ASN or Name' ) ) {}
 
                         $this->table(
                             ['ID', 'Name', 'ASN'],
@@ -125,17 +122,17 @@ class Create extends Command
                         );
                     }
 
-                    $options[$option] = $this->validate_cmd( function() use( $option ) {
+                    $options[$option] = $this->recurringAskWithValidation( function() use( $option ) {
                         if( $option === 'password' ){
                             return $this->secret('Enter '. $option);
                         }
                         return $this->ask('Enter ' . $option);
-                    }, [ $option => $this->rules[ $option ] ]);
+                    }, $option, $this->getRules()[ $option ] );
                 }
             }
         }
 
-        if( !$sendEmail && $this->confirm('Do you want to send the welcome email to the used?', false ) ) {
+        if( !$sendEmail && $this->confirm('Do you want to send the welcome email to the user?', false ) ) {
             $sendEmail = true;
         }
 
@@ -148,7 +145,6 @@ class Create extends Command
         $user->username         = strtolower( $options['username'] );
         $user->email            = strtolower( $options['email'] );
         $user->disabled         = false;
-        $user->privs            = (int) $options['priv'];
         $user->custid           = (int) $options['custid'];
         $user->save();
 
@@ -156,7 +152,7 @@ class Create extends Command
         $c2u = new CustomerToUser;
         $c2u->customer_id   = $user->custid;
         $c2u->user_id       = $user->id;
-        $c2u->privs         = $user->privs;
+        $c2u->privs         = (int) $options['priv'];
         $c2u->extra_attributes = [ "created_by" => [ "type" => "artisan" , "user_id" => $user->id ] ];
         $c2u->save();
 
@@ -167,5 +163,51 @@ class Create extends Command
 
         $this->info( 'User created.' );
         return 0;
+    }
+
+    /**
+     * This function assists the user in entering data until the data is valid.
+     *
+     * A closure $method is used to prompt the user for input.
+     * $option is the name of the input variable.
+     * $rules is the validation rules to apply to the input.
+     *
+     * If the user's input passes validation, it is returned to the caller.
+     * If not, the function recurses to begin the cycle again.
+     *
+     * @param  \Closure  $method
+     * @param  string    $option
+     * @param  string    $rules
+     *
+     * @return mixed
+     */
+    private function recurringAskWithValidation( \Closure $method, string $option, mixed $rules ): mixed
+    {
+        $value = $method();
+        $validate = $this->validateInput( $option, $rules, $value );
+
+        if( $validate !== true ) {
+            $this->warn( $validate );
+            $value = $this->recurringAskWithValidation( $method, $option, $rules );
+        }
+        return $value;
+    }
+
+    /**
+     * This validator function takes a value (called $name), and attempts to validate
+     * it against the provided rules. If the validation fails, it returns the error message.
+     * If successful, true is returned.
+     *
+     * @return string|true
+     */
+    private function validateInput( string $name, mixed $rules, mixed $value ): bool|string
+    {
+        $validator = \Validator::make( [ $name => $value ], [ $name => $rules ] );
+
+        if( $validator->fails() ) {
+            return $validator->errors()->first( $name );
+        }
+
+        return true;
     }
 }

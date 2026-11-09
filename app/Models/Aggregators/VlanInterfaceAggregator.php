@@ -23,9 +23,11 @@ namespace IXP\Models\Aggregators;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+use Exception;
 use Illuminate\Database\Eloquent\{
     Builder,
 };
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 
 use IXP\Models\{Customer, PhysicalInterface, Router, Vlan, VlanInterface};
@@ -47,7 +49,8 @@ use IXP\Models\{Customer, PhysicalInterface, Router, Vlan, VlanInterface};
  * @property string|null $bgpmd5secret
  * @property string|null $ipv4bgpmd5secret
  * @property string|null $ipv6bgpmd5secret
- * @property int|null $maxbgpprefix
+ * @property int|null $ipv4maxbgpprefix
+ * @property int|null $ipv6maxbgpprefix
  * @property int|null $rsclient
  * @property int|null $ipv4canping
  * @property int|null $ipv6canping
@@ -65,35 +68,36 @@ use IXP\Models\{Customer, PhysicalInterface, Router, Vlan, VlanInterface};
  * @property-read int|null $layer2addresses_count
  * @property-read \IXP\Models\VirtualInterface|null $virtualInterface
  * @property-read Vlan|null $vlan
- * @method static Builder|VlanInterfaceAggregator newModelQuery()
- * @method static Builder|VlanInterfaceAggregator newQuery()
- * @method static Builder|VlanInterfaceAggregator query()
- * @method static Builder|VlanInterfaceAggregator whereAs112client($value)
- * @method static Builder|VlanInterfaceAggregator whereBgpmd5secret($value)
- * @method static Builder|VlanInterfaceAggregator whereBusyhost($value)
- * @method static Builder|VlanInterfaceAggregator whereCreatedAt($value)
- * @method static Builder|VlanInterfaceAggregator whereId($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4addressid($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4bgpmd5secret($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4canping($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4enabled($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4hostname($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv4monitorrcbgp($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6addressid($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6bgpmd5secret($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6canping($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6enabled($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6hostname($value)
- * @method static Builder|VlanInterfaceAggregator whereIpv6monitorrcbgp($value)
- * @method static Builder|VlanInterfaceAggregator whereIrrdbfilter($value)
- * @method static Builder|VlanInterfaceAggregator whereMaxbgpprefix($value)
- * @method static Builder|VlanInterfaceAggregator whereMcastenabled($value)
- * @method static Builder|VlanInterfaceAggregator whereNotes($value)
- * @method static Builder|VlanInterfaceAggregator whereRsclient($value)
- * @method static Builder|VlanInterfaceAggregator whereRsmorespecifics($value)
- * @method static Builder|VlanInterfaceAggregator whereUpdatedAt($value)
- * @method static Builder|VlanInterfaceAggregator whereVirtualinterfaceid($value)
- * @method static Builder|VlanInterfaceAggregator whereVlanid($value)
+ * @method static Builder<static>|VlanInterfaceAggregator newModelQuery()
+ * @method static Builder<static>|VlanInterfaceAggregator newQuery()
+ * @method static Builder<static>|VlanInterfaceAggregator query()
+ * @method static Builder<static>|VlanInterfaceAggregator whereAs112client($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereBgpmd5secret($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereBusyhost($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereCreatedAt($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereId($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4addressid($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4bgpmd5secret($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4canping($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4enabled($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4hostname($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4maxbgpprefix($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv4monitorrcbgp($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6addressid($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6bgpmd5secret($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6canping($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6enabled($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6hostname($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6maxbgpprefix($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIpv6monitorrcbgp($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereIrrdbfilter($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereMcastenabled($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereNotes($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereRsclient($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereRsmorespecifics($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereUpdatedAt($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereVirtualinterfaceid($value)
+ * @method static Builder<static>|VlanInterfaceAggregator whereVlanid($value)
  * @mixin \Eloquent
  */
 class VlanInterfaceAggregator extends VlanInterface
@@ -103,12 +107,12 @@ class VlanInterfaceAggregator extends VlanInterface
      * Utility function to provide an array of VLAN interface objects on a given VLAN.
      *
      * @param Vlan $vlan The VLAN to gather VlanInterfaces for
-     * @param bool|mixed $protocol Either 4 or 6 to limit the results to interface with IPv4 / IPv6
+     * @param int|bool $protocol Either 4 or 6 to limit the results to interface with IPv4 / IPv6
      *
      * @return Collection
      *
      */
-    public static function forVlan( Vlan $vlan, $protocol = false )
+    public static function forVlan( Vlan $vlan, int|bool $protocol = false ): Collection
     {
         return self::select( [ 'vli.*' ] )
             ->from( 'vlaninterface AS vli' )
@@ -187,7 +191,8 @@ class VlanInterfaceAggregator extends VlanInterface
             'cust.id AS cid', 'cust.name AS cname',
             'cust.abbreviatedName AS abrevcname',
             'cust.shortname AS cshortname',
-            'cust.autsys AS autsys', 'cust.maxprefixes AS gmaxprefixes',
+            'cust.autsys AS autsys',
+            ( $proto === 4 ? 'cust.maxprefixes' : 'cust.maxprefixesv6' ) . ' AS gmaxprefixes',
             'cust.peeringmacro AS peeringmacro', 'cust.peeringmacrov6  AS peeringmacrov6',
 
             'v.id AS vid', 'v.number AS vtag', 'v.name AS vname', 'vi.id AS viid',
@@ -198,7 +203,7 @@ class VlanInterfaceAggregator extends VlanInterface
             "vli.ipv{$proto}hostname     AS hostname" ,
             "vli.ipv{$proto}monitorrcbgp AS monitorrcbgp" ,
             "vli.ipv{$proto}bgpmd5secret AS bgpmd5secret" ,
-            'vli.maxbgpprefix            AS maxbgpprefix' ,
+            "vli.ipv{$proto}maxbgpprefix AS maxbgpprefix" ,
             'vli.as112client             AS as112client' ,
             'vli.rsclient                AS rsclient' ,
             'vli.busyhost                AS busyhost' ,
@@ -239,8 +244,8 @@ class VlanInterfaceAggregator extends VlanInterface
         }
 
         $q->groupByRaw( "vli.id, cust.id, cust.name, cust.abbreviatedName, cust.shortname, cust.autsys,
-                        cust.maxprefixes, cust.peeringmacro, cust.peeringmacrov6,
-                        vli.ipv{$proto}enabled, addr.address, vli.ipv{$proto}bgpmd5secret, vli.maxbgpprefix,
+                        cust.maxprefixes" . ( $proto === 4 ? '' : 'v6' ) . ", cust.peeringmacro, cust.peeringmacrov6,
+                        vli.ipv{$proto}enabled, addr.address, vli.ipv{$proto}bgpmd5secret, vli.ipv{$proto}maxbgpprefix,
                         vli.ipv{$proto}hostname, vli.ipv{$proto}monitorrcbgp, vli.busyhost,
                         vli.as112client, vli.rsclient, vli.irrdbfilter, vli.ipv{$proto}canping,
                         s.id, s.name,
@@ -250,9 +255,8 @@ class VlanInterfaceAggregator extends VlanInterface
 
         return $q->get()->toArray();
     }
-
-
-
+    
+    
     /**
      * Find all IP addresses on a given VLAN for a given ASN and protocol.
      *
@@ -260,18 +264,14 @@ class VlanInterfaceAggregator extends VlanInterface
      * which prevents next-hop hijacking but allows the same ASN to
      * set its other IPs as the next hop.
      *
-     * @param Vlan $v
-     * @param int $asn
-     * @param int $proto
      *
-     * @return array Array of IP addresses [ '192.0.2.2', '192.0.2.23', ]
-     *
-     * @throws
+     * @throws Exception
+     * @psalm-return list<mixed>
      */
     public static function getAllIPsForASN( Vlan $v, int $asn, int $proto ): array
     {
         if( !in_array( $proto, [ 4,6 ] , true ) ) {
-            throw new \Exception( 'Invalid inet protocol' );
+            throw new Exception( 'Invalid inet protocol' );
         }
 
         $ips = Vlan::select( [ 'ip.address' ] )
@@ -292,7 +292,31 @@ class VlanInterfaceAggregator extends VlanInterface
 
         return $vips;
     }
+    
+    
+    /**
+     * Is this peer a route server?
+     *
+     * @param Vlan $v
+     * @param int $asn
+     * @param int $proto
+     * @return bool
+     * @throws \Exception
+     */
+    public static function isRouteServer( Vlan $v, int $asn, int $proto ): bool
+    {
+        if( !in_array( $proto, [ 4,6 ] , true ) ) {
+            throw new \Exception( 'Invalid inet protocol' );
+        }
 
+        return Router::where( 'asn', $asn )
+            ->where( 'vlan_id', $v->id )
+            ->where( 'protocol', $proto )
+            ->where( 'type', Router::TYPE_ROUTE_SERVER )
+            ->get()
+            ->count() > 0;
+    }
+    
     /**
      * Utility function to get and return active VLAN interfaces on the requested protocol
      * suitable for route collector / server configuration.
@@ -305,6 +329,7 @@ class VlanInterfaceAggregator extends VlanInterface
      *         [cshortname] => shortname
      *         [autsys] => 65000
      *         [peeringmacro] => QWE              // or AS65500 if not defined
+     *         [is_route_server] => 0             // indicates if this peer is a route server
      *         [vliid] => 159
      *         [fvliid] => 00159                  // formatted %05d
      *         [address] => 192.0.2.123
@@ -320,13 +345,14 @@ class VlanInterfaceAggregator extends VlanInterface
      *         [vlanid] => 2
      *     ]
      *
-     * @param Vlan  $vlan
-     * @param int   $protocol
-     * @param int   $target
-     * @param bool  $quarantine
+     * @param Vlan $vlan
+     * @param int $protocol
+     * @param int $target
+     * @param bool $quarantine
      *
      * @return array As defined above
      *
+     * @throws \Exception
      */
     public static function sanitiseVlanInterfaces( Vlan $vlan, int $protocol = 4, int $target = Router::TYPE_ROUTE_SERVER, bool $quarantine = false ): array
     {
@@ -334,7 +360,7 @@ class VlanInterfaceAggregator extends VlanInterface
 
         $newints = [];
 
-        foreach( $ints as $index => $int ) {
+        foreach( $ints as $int ) {
 
             if( !$int['enabled'] ) {
                 continue;
@@ -342,7 +368,9 @@ class VlanInterfaceAggregator extends VlanInterface
 
             $int['protocol'] = $protocol;
             $int['vlanid']   = $int['vid'];
-
+            
+            $int['is_route_server'] = self::isRouteServer( $vlan, $int['autsys'], $protocol );
+            
             // don't need this anymore:
             unset( $int['enabled'] );
 
@@ -356,14 +384,14 @@ class VlanInterfaceAggregator extends VlanInterface
 
             $int['fvliid'] = sprintf( '%04d', $int['vliid'] );
 
-            if( $int['maxbgpprefix'] && $int['maxbgpprefix'] > $int['gmaxprefixes'] ) {
+            if( $int['maxbgpprefix'] && $int['maxbgpprefix'] > 0 ) {
                 $int['maxprefixes'] = $int['maxbgpprefix'];
             } else {
                 $int['maxprefixes'] = $int['gmaxprefixes'];
             }
 
-            if( !$int['maxprefixes'] ) {
-                $int['maxprefixes'] = 250;
+            if( !( is_numeric( $int['maxprefixes'] ) && $int['maxprefixes'] > 0 ) ) {
+                $int['maxprefixes'] = ( $protocol === 4 ? config( 'ixp.default_maxprefixes.v4' ) : config( 'ixp.default_maxprefixes.v6' ) );
             }
 
             unset( $int['gmaxprefixes'] );
@@ -395,5 +423,29 @@ class VlanInterfaceAggregator extends VlanInterface
         }
 
         return $newints;
+    }
+
+    /**
+     * This function takes two customers, and finds Vlans which the customers have in common with
+     * eachother.
+     * It returns an array of vlan ID's the users have in common.
+     * @param Customer $cust1
+     * @param Customer $cust2
+     * @return int[]
+     */
+    public static function findVlansBetweenCustomers( Customer $cust1, Customer $cust2 ): array
+    {
+        return VlanInterface::selectRaw("DISTINCT vlaninterface.vlanid")
+            ->join('virtualinterface as vi', 'vi.id', '=', 'vlaninterface.virtualinterfaceid')
+            ->where('vi.custid', $cust1->id)
+            ->whereIn('vlaninterface.vlanid', function( QueryBuilder $query) use ($cust2) {
+                $query->select('vlaninterface.vlanid')
+                    ->from('vlaninterface')
+                    ->join('virtualinterface as vi', 'vi.id', '=', 'vlaninterface.virtualinterfaceid')
+                    ->where('vi.custid', $cust2->id);
+            })
+            ->get()
+            ->pluck('vlanid')
+            ->toArray();
     }
 }

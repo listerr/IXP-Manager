@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Api\V4;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -52,9 +52,10 @@ class UtilsController extends Controller
      */
     public function markdown( Request $r ): JsonResponse
     {
-        $pd = new Parsedown();
+        /** @var Parsedown $parsedown */
+        $parsedown = app('parsedown');
         return response()->json([
-            'html' => clean( $pd->text( $r->text ) )
+            'html' => clean( $parsedown->text( $r->text ) )
         ]);
     }
 }

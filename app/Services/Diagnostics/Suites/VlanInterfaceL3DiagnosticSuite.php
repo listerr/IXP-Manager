@@ -66,9 +66,10 @@ class VlanInterfaceL3DiagnosticSuite extends DiagnosticSuite
 
     /**
      * Run the diagnostics suite
+     *
      * @throws BindingResolutionException
      */
-    public function run(): VlanInterfaceL3DiagnosticSuite
+    public function run(): static
     {
 
         $this->results->add( $this->ping(   $this->vli, $this->protocol ) );
@@ -85,24 +86,36 @@ class VlanInterfaceL3DiagnosticSuite extends DiagnosticSuite
     {
         $mainName = $vli->getIPAddress($protocol)->address . ' responds to pings';
 
-        $result = Process::run( sprintf( config( "ixp.exec.ping{$protocol}" ),  $vli->getIPAddress($protocol)->address ) );
+        try {
+            $result = Process::run( sprintf( config( "ixp.exec.ping{$protocol}" ),  $vli->getIPAddress($protocol)->address ) );
 
-        if( $result->successful() ) {
+            if( $result->successful() ) {
+
+                return new DiagnosticResult(
+                    name: $mainName,
+                    result: DiagnosticResult::TYPE_GOOD,
+                    narrativeHtml: "<pre>{$result->output()}</pre>",
+                );
+
+            } else {
+
+                return new DiagnosticResult(
+                    name: $mainName . ' - no, see detail for more information',
+                    result: DiagnosticResult::TYPE_ERROR,
+                    narrativeHtml: "<pre>{$result->output()}</pre>",
+                );
+
+            }
+
+        } catch ( \Exception $e ) {
 
             return new DiagnosticResult(
-                name: $mainName,
-                result: DiagnosticResult::TYPE_GOOD,
-                narrativeHtml: "<pre>{$result->output()}</pre>",
+                name: $mainName . ' - diagnostic failed to run',
+                result: DiagnosticResult::TYPE_UNKNOWN,
+                narrativeHtml: $e->getMessage(),
             );
 
         }
-
-        return new DiagnosticResult(
-            name: $mainName . ' - no, see detail for more information',
-            result: DiagnosticResult::TYPE_ERROR,
-            narrativeHtml: "<pre>{$result->output()}</pre>",
-        );
-
     }
 
 }

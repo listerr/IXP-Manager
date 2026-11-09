@@ -71,17 +71,13 @@ class JsonSchema
         self::EUROIX_JSON_VERSION_1_0,
     ];
     
+    // the data to export
+    private array $output = [];
+    
     /**
      * Get the JSON schema (for a given version or for the latest version)
-     *
-     * @param string|null   $version    The version to get (or, if null / not present then the latest)
-     * @param bool          $asArray    Do not convert to JSON but rather return the PHP array
-     * @param bool          $detailed   Create the very detailed version (usually for logged in users)
-     * @param bool          $tags       Include customer tags
-     * @return string|array
-     * @throws
      */
-    public function get( string $version = null, $asArray = false, $detailed = true, $tags = false )
+    public function get( ?string $version = null, bool $asArray = false, bool $detailed = true, bool $tags = false ): array|string
     {
         if( $version === null ) {
             $version = self::EUROIX_JSON_LATEST;
@@ -90,26 +86,26 @@ class JsonSchema
         }
 
         /** @psalm-suppress UndefinedConstant */
-        $output = [
+        $this->output = [
             'version' => $version,
             'generator' => 'IXP Manager v' . APPLICATION_VERSION,
         ];
 
         // normalise times to UTC for exports
         date_default_timezone_set('UTC');
-        $output['timestamp'] = now()->toIso8601ZuluString();
+        $this->output['timestamp'] = now()->toIso8601ZuluString();
 
-        $output['ixp_list']    = $this->getIXPInfo( $version );
-        $output['member_list'] = $this->getMemberInfo( $version, $detailed, $tags );
+        $infrasIncluded = $this->getIXPInfo( $version );
+        $this->output['member_list'] = $this->getMemberInfo( $version, $detailed, $tags, $infrasIncluded );
 
         // apply filters as some IXs don't want to export all details
-        $output = $this->filter($output);
+        $this->output = $this->filter($this->output);
 
         if( $asArray ) {
-            return $output;
+            return $this->output;
         }
 
-        return json_encode( $output, JSON_PRETTY_PRINT )."\n";
+        return json_encode( $this->output, JSON_PRETTY_PRINT )."\n";
     }
 
     /**
@@ -131,17 +127,19 @@ class JsonSchema
     /**
      * Collate the IXP specific information for the JSON schema export
      *
-     * @param string $version The version to collate the detail for
-     *
-     * @return array
-     *
-     * @throws
+     * @throws ExportException
      */
     private function getIXPInfo( string $version ): array
     {
         $ixpinfo = [];
+        $infrasIncluded = [];
 
         foreach( Infrastructure::with( ['switchers.cabinet.location'] )->get() as $infra ) {
+            
+            if( $infra->exclude_from_ixf_export ) {
+                continue;
+            }
+            
             $i = [];
             $i['shortname'] = $infra->name;
             $i['name'] = config('identity.legalname');
@@ -180,6 +178,8 @@ class JsonSchema
                 }
             }
 
+            $infrasIncluded[] = $infra->id;
+            
             $i['ixp_id'] = $infra->id;    // referenced in member's connections section
 
             $i['support_email'] = config('identity.support_email');
@@ -235,17 +235,16 @@ class JsonSchema
 
             $ixpinfo[] = $i;
         }
-
-        return $ixpinfo;
+        
+        $this->output['ixp_list']    = $ixpinfo;
+        
+        return $infrasIncluded;
     }
 
     /**
      * Collate the IXP's switch information for the JSON schema export
      *
-     * @param string            $version
-     * @param Infrastructure    $infra
-     *
-     * @return array
+     * @return array<array>
      */
     private function getSwitchInfo( string $version, Infrastructure $infra ): array
     {
@@ -284,14 +283,8 @@ class JsonSchema
 
     /**
      * Collate the IXP's member information for the JSON schema export
-     *
-     * @param string $version The version to collate the detail for
-     * @param bool $detailed
-     * @param bool $tags
-     *
-     * @return array
      */
-    private function getMemberInfo( string $version, bool $detailed, bool $tags ): array
+    private function getMemberInfo( string $version, bool $detailed, bool $tags, array $infrasIncluded ): array
     {
         $memberinfo = [];
 
@@ -331,11 +324,17 @@ class JsonSchema
         $exclude_asns = [];
         $exclude_tags = [];
 
-        if( $xas = config( 'ixp_api.json_export_schema.excludes.asnum' ) ) {
+        /** @var false|string $xas */
+        $xas = config( 'ixp_api.json_export_schema.excludes.asnum' );
+
+        if( is_string( $xas ) ) {
             $exclude_asns = explode( '|', $xas );
         }
 
-        if( $xt = config( 'ixp_api.json_export_schema.excludes.tags' ) ) {
+        /** @var false|string $xt */
+        $xt = config( 'ixp_api.json_export_schema.excludes.tags' );
+
+        if( is_string( $xt ) ) {
             $exclude_tags = explode( '|', $xt );
         }
 
@@ -368,6 +367,9 @@ class JsonSchema
                     }
                 }
             }
+            
+            // ensure we have at least one interface on an included infrastructure
+            $atLeastOneInfraIsConnected = false;
 
             foreach( $c->virtualInterfaces as $vi ) {
                 $iflist = [];
@@ -378,6 +380,15 @@ class JsonSchema
                     // FIXME: hack for LONAP as they do peering on reseller ports :-(
                     if( !$pi->switchPort->typePeering() && !$pi->switchPort->typeReseller() ) {
                         continue;
+                    }
+                    
+                    // is this an infrastructure we are including?
+                    try {
+                        if( !in_array( $pi->switchPort->switcher->infrastructure, $infrasIncluded ) ) {
+                            continue;
+                        }
+                    } catch( \Exception $e ) {
+                        dd($pi);
                     }
                     
                     $atLeastOnePiIsPeering = true;
@@ -401,7 +412,9 @@ class JsonSchema
                 if( !$atLeastOnePiIsPeering || !$atLeastOnePiIsConnected ) {
                     continue;
                 }
-
+                
+                $atLeastOneInfraIsConnected = true;
+                
                 $vlanentries = [];
                 foreach( $vi->vlanInterfaces as $vli ) {
                     if( $vli->vlan->private || !$vli->vlan->export_to_ixf ) {
@@ -416,6 +429,7 @@ class JsonSchema
                         $enabledfn = "ipv{$protocol}enabled";
                         $ipvaddressfn = "ipv{$protocol}address";
                         $ipv = "ipv{$protocol}";
+                        $maxprefixes = $protocol == 4 ? 'maxprefixes' : 'maxprefixesv6';
 
                         if( $vli->$enabledfn ) {
                             $vlanentry[ $ipv ][ 'address' ] = $vli->$ipvaddressfn->address;
@@ -431,8 +445,8 @@ class JsonSchema
 
                             $vlanentry[ $ipv ][ 'mac_addresses' ] = $macAddresses;
 
-                            if( !is_null ( $c->maxprefixes ) ) {
-                                $vlanentry[ $ipv ][ 'max_prefix' ] = $c->maxprefixes;
+                            if( !is_null ( $c->$maxprefixes ) ) {
+                                $vlanentry[ $ipv ][ 'max_prefix' ] = $c->$maxprefixes;
                             }
 
 
@@ -500,7 +514,7 @@ class JsonSchema
 
                 $connlist[] = $conn;
             }
-
+            
             $memberinfo[ $cnt ] = [
                 'asnum'          => $c->autsys,
                 'member_since'   => \Carbon\Carbon::parse($c->datejoin)->format( 'Y-m-d' ).'T00:00:00Z',
@@ -513,7 +527,7 @@ class JsonSchema
             if( $detailed ) {
                 $memberinfo[ $cnt ] = array_merge( $memberinfo[ $cnt ], [
                     'contact_email' => [ $c->peeringemail ],
-                    'contact_phone' => [ $c->nocphone ],
+                    'contact_phone' => [ $c->nocphone ?? '' ],
                 ]);
 
                 if( filter_var($c->nocwww, FILTER_VALIDATE_URL) !== false ) {
@@ -539,10 +553,11 @@ class JsonSchema
                     $memberinfo[ $cnt ][ 'ixp_manager' ][ 'resold_via_asn' ]   = $c->resellerObject->autsys;
                 }
             }
-
-            $memberinfo[ $cnt ][ 'connection_list' ] = $connlist;
-
-            $cnt++;
+            
+            if( $atLeastOneInfraIsConnected ) {
+                $memberinfo[ $cnt ][ 'connection_list' ] = $connlist;
+                $cnt++;
+            }
         }
 
         return $memberinfo;
@@ -554,6 +569,8 @@ class JsonSchema
      * @param int $ixpmType
      *
      * @return string
+     *
+     * @psalm-return 'ixp'|'other'|'peering'
      */
     private function xlateMemberType( int $ixpmType ) : string
     {
@@ -577,8 +594,11 @@ class JsonSchema
     private function filter( array $output ): array
     {
         // switch filters
-        if( $s = config( 'ixp_api.json_export_schema.excludes.switch' ) ) {
-            foreach( explode( '|', $s ) as $exc ) {
+        /** @var string|bool $switch_excludes - needed for psalm to understand the type */
+        $switch_excludes = config('ixp_api.json_export_schema.excludes.switch');
+
+        if( is_string( $switch_excludes ) ) {
+            foreach( explode( '|', $switch_excludes ) as $exc ) {
                 foreach( $output[ 'ixp_list' ] as $ixid => $ix ) {
                     foreach( $ix[ 'switch' ] as $sid => $sw ) {
                         if( isset( $output[ 'ixp_list' ][ $ixid ][ 'switch' ][ $sid ][ $exc ] ) ) {
@@ -590,8 +610,11 @@ class JsonSchema
         }
 
         // ixp filters
-        if( $i = config( 'ixp_api.json_export_schema.excludes.ixp' ) ) {
-            foreach( explode( '|', $i ) as $exc ) {
+        /** @var string|bool $ixp_excludes - needed for psalm to understand the type */
+        $ixp_excludes = config('ixp_api.json_export_schema.excludes.ixp');
+
+        if( is_string( $ixp_excludes ) ) {
+            foreach( explode( '|', $ixp_excludes ) as $exc ) {
                 foreach( $output[ 'ixp_list' ] as $ixid => $ix ) {
                     if( isset( $output[ 'ixp_list' ][ $ixid ][ $exc ] ) ) {
                         unset( $output[ 'ixp_list' ][ $ixid ][ $exc ] );
@@ -601,8 +624,11 @@ class JsonSchema
         }
 
         // member filters
-        if( $m = config( 'ixp_api.json_export_schema.excludes.member' ) ) {
-            foreach( explode( '|', $m ) as $exc ) {
+        /** @var string|bool $member_excludes - needed for psalm to understand the type */
+        $member_excludes = config('ixp_api.json_export_schema.excludes.member');
+
+        if( is_string( $member_excludes ) ) {
+            foreach( explode( '|', $member_excludes ) as $exc ) {
                 foreach( $output[ 'member_list' ] as $membid => $memb ) {
                     if( isset( $output[ 'member_list' ][ $membid ][ $exc ] ) ) {
                         unset( $output[ 'member_list' ][ $membid ][ $exc ] );
@@ -612,8 +638,11 @@ class JsonSchema
         }
 
         // intinfo filters
-        if( $i = config( 'ixp_api.json_export_schema.excludes.intinfo' ) ) {
-            foreach( explode( '|', $i ) as $exc ) {
+        /** @var string|bool $intinfo_excludes - needed for psalm to understand the type */
+        $intinfo_excludes = config('ixp_api.json_export_schema.excludes.intinfo');
+
+        if( is_string( $intinfo_excludes ) ) {
+            foreach( explode( '|', $intinfo_excludes ) as $exc ) {
                 foreach( $output[ 'member_list' ] as $mid => $member ) {
                     foreach( $member[ 'connection_list' ] as $clid => $connection ) {
                         foreach( $member[ 'connection_list' ][$clid]['vlan_list'] as $vid => $vlanint ) {

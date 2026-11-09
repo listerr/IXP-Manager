@@ -14,7 +14,7 @@ namespace IXP\Console\Commands;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -83,12 +83,14 @@ abstract class Command extends \Illuminate\Console\Command
      }
 
     /**
-     * Returns the list of customers that the keyword match the ASN or the name
-     *
-     * @param  string|int  $search
-     *
-     * @return array
-     */
+      * Returns the list of customers that the keyword match the ASN or the name
+      *
+      * @param string|int  $search
+      *
+      * @return array
+      *
+      * @psalm-return array<int, mixed>
+      */
      protected function customersViaNameOrASN( string|int $search ): array
      {
          return Customer::selectRaw( 'id,name,autsys' )
@@ -129,27 +131,6 @@ abstract class Command extends \Illuminate\Console\Command
     }
 
     /**
-     * Validate an input.
-     *
-     * @param  mixed   $method
-     * @param  array   $rules
-     *
-     * @return mixed
-     */
-    protected function validate_cmd( mixed $method, array $rules ): mixed
-    {
-        $value = $method();
-        $validate = $this->validateInput( $rules, $value );
-
-        if( $validate !== true ) {
-            $this->warn( $validate );
-            $value = $this->validate_cmd( $method, $rules );
-        }
-        return $value;
-    }
-
-
-    /**
      * Simple validator function for validating a single value against a given rule
      * and error and exit it if fails.
      *
@@ -157,7 +138,8 @@ abstract class Command extends \Illuminate\Console\Command
      * @param string $name The parameter name for output in error messages
      * @param mixed $value The value to validate against $rule
      *
-     * @return bool
+     * @return true
+     *
      * @throws \Exception
      */
     protected function validateOrExit( string $rule, string $name, string $value ): bool

@@ -75,7 +75,7 @@ class GrapherServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Route::group( ['middleware' => 'grapher', 'namespace' => 'IXP\Http\Controllers\Services', 'as' => 'grapher::', 'prefix' => 'grapher'  ], function(){
+        Route::group( ['middleware' => 'grapher', 'namespace' => 'IXP\Http\Controllers\Services', 'prefix' => 'grapher'  ], function(){
             Route::get( 'ixp',               'Grapher@ixp'               );
             Route::get( 'infrastructure',    'Grapher@infrastructure'    );
             Route::get( 'vlan',              'Grapher@vlan'              );
@@ -87,18 +87,29 @@ class GrapherServiceProvider extends ServiceProvider
             Route::get( 'virtualinterface',  'Grapher@virtualInterface'  ); // member LAG (of physint's)
             Route::get( 'customer',          'Grapher@customer'          ); // member agg over all physint's
             Route::get( 'vlaninterface',     'Grapher@vlanInterface'     ); // member vlan interface
-            Route::get( 'p2p',               'Grapher@p2p'               ); // member vlan interface
+            Route::get( 'p2p',               'Grapher@p2p'               ); // member p2p graph
+            Route::get( 'multip2p',          'Grapher@multip2p'          ); // member multip2p graph
             Route::get( 'latency',           'Grapher@latency'           );
         });
-
-        Route::group(['middleware' => [ 'api/v4', 'assert.privilege:' . User::AUTH_SUPERUSER ],
-                'namespace' => 'IXP\Http\Controllers\Services', 'as' => 'grapher::' ], function(){
-
-            Route::get(  'api/v4/grapher/mrtg-config', 'Grapher\Api@generateConfiguration' );
-            Route::get(  'api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
-            Route::post( 'api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
-        });
         
+        if( config( 'ixp_api.unsecured_api_access' ) ) {
+            Route::group( [ 'middleware' => [ 'apideprecated', 'api/v4', 'assert.privilege:' . User::AUTH_SUPERUSER ],
+                            'namespace'  => 'IXP\Http\Controllers\Services', ], function() {
+                
+                Route::get(  'api/v4/grapher/mrtg-config', 'Grapher\Api@generateConfiguration' );
+                Route::get(  'api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
+                Route::post( 'api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
+            } );
+        }
+        
+        Route::group(['middleware' => [ 'api/v4', 'assert.privilege:' . User::AUTH_SUPERUSER ],
+                      'namespace' => 'IXP\Http\Controllers\Services',  ], function(){
+            
+            Route::get(  'admin/api/v4/grapher/mrtg-config', 'Grapher\Api@generateConfiguration' );
+            Route::get(  'admin/api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
+            Route::post( 'admin/api/v4/grapher/config',      'Grapher\Api@generateConfiguration' );
+        });
+
         // we have a few rendering functions we want to include here:
         $this->app->make( Engine::class )->loadExtension( new GrapherRendererExtension(), [] );
     }
@@ -110,6 +121,7 @@ class GrapherServiceProvider extends ServiceProvider
      *
      * @throws
      */
+    #[\Override]
     public function register()
     {
         // make sure the config is okay:
@@ -130,8 +142,11 @@ class GrapherServiceProvider extends ServiceProvider
     /**
      * Get the services provided by the provider.
      *
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return list{Grapher::class}
      */
+    #[\Override]
     public function provides(): array
     {
         return [ Grapher::class ];

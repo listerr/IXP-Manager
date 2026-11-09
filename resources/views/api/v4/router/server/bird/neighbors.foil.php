@@ -7,9 +7,9 @@
  * you can't effect the changes you need with skinning, consider posting to the mailing
  * list to see if it can be achieved / incorporated.
  *
- * Skinning: https://ixp-manager.readthedocs.io/en/latest/features/skinning.html
+ * Skinning: https://docs.ixpmanager.org/latest/features/skinning/
  *
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -111,6 +111,9 @@ int set allas;
 
         # This ASN was configured not to use IRRDB filtering
 <?php endif; ?>
+
+    # RFC 8326 - facilitate Graceful BGP Session Shutdown
+    if (65535, 0) ~ bgp_community then bgp_local_pref = 0;
 
     accept;
 }

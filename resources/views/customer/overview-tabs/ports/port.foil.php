@@ -241,7 +241,7 @@
                                             </b>
                                         </td>
                                         <td>
-                                            <span class="tw-font-mono">
+                                            <span class="tw:font-mono">
                                                 <?= $t->ee( $v6->address ) ?><?php if( isset( $t->netInfo[ $vlanid ][ 6 ][ 'masklen' ] ) ) : ?>/<?= $t->netInfo[ $vlanid ][ 6 ][ "masklen" ] ?><?php endif;?>
                                             </span>
                                         </td>
@@ -250,7 +250,7 @@
                                         </td>
                                         <td>
                                             <?php if( $vli->ipv6bgpmd5secret ): ?>
-                                                <span class="tw-font-mono">
+                                                <span class="tw:font-mono">
                                                     <?= $t->ee( $vli->ipv6bgpmd5secret ) ?>
                                                 </span>
                                             <?php else: ?>
@@ -268,7 +268,7 @@
                                             </b>
                                         </td>
                                         <td>
-                                            <span class="tw-font-mono">
+                                            <span class="tw:font-mono">
                                                 <?= $t->ee( $v4->address ) ?><?php if( isset( $t->netInfo[ $vlanid ][ 4 ][ 'masklen' ] ) ) : ?>/<?= $t->netInfo[ $vlanid ][ 4 ][ "masklen" ] ?><?php endif;?>
                                             </span>
                                         </td>
@@ -277,7 +277,7 @@
                                         </td>
                                         <td>
                                             <?php if( $vli->ipv4bgpmd5secret ): ?>
-                                                <span class="tw-font-mono">
+                                                <span class="tw:font-mono">
                                                     <?= $t->ee( $vli->ipv4bgpmd5secret ) ?>
                                                 </span>
                                             <?php else: ?>
@@ -302,7 +302,7 @@
                                     </td>
                                     <td>
                                         <?php foreach( $vli->layer2Addresses as $l2a ): ?>
-                                            <span class="tw-font-mono">
+                                            <span class="tw:font-mono">
                                                 <?= $l2a->macFormatted( ':' ) ?>
                                             </span><br />
                                         <?php endforeach; ?>
@@ -342,6 +342,31 @@
     </div>
 
     <div class="col-lg-6 col-md-12">
+
+    <?php foreach( $pis as $pi ): ?>
+
+            <?php if( !$pi->isGraphable() ) { continue; } ?>
+
+            <div class="card mb-4">
+                <div class="card-header d-flex">
+                    <div class="mr-auto">
+                        <h5>
+                            Day Graph for <?= $t->ee( $pi->switchPort->switcher->name ) ?> / <?= $t->ee( $pi->switchPort->name ) ?>
+                        </h5>
+                    </div>
+
+                    <div class="my-auto">
+                        <a class="btn btn-white btn-sm" href="<?= route( "statistics@member-drilldown", [ 'type' => 'pi', 'typeid' => $pi->id ] ) ?>">
+                            <i class="fa fa-search"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <?= $t->grapher->physint( $pi )->renderer()->boxLegacy() ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
+
         <?php if( $isLAG ): ?>
             <?php if( $t->vi->isGraphable() ): ?>
                 <div class="card mb-4">
@@ -364,27 +389,5 @@
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php foreach( $pis as $pi ): ?>
-            <?php if( !$pi->isGraphable() ) { continue; } ?>
-
-            <div class="card mb-4">
-                <div class="card-header d-flex">
-                    <div class="mr-auto">
-                        <h5>
-                            Day Graph for <?= $t->ee( $pi->switchPort->switcher->name ) ?> / <?= $t->ee( $pi->switchPort->name ) ?>
-                        </h5>
-                    </div>
-
-                    <div class="my-auto">
-                        <a class="btn btn-white btn-sm" href="<?= route( "statistics@member-drilldown", [ 'type' => 'pi', 'typeid' => $pi->id ] ) ?>">
-                            <i class="fa fa-search"></i>
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <?= $t->grapher->physint( $pi )->renderer()->boxLegacy() ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
     </div>
 </div>

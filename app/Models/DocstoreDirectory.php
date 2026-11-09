@@ -57,15 +57,15 @@ use Illuminate\Support\Facades\{
  * @property-read DocstoreDirectory|null $parentDirectory
  * @property-read EloquentCollection<int, DocstoreDirectory> $subDirectories
  * @property-read int|null $sub_directories_count
- * @method static Builder|DocstoreDirectory newModelQuery()
- * @method static Builder|DocstoreDirectory newQuery()
- * @method static Builder|DocstoreDirectory query()
- * @method static Builder|DocstoreDirectory whereCreatedAt($value)
- * @method static Builder|DocstoreDirectory whereDescription($value)
- * @method static Builder|DocstoreDirectory whereId($value)
- * @method static Builder|DocstoreDirectory whereName($value)
- * @method static Builder|DocstoreDirectory whereParentDirId($value)
- * @method static Builder|DocstoreDirectory whereUpdatedAt($value)
+ * @method static Builder<static>|DocstoreDirectory newModelQuery()
+ * @method static Builder<static>|DocstoreDirectory newQuery()
+ * @method static Builder<static>|DocstoreDirectory query()
+ * @method static Builder<static>|DocstoreDirectory whereCreatedAt($value)
+ * @method static Builder<static>|DocstoreDirectory whereDescription($value)
+ * @method static Builder<static>|DocstoreDirectory whereId($value)
+ * @method static Builder<static>|DocstoreDirectory whereName($value)
+ * @method static Builder<static>|DocstoreDirectory whereParentDirId($value)
+ * @method static Builder<static>|DocstoreDirectory whereUpdatedAt($value)
  * @mixin Eloquent
  */
 
@@ -84,6 +84,7 @@ class DocstoreDirectory extends Model
 
     /**
      * Get the subdirectories for this directory
+     * @return HasMany<DocstoreDirectory, DocstoreDirectory>
      */
     public function subDirectories(): HasMany
     {
@@ -92,6 +93,8 @@ class DocstoreDirectory extends Model
 
     /**
      * Get the parent directory
+     *
+     * @return BelongsTo<self, DocstoreDirectory>
      */
     public function parentDirectory(): BelongsTo
     {
@@ -100,6 +103,8 @@ class DocstoreDirectory extends Model
 
     /**
      * Get the files in this directory
+     *
+     * @return HasMany<DocstoreFile, DocstoreDirectory>
      */
     public function files(): HasMany
     {
@@ -129,17 +134,19 @@ class DocstoreDirectory extends Model
     /**
      * Create an array of directories keeping the hierarchy root/subfolder
      *
-     *  [
-     *      [ "id" => 1, "name"  => "Folder 1" ],
-     *      [ "id" => 2, "name"  => " - Sub Folder 1" ],
-     *      [ "id" => 3, "name"  => " - Sub Folder 2" ],
-     *      [ "id" => 4, "name"  => "Folder 2" ],
-     *  ]
+     * [
+     * [ "id" => 1, "name"  => "Folder 1" ],
+     * [ "id" => 2, "name"  => " - Sub Folder 1" ],
+     * [ "id" => 3, "name"  => " - Sub Folder 2" ],
+     * [ "id" => 4, "name"  => "Folder 2" ],
+     * ]
      *
      * @param $dirs EloquentCollection
      * @param $depth int
      *
-     * @return array
+     * @return ((mixed|string)[]|mixed)[]
+     *
+     * @psalm-return list{0: array{id: ''|mixed, name: string}|mixed, 1?: array{id: ''|mixed, name: string}|mixed,...}
      */
     public static function getListingForDropdown( EloquentCollection $dirs, int $depth = 5 ): array
     {

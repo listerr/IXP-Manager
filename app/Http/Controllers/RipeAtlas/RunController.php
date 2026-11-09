@@ -90,7 +90,10 @@ class RunController extends Eloquent2Frontend
 
     /**
      * This function sets up the frontend controller
+     *
+     * @return void
      */
+    #[\Override]
     public function feInit()
     {
         $this->feParams         = (object)[
@@ -136,22 +139,24 @@ class RunController extends Eloquent2Frontend
      *
      * @return void
      */
+    #[\Override]
     protected static function additionalRoutes( string $route_prefix ): void
     {
         Route::group( [ 'prefix' => $route_prefix ], function() use ( $route_prefix ) {
-            Route::get( 'add-step-2',                   'RipeAtlas\RunController@addStep2'      )->name( $route_prefix . '@add-step-2'    );
-            Route::put( 'run/complete/{atlasrun}',      'RipeAtlas\RunController@completeRun'   )->name( $route_prefix . '@complete-run'  );
+            Route::get( 'add-step-2',                   [self::class, 'addStep2']      )->name( $route_prefix . '@add-step-2'    );
+            Route::put( 'run/complete/{atlasrun}',      [self::class, 'completeRun']   )->name( $route_prefix . '@complete-run'  );
         });
     }
 
     /**
      * Provide array of rows for the list action and view action
      *
-     * @param int $id The `id` of the row to load for `view` action`. `null` if `listAction`
+     * @param int|null $id The `id` of the row to load for `view` action`. `null` if `listAction`
      *
      * @return array
      */
-    protected function listGetData( $id = null ): array
+    #[\Override]
+    protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
 
@@ -176,8 +181,11 @@ class RunController extends Eloquent2Frontend
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (\Illuminate\Database\Eloquent\Collection|null|true)[]
+     *
+     * @psalm-return array{object: null, vlans: \Illuminate\Database\Eloquent\Collection<int, Vlan>, preAddForm: true}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         Former::populate( [
@@ -227,8 +235,9 @@ class RunController extends Eloquent2Frontend
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return RedirectResponse|true
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         if( !$r->selected_custs || !count( $r->selected_custs ) ) {
@@ -285,6 +294,7 @@ class RunController extends Eloquent2Frontend
      *
      * @return bool Return false to stop / cancel the deletion
      */
+    #[\Override]
     protected function preDelete(): bool
     {
         if( !$this->object->completed_at ) {
@@ -304,6 +314,7 @@ class RunController extends Eloquent2Frontend
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $rules = [

@@ -3,7 +3,7 @@
 namespace IXP\Http\Controllers;
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -47,9 +47,10 @@ use IXP\Utils\View\Alert\{
  *
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers
- * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class PeeringMatrixController extends Controller
@@ -91,7 +92,14 @@ class PeeringMatrixController extends Controller
         } else if( $r->session()->exists( "peering-matrix-vlan" ) ) {
             $vl = $r->session()->get( "peering-matrix-vlan" );
         } else {
-            $vl = config( "identity.vlans.default" );
+            $vl = Vlan::where( 'peering_matrix', 1 )->first();
+            
+            if( !$vl ) {
+                AlertContainer::push( 'There are no VLANs configured to be included in the peering matrix.', Alert::DANGER );
+                return redirect('');
+            }
+            
+            $vl = $vl->id;
         }
 
         if( $r->proto  !== null ) {
@@ -116,22 +124,18 @@ class PeeringMatrixController extends Controller
 
         if( !count( $vlans ) ) {
             AlertContainer::push( 'No VLANs have been enabled for the peering matrix. Please see <a href="'
-                . 'https://github.com/inex/IXP-Manager/wiki/Peering-Matrix">these instructions</a>'
+                . 'https://docs.ixpmanager.org/latest/features/peering-matrix/">these instructions</a>'
                 . ' / contact our support team.', Alert::DANGER );
             return redirect( '');
         }
 
 
-        if( !isset( $vlans[ $vl ] ) ){
-            $vl = config( "identity.vlans.default", null );
+        if( !isset( $vlans[ $vl ] ) ) {
+            AlertContainer::push( 'There are no VLANs set for the peering matrix. Please '
+                    . 'edit your VLAN(s) and set the "Peering Matrix" option to "Yes" for at least one of them.',
+            Alert::DANGER );
 
-            if( !isset( $vlans[ $vl ] ) ) {
-                AlertContainer::push( 'There is no default VLAN set for the peering matrix. Please '
-                    . 'set <code>IDENTITY_DEFAULT_VLAN</code> in your <code>.env</code> file to a valid DB ID '
-                    . 'of the VLAN you would like the peering matrix to show by default.', Alert::DANGER );
-
-                return redirect( '');
-            }
+            return redirect( '');
         }
 
         /** @var User $us */

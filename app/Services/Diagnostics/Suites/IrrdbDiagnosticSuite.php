@@ -54,15 +54,17 @@ class IrrdbDiagnosticSuite extends DiagnosticSuite
         $this->name        = 'IRRDB Filtering';
         $this->description = "Diagnostics related to IRRDB filtering.";
         $this->type        = 'CUSTOMER';
+        $this->link        = route( 'irrdb@list', ['cust' => $this->customer, 'type' => 'prefix', 'protocol' => 4 ] );
 
         parent::__construct();
     }
 
     /**
      * Run the diagnostics suite
+     *
      * @throws GeneralException
      */
-    public function run(): IrrdbDiagnosticSuite
+    public function run(): static
     {
         // ordering here will determine order on view
         $this->results->add( $this->customerIrrdbFiltered( $this->customer ) );

@@ -61,16 +61,20 @@ class IrrdbConfigController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = (object)[
             'model'             => IrrdbConfig::class,
             'pagetitle'         => 'IRRDB Sources',
             'titleSingular'     => 'IRRDB Source',
-            'nameSingular'      => 'an IRRDB Sources',
+            'nameSingular'      => 'IRRDB Source',
             'listOrderBy'       => 'host',
             'listOrderByDir'    => 'ASC',
             'viewFolderName'    => 'irrdb-config',
@@ -108,6 +112,7 @@ class IrrdbConfigController extends EloquentController
      *
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -121,8 +126,11 @@ class IrrdbConfigController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return IrrdbConfig[]
+     *
+     * @psalm-return array{object: IrrdbConfig}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -136,8 +144,11 @@ class IrrdbConfigController extends EloquentController
      * @param int|null $id
      *
      * @return array
+     *
+     * @psalm-return array{object: mixed}
      */
-    protected function editPrepareForm( int $id = null ): array
+    #[\Override]
+    protected function editPrepareForm( ?int $id = null ): array
     {
         $this->object = IrrdbConfig::findOrFail( $id );
 
@@ -155,7 +166,9 @@ class IrrdbConfigController extends EloquentController
     /**
      * Function to do the actual validation and storing of the submitted object.
      *
+     * @return true
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -166,8 +179,9 @@ class IrrdbConfigController extends EloquentController
     /**
      * Function to do the actual validation and storing of the submitted object.
      *
-     *
+     * @return true
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = IrrdbConfig::findOrFail( $id );
@@ -179,6 +193,7 @@ class IrrdbConfigController extends EloquentController
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function preDelete() : bool
     {
         $okay = true;
@@ -194,6 +209,7 @@ class IrrdbConfigController extends EloquentController
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [

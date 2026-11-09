@@ -14,7 +14,7 @@ namespace IXP\Services;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -26,7 +26,7 @@ use Illuminate\Contracts\View\Engine as EngineInterface;
 
 use Foil\Engine as EngineFoil;
 
-class FoilEngine implements EngineInterface
+final class FoilEngine implements EngineInterface
 {
     private EngineFoil $engine;
 
@@ -48,6 +48,7 @@ class FoilEngine implements EngineInterface
      *
      * @return string
      */
+    #[\Override]
     public function get( $path, array $data = array() ): string
     {
         return $this->engine->render( $path, $data );

@@ -14,7 +14,7 @@ namespace IXP\Jobs\RipeAtlas;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -71,11 +71,11 @@ class CompleteRequests extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @return bool
+     * @throws \JsonException|\Illuminate\Contracts\Container\BindingResolutionException
      *
-     * @throws
+     * @psalm-return 0|1
      */
-    public function handle()
+    public function handle(): int
     {
         $ams = $this->atlasRun->atlasMeasurements()->get();
 

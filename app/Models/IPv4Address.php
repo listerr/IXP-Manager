@@ -40,14 +40,14 @@ use Illuminate\Database\Eloquent\{
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \IXP\Models\Vlan|null $vlan
  * @property-read \IXP\Models\VlanInterface|null $vlanInterface
- * @method static Builder|IPv4Address newModelQuery()
- * @method static Builder|IPv4Address newQuery()
- * @method static Builder|IPv4Address query()
- * @method static Builder|IPv4Address whereAddress($value)
- * @method static Builder|IPv4Address whereCreatedAt($value)
- * @method static Builder|IPv4Address whereId($value)
- * @method static Builder|IPv4Address whereUpdatedAt($value)
- * @method static Builder|IPv4Address whereVlanid($value)
+ * @method static Builder<static>|IPv4Address newModelQuery()
+ * @method static Builder<static>|IPv4Address newQuery()
+ * @method static Builder<static>|IPv4Address query()
+ * @method static Builder<static>|IPv4Address whereAddress($value)
+ * @method static Builder<static>|IPv4Address whereCreatedAt($value)
+ * @method static Builder<static>|IPv4Address whereId($value)
+ * @method static Builder<static>|IPv4Address whereUpdatedAt($value)
+ * @method static Builder<static>|IPv4Address whereVlanid($value)
  * @mixin \Eloquent
  */
 class IPv4Address extends Model
@@ -62,6 +62,8 @@ class IPv4Address extends Model
 
     /**
      * Get the vlan that own the ipv4address
+     *
+     * @return BelongsTo<Vlan, IPv4Address>
      */
     public function vlan(): BelongsTo
     {
@@ -70,6 +72,8 @@ class IPv4Address extends Model
 
     /**
      * Get the vlan interface associated with the ipv4.
+     *
+     * @return HasOne<VlanInterface, IPv4Address>
      */
     public function vlanInterface(): HasOne
     {

@@ -7,9 +7,9 @@
  * you can't effect the changes you need with skinning, consider posting to the mailing
  * list to see if it can be achieved / incorporated.
  *
- * Skinning: https://ixp-manager.readthedocs.io/en/latest/features/skinning.html
+ * Skinning: https://docs.ixpmanager.org/latest/features/skinning/
  *
- * Copyright (C) 2009 - 2019 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -37,7 +37,7 @@
 # Generated: <?= date('Y-m-d H:i:s') . "\n" ?>
 #
 
-# For VLAN: <?= $t->vlan->name ?> (Tag: <?= $t->vlan->number ?>, Database ID: <?= $t->vlan->id ?>)
+# For VLAN: <?= $t->vlan->name ?> (Tag: <?= $t->vlan->number ?>, Database ID: <?= $t->vlan->id ?>) - IPv<?= $t->router->protocol ?>
 
 # standardise time formats:
 timeformat base         iso long;
@@ -47,7 +47,7 @@ timeformat route        iso long;
 
 
 log "/var/log/bird/<?= $t->handle ?>.log" all;
-log syslog all;
+log syslog name "bird-<?= $t->handle ?>" all;
 
 define routerasn     = <?= $t->router->asn       ?>;
 define routeraddress = <?= $t->router->peering_ip ?>;
@@ -55,10 +55,11 @@ define routeraddress = <?= $t->router->peering_ip ?>;
 router id <?= $t->router->router_id ?>;
 
 protocol kernel {
-    ipv<?= $int['protocol'] ?? 4 ?> {
+    ipv<?= $t->router->protocol ?> {
         export all;
     };
-    scan time 60;
+    scan time 120;
+    netlink rx buffer 1703936;
 }
 
 protocol device {
@@ -67,7 +68,7 @@ protocol device {
 
 # These function excludes weird networks
 #  rfc1918, class D, class E, too long and too short prefixes
-function avoid_martians()
+function avoid_martians() -> bool
 prefix set martians;
 {
     <?php if( $t->router->protocol === 6 ): ?>
@@ -124,8 +125,9 @@ prefix set martians;
     <?php endif; ?>
 
     # Avoid RFC1918 and similar networks
-    if net ~ martians then
+    if ( net ~ martians ) then {
         return false;
+    }
 
     return true;
 }

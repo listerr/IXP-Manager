@@ -58,20 +58,20 @@ use IXP\Traits\Observable;
  * @property-read int|null $sflow_receivers_count
  * @property-read Collection<int, \IXP\Models\VlanInterface> $vlanInterfaces
  * @property-read int|null $vlan_interfaces_count
- * @method static Builder|VirtualInterface newModelQuery()
- * @method static Builder|VirtualInterface newQuery()
- * @method static Builder|VirtualInterface query()
- * @method static Builder|VirtualInterface whereChannelgroup($value)
- * @method static Builder|VirtualInterface whereCreatedAt($value)
- * @method static Builder|VirtualInterface whereCustid($value)
- * @method static Builder|VirtualInterface whereDescription($value)
- * @method static Builder|VirtualInterface whereFastlacp($value)
- * @method static Builder|VirtualInterface whereId($value)
- * @method static Builder|VirtualInterface whereLagFraming($value)
- * @method static Builder|VirtualInterface whereMtu($value)
- * @method static Builder|VirtualInterface whereName($value)
- * @method static Builder|VirtualInterface whereTrunk($value)
- * @method static Builder|VirtualInterface whereUpdatedAt($value)
+ * @method static Builder<static>|VirtualInterface newModelQuery()
+ * @method static Builder<static>|VirtualInterface newQuery()
+ * @method static Builder<static>|VirtualInterface query()
+ * @method static Builder<static>|VirtualInterface whereChannelgroup($value)
+ * @method static Builder<static>|VirtualInterface whereCreatedAt($value)
+ * @method static Builder<static>|VirtualInterface whereCustid($value)
+ * @method static Builder<static>|VirtualInterface whereDescription($value)
+ * @method static Builder<static>|VirtualInterface whereFastlacp($value)
+ * @method static Builder<static>|VirtualInterface whereId($value)
+ * @method static Builder<static>|VirtualInterface whereLagFraming($value)
+ * @method static Builder<static>|VirtualInterface whereMtu($value)
+ * @method static Builder<static>|VirtualInterface whereName($value)
+ * @method static Builder<static>|VirtualInterface whereTrunk($value)
+ * @method static Builder<static>|VirtualInterface whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class VirtualInterface extends Model
@@ -113,6 +113,8 @@ class VirtualInterface extends Model
 
     /**
      * Get the customer that owns the virtual interfaces.
+     *
+     * @return BelongsTo<Customer, VirtualInterface>
      */
     public function customer(): BelongsTo
     {
@@ -121,6 +123,8 @@ class VirtualInterface extends Model
 
     /**
      * Get the VLAN interfaces for the virtual interface
+     *
+     * @return HasMany<VlanInterface, VirtualInterface>
      */
     public function vlanInterfaces(): HasMany
     {
@@ -129,6 +133,8 @@ class VirtualInterface extends Model
 
     /**
      * Get the physical interfaces for the virtual interface
+     *
+     * @return HasMany<PhysicalInterface, VirtualInterface>
      */
     public function physicalInterfaces(): HasMany
     {
@@ -137,6 +143,8 @@ class VirtualInterface extends Model
 
     /**
      * Get the mac addresses for the virtual interface
+     *
+     * @return HasMany<MacAddress, VirtualInterface>
      */
     public function macAddresses(): HasMany
     {
@@ -145,6 +153,8 @@ class VirtualInterface extends Model
 
     /**
      * Get the sflow receivers for the virtual interface
+     *
+     * @return HasMany<SflowReceiver, VirtualInterface>
      */
     public function sflowReceivers(): HasMany
     {
@@ -183,10 +193,8 @@ class VirtualInterface extends Model
 
     /**
      * Return the core bundle associated to the virtual interface or false
-     *
-     * @return CoreBundle|bool
      */
-    public function getCoreBundle()
+    public function getCoreBundle(): CoreBundle|false|null
     {
         foreach( $this->physicalInterfaces as $pi ) {
             if( $pi->coreinterface()->exists() ) {
@@ -201,6 +209,9 @@ class VirtualInterface extends Model
     /**
      * Get peering PhysicalInterfaces
      *
+     * @return PhysicalInterface[]
+     *
+     * @psalm-return list<IXP\Models\PhysicalInterface>
      */
     public function peeringPhysicalInterface(): array
     {
@@ -216,7 +227,9 @@ class VirtualInterface extends Model
     /**
      * Get fanout PhysicalInterfaces
      *
-     * @return array
+     * @return (PhysicalInterface|null)[]
+     *
+     * @psalm-return list<IXP\Models\PhysicalInterface|null>
      */
     public function fanoutPhysicalInterface(): array
     {
@@ -251,9 +264,9 @@ class VirtualInterface extends Model
      *
      * @see SwitchPortt::$TYPES
      *
-     * @return string|bool The virtual interface type (`\Models\SwitchPort::TYPE_XXX`) or false if no physical interfaces.
+     * @return false|int|null The virtual interface type (`\Models\SwitchPort::TYPE_XXX`) or false if no physical interfaces.
      */
-    public function type()
+    public function type(): int|false|null
     {
         if( $this->physicalInterfaces->isNotEmpty() ) {
             return $this->physicalInterfaces[ 0 ]->switchPort->type;

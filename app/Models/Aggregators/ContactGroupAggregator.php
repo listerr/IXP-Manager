@@ -42,19 +42,17 @@ use IXP\Models\ContactGroup;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\Contact> $contacts
  * @property-read int|null $contacts_count
- * @method static Builder|ContactGroupAggregator newModelQuery()
- * @method static Builder|ContactGroupAggregator newQuery()
- * @method static Builder|ContactGroupAggregator query()
- * @method static Builder|ContactGroupAggregator whereActive($value)
- * @method static Builder|ContactGroupAggregator whereCreatedAt($value)
- * @method static Builder|ContactGroupAggregator whereDescription($value)
- * @method static Builder|ContactGroupAggregator whereId($value)
- * @method static Builder|ContactGroupAggregator whereLimitedTo($value)
- * @method static Builder|ContactGroupAggregator whereName($value)
- * @method static Builder|ContactGroupAggregator whereType($value)
- * @method static Builder|ContactGroupAggregator whereUpdatedAt($value)
- * @property string $created
- * @method static Builder|ContactGroupAggregator whereCreated($value)
+ * @method static Builder<static>|ContactGroupAggregator newModelQuery()
+ * @method static Builder<static>|ContactGroupAggregator newQuery()
+ * @method static Builder<static>|ContactGroupAggregator query()
+ * @method static Builder<static>|ContactGroupAggregator whereActive($value)
+ * @method static Builder<static>|ContactGroupAggregator whereCreatedAt($value)
+ * @method static Builder<static>|ContactGroupAggregator whereDescription($value)
+ * @method static Builder<static>|ContactGroupAggregator whereId($value)
+ * @method static Builder<static>|ContactGroupAggregator whereLimitedTo($value)
+ * @method static Builder<static>|ContactGroupAggregator whereName($value)
+ * @method static Builder<static>|ContactGroupAggregator whereType($value)
+ * @method static Builder<static>|ContactGroupAggregator whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class ContactGroupAggregator extends ContactGroup
@@ -65,24 +63,25 @@ class ContactGroupAggregator extends ContactGroup
      *
      * Returned array structure:
      *
-     *     $arr = [
-     *         'ROLE' => [
-     *              [ 'id' => 1, 'name' => 'Billing' ],
-     *              [ 'id' => 2, 'name' => 'Admin']
-     *         ]
-     *         'OTHER' => [
-     *              [ 'id' => n, 'name' => 'Other group' ]
-     *         ]
-     *     ];
-     *
+     * $arr = [
+     * 'ROLE' => [
+     * [ 'id' => 1, 'name' => 'Billing' ],
+     * [ 'id' => 2, 'name' => 'Admin']
+     * ]
+     * 'OTHER' => [
+     * [ 'id' => n, 'name' => 'Other group' ]
+     * ]
+     * ];
      *
      * @param string|null   $type   Optionally limit to a specific type
      * @param int|null      $cid    Contact id to filter for a particular contact
      * @param bool          $active Filter active
      *
-     * @return array
+     * @return array[][]
+     *
+     * @psalm-return array<array<array{id: mixed, name: mixed}>>
      */
-    public static function getGroupNamesTypeArray( string $type = null, int $cid = null, bool $active = false ): array
+    public static function getGroupNamesTypeArray( ?string $type = null, ?int $cid = null, bool $active = false ): array
     {
         $result = self::when( $cid , function( Builder $q, $cid ) {
             return $q->leftJoin( 'contact_to_group', function( $join ) use( $cid ) {

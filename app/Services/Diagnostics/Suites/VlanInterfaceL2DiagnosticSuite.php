@@ -58,9 +58,10 @@ class VlanInterfaceL2DiagnosticSuite extends DiagnosticSuite
 
     /**
      * Run the diagnostics suite
+     *
      * @throws BindingResolutionException
      */
-    public function run(): VlanInterfaceL2DiagnosticSuite
+    public function run(): static
     {
 
         $this->results->add( $this->arping( $this->vli ) );
@@ -71,8 +72,9 @@ class VlanInterfaceL2DiagnosticSuite extends DiagnosticSuite
 
 
     /**
-     *
      * @return DiagnosticResult[]
+     *
+     * @psalm-return list<IXP\Services\Diagnostics\DiagnosticResult>
      */
     public function arping( VlanInterface $vli ): array
     {
@@ -82,23 +84,35 @@ class VlanInterfaceL2DiagnosticSuite extends DiagnosticSuite
 
             $mainName = $l2a->macFormatted(':') . ' responds to arp pings';
 
-            $result = Process::run( sprintf( config( "ixp.exec.arping.{$vli->vlanid}" ), $l2a->macFormatted(':') ) );
+            try{
 
-            if( $result->successful() ) {
+                $result = Process::run( sprintf( config( "ixp.exec.arping.{$vli->vlanid}" ), $l2a->macFormatted(':') ) );
+
+                if( $result->successful() ) {
+
+                    $results[] = new DiagnosticResult(
+                        name: $mainName,
+                        result: DiagnosticResult::TYPE_GOOD,
+                        narrativeHtml: "<pre>{$result->output()}</pre>",
+                    );
+
+                }
 
                 $results[] = new DiagnosticResult(
-                    name: $mainName,
-                    result: DiagnosticResult::TYPE_GOOD,
+                    name: $mainName . ' - no, see detail for more information',
+                    result: DiagnosticResult::TYPE_ERROR,
                     narrativeHtml: "<pre>{$result->output()}</pre>",
                 );
 
-            }
+            } catch(\Exception $e) {
 
-            $results[] = new DiagnosticResult(
-                name: $mainName . ' - no, see detail for more information',
-                result: DiagnosticResult::TYPE_ERROR,
-                narrativeHtml: "<pre>{$result->output()}</pre>",
-            );
+                $results[] = new DiagnosticResult(
+                    name: $mainName . ' - diagnostic failed to run',
+                    result: DiagnosticResult::TYPE_UNKNOWN,
+                    narrativeHtml: $e->getMessage(),
+                );
+
+            }
 
         }
 

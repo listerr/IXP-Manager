@@ -28,6 +28,7 @@ use GuzzleHttp\{
     Exception\RequestException
 };
 use Illuminate\Support\Facades\Log;
+use IXP\Models\Customer;
 
 /**
  * RipeAtlas Api Calls
@@ -44,14 +45,12 @@ class ApiCall
     /**
      * Call the Ripe Atlas Api and return the Probes list for the protocol and Asn
      *
-     * @param $customer
-     * @param $protocol
-     *
-     * @return array
-     *
      * @throws
+     *
+     * @psalm-return array{error: bool, response: mixed|string}
+     * @psalm-param 4|6 $protocol
      */
-    public function queryAtlasForProbes( $customer, $protocol ): array
+    public function queryAtlasForProbes( Customer $customer, int $protocol ): array
     {
         $client = new GuzzleHttp();
         $asn    = $customer->autsys;
@@ -83,15 +82,9 @@ class ApiCall
     /**
      * Call the Ripe Atlas Api and return the Probes list for the protocol and Asn
      *
-     * @param $fromASN
-     * @param $target
-     * @param $protocol
-     *
-     * @return int|null
-     *
      * @throws
      */
-    public function requestAtlasTraceroute( $fromASN, $target, $protocol ): ?int
+    public function requestAtlasTraceroute( int $fromASN, $target, int $protocol ): ?int
     {
         $query = [
             'definitions' => [ [
@@ -139,9 +132,11 @@ class ApiCall
      *
      * @param int $atlasId
      *
-     * @return array
+     * @return (bool|mixed|string)[]
      *
      * @throws
+     *
+     * @psalm-return array{error: bool, response: mixed|string}
      */
     public function updateAtlasMeasurement( int $atlasId ): array
     {
@@ -176,9 +171,11 @@ class ApiCall
     /**
      * Get the Atlas measurements from the API
      *
-     * @return array
+     * @return (bool|mixed|string)[]
      *
      * @throws
+     *
+     * @psalm-return array{error: bool, response: mixed|string}
      */
     public function myAtlasMeasurements(): array
     {

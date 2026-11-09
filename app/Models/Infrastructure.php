@@ -40,9 +40,10 @@ use IXP\Traits\Observable;
  * @property int $id
  * @property string|null $name
  * @property string|null $shortname
- * @property int $isPrimary
+ * @property bool $isPrimary
  * @property int|null $peeringdb_ix_id
  * @property int|null $ixf_ix_id
+ * @property bool $exclude_from_ixf_export
  * @property string|null $country
  * @property string|null $notes
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -51,21 +52,20 @@ use IXP\Traits\Observable;
  * @property-read int|null $switchers_count
  * @property-read Collection<int, \IXP\Models\Vlan> $vlans
  * @property-read int|null $vlans_count
- * @method static Builder|Infrastructure newModelQuery()
- * @method static Builder|Infrastructure newQuery()
- * @method static Builder|Infrastructure query()
- * @method static Builder|Infrastructure whereCountry($value)
- * @method static Builder|Infrastructure whereCreatedAt($value)
- * @method static Builder|Infrastructure whereId($value)
- * @method static Builder|Infrastructure whereIsPrimary($value)
- * @method static Builder|Infrastructure whereIxfIxId($value)
- * @method static Builder|Infrastructure whereName($value)
- * @method static Builder|Infrastructure whereNotes($value)
- * @method static Builder|Infrastructure wherePeeringdbIxId($value)
- * @method static Builder|Infrastructure whereShortname($value)
- * @method static Builder|Infrastructure whereUpdatedAt($value)
- * @property int $ixp_id
- * @method static Builder|Infrastructure whereIxpId($value)
+ * @method static Builder<static>|Infrastructure newModelQuery()
+ * @method static Builder<static>|Infrastructure newQuery()
+ * @method static Builder<static>|Infrastructure query()
+ * @method static Builder<static>|Infrastructure whereCountry($value)
+ * @method static Builder<static>|Infrastructure whereCreatedAt($value)
+ * @method static Builder<static>|Infrastructure whereExcludeFromIxfExport($value)
+ * @method static Builder<static>|Infrastructure whereId($value)
+ * @method static Builder<static>|Infrastructure whereIsPrimary($value)
+ * @method static Builder<static>|Infrastructure whereIxfIxId($value)
+ * @method static Builder<static>|Infrastructure whereName($value)
+ * @method static Builder<static>|Infrastructure whereNotes($value)
+ * @method static Builder<static>|Infrastructure wherePeeringdbIxId($value)
+ * @method static Builder<static>|Infrastructure whereShortname($value)
+ * @method static Builder<static>|Infrastructure whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class Infrastructure extends Model
@@ -85,18 +85,36 @@ class Infrastructure extends Model
      * @var array
      */
     protected $fillable = [
-        'ixp_id',
         'name',
         'shortname',
         'isPrimary',
+        'exclude_from_ixf_export',
         'peeringdb_ix_id',
         'ixf_ix_id',
         'country',
         'notes',
     ];
 
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    #[\Override]
+    protected function casts(): array
+    {
+        return [
+            'isPrimary' => 'boolean',
+            'exclude_from_ixf_export' => 'boolean',
+        ];
+    }
+
+
     /**
      * Get the vlans for the infrastructure
+     *
+     * @return HasMany<Vlan, Infrastructure>
      */
     public function vlans(): HasMany
     {
@@ -105,6 +123,8 @@ class Infrastructure extends Model
 
     /**
      * Get the switchers for the infrastructure
+     *
+     * @return HasMany<Switcher, Infrastructure>
      */
     public function switchers(): HasMany
     {

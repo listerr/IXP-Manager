@@ -42,18 +42,18 @@ use IXP\Traits\Observable;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \IXP\Models\Customer $customer
- * @method static Builder|CustomerNote newModelQuery()
- * @method static Builder|CustomerNote newQuery()
- * @method static Builder|CustomerNote privateOnly()
- * @method static Builder|CustomerNote publicOnly()
- * @method static Builder|CustomerNote query()
- * @method static Builder|CustomerNote whereCreatedAt($value)
- * @method static Builder|CustomerNote whereCustomerId($value)
- * @method static Builder|CustomerNote whereId($value)
- * @method static Builder|CustomerNote whereNote($value)
- * @method static Builder|CustomerNote wherePrivate($value)
- * @method static Builder|CustomerNote whereTitle($value)
- * @method static Builder|CustomerNote whereUpdatedAt($value)
+ * @method static Builder<static>|CustomerNote newModelQuery()
+ * @method static Builder<static>|CustomerNote newQuery()
+ * @method static Builder<static>|CustomerNote privateOnly()
+ * @method static Builder<static>|CustomerNote publicOnly()
+ * @method static Builder<static>|CustomerNote query()
+ * @method static Builder<static>|CustomerNote whereCreatedAt($value)
+ * @method static Builder<static>|CustomerNote whereCustomerId($value)
+ * @method static Builder<static>|CustomerNote whereId($value)
+ * @method static Builder<static>|CustomerNote whereNote($value)
+ * @method static Builder<static>|CustomerNote wherePrivate($value)
+ * @method static Builder<static>|CustomerNote whereTitle($value)
+ * @method static Builder<static>|CustomerNote whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class CustomerNote extends Model
@@ -69,6 +69,8 @@ class CustomerNote extends Model
 
     /**
      * Get the customer that own the customer note
+     *
+     * @return BelongsTo<Customer, CustomerNote>
      */
     public function customer(): BelongsTo
     {
@@ -123,15 +125,17 @@ class CustomerNote extends Model
      *
      * Returns an associate array with keys:
      *
-     * * `notesReadUpto` - UNIX timestamp of when the user last read all notes / marked them as read
-     * * `notesLastRead` - UNIX timestamp of when the user last read this customer's notes
-     * * `unreadNotes`   - number of unread notes for this customer
+     * `notesReadUpto` - UNIX timestamp of when the user last read all notes / marked them as read
+     * `notesLastRead` - UNIX timestamp of when the user last read this customer's notes
+     * `unreadNotes`   - number of unread notes for this customer
      *
      * @param Collection    $notes
      * @param Customer      $c      The customer
      * @param User          $u       Optional user
      *
-     * @return array
+     * @return (int|mixed|null)[]
+     *
+     * @psalm-return array{notesReadUpto: mixed|null, notesLastRead: mixed|null, unreadNotes: int}
      */
     public static function analyseForUser( Collection $notes, Customer $c, User $u ): array
     {

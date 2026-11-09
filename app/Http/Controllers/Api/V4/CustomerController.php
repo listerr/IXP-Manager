@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Api\V4;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -86,10 +86,8 @@ class CustomerController extends Controller
      *
      * @return  JsonResponse
      */
-    public function queryPeeringDbWithAsn( string $asn ): JsonResponse
+    public function queryPeeringDbWithAsn( PeeringDb $pdb, string $asn ): JsonResponse
     {
-        $pdb = App::make( PeeringDb::class );
-
         if( $response = $pdb->getNetworkByAsn( $asn ) ) {
             return response()->json( [ 'net' => $response ] );
         }

@@ -1,5 +1,5 @@
 
-function fn_import ( int remote_as )
+function fn_import ( int remote_as ) -> bool
 {
     if !(avoid_martians()) then {
         return false;
@@ -10,17 +10,6 @@ function fn_import ( int remote_as )
         return false;
     }
 
-    # Peer ASN == route's first ASN?
-    if (bgp_path.first != remote_as ) then {
-        return false;
-    }
-
-
-    # Prevent BGP NEXT_HOP Hijacking
-    if !( from = bgp_next_hop ) then {
-        return false;
-    }
-
     # Belt and braces: no one needs an ASN path with > 64 hops, that's just broken
     if( bgp_path.len > 64 ) then {
         return false;
@@ -28,11 +17,10 @@ function fn_import ( int remote_as )
 
     <?php if( $t->router->rpki ): ?>
 
-    # RPKI check
-    if( roa_check( t_roa, net, bgp_path.last_nonaggregated ) = ROA_INVALID ) then {
+    # RPKI check - deny invalids
+    if( roa_check( t_roa ) = ROA_INVALID ) then {
+        print "Ignore RPKI invalid ", net, " for ASN ", bgp_path.last;
         return false;
-    } else if( roa_check( t_roa, net, bgp_path.last_nonaggregated ) = ROA_VALID ) then {
-        return true;
     }
 
     <?php else: ?>
@@ -59,13 +47,19 @@ protocol bgp pb_as<?= $int['autsys'] ?>_vli<?= $int['vliid'] ?>_ipv<?= $int['pro
         source address routeraddress;
         neighbor <?= $int['address'] ?> as <?= $int['autsys'] ?>;
         strict bind yes;
+        enforce first as <?= $int['is_route_server'] ? 'off' : 'on' ?>;
 <?php if( config('app.env') === 'vagrant' ): ?>
         multihop;        # needed for loopback interface binding
 <?php endif; ?>
         ipv<?= $int['protocol'] ?? 4 ?> {
+<?php if( $int['is_route_server'] ): ?>
+            # peer is route server at own IXP => prefixes already validated by route server
+            import all;
+<?php else: ?>
             import where fn_import( <?= $int['autsys'] ?> );
-            export where proto = "static_as112";
             import limit <?= $int['maxprefixes'] ?> action restart;
+<?php endif; ?>
+            export where proto = "static_as112";
         };
         <?php if( $int['bgpmd5secret'] && !$t->router->skip_md5 ): ?>password "<?= $int['bgpmd5secret'] ?>";<?php endif; ?>
 

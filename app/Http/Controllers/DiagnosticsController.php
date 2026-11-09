@@ -24,7 +24,10 @@ namespace IXP\Http\Controllers;
  */
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use IXP\Exceptions\GeneralException;
 use IXP\Models\Customer;
 use IXP\Services\Diagnostics;
 use IXP\Services\Diagnostics\DiagnosticResult;
@@ -41,18 +44,70 @@ use IXP\Services\Diagnostics\DiagnosticResult;
  */
 class DiagnosticsController extends Controller
 {
+    public array $badgeTypes;
+
+    public function __construct() {
+        $this->badgeTypes = [
+            DiagnosticResult::TYPE_FATAL   => 'tw:border-red-600 tw:bg-red-600',
+            DiagnosticResult::TYPE_ERROR   => 'tw:border-red-400 tw:bg-red-400',
+            DiagnosticResult::TYPE_WARN    => 'tw:border-amber-400 tw:bg-amber-400',
+            DiagnosticResult::TYPE_INFO    => 'tw:border-teal-400 tw:bg-teal-400',
+            DiagnosticResult::TYPE_UNKNOWN => 'tw:border-gray-600 tw:bg-gray-800',
+            DiagnosticResult::TYPE_DEBUG   => 'tw:border-gray-300 tw:bg-gray-300',
+            DiagnosticResult::TYPE_TRACE   => 'tw:border-gray-400 tw:bg-gray-400',
+            DiagnosticResult::TYPE_GOOD    => 'tw:border-lime-500 tw:bg-lime-500',
+        ];
+    }
+
+    /**
+     * @return string[]
+     *
+     * @psalm-return array<string>
+     */
+    private function generateBadges(): array {
+        $badges = [];
+        $enabledBadges = [
+            DiagnosticResult::TYPE_FATAL,
+            DiagnosticResult::TYPE_ERROR,
+            DiagnosticResult::TYPE_WARN,
+            DiagnosticResult::TYPE_INFO,
+            DiagnosticResult::TYPE_UNKNOWN,
+            //DiagnosticResult::TYPE_DEBUG,
+            //DiagnosticResult::TYPE_TRACE,
+            DiagnosticResult::TYPE_GOOD,
+        ];
+
+        foreach(DiagnosticResult::$RESULT_TYPES_TEXT as $result => $text) {
+
+            $plainResult = new DiagnosticResult(
+                name: '',
+                result: $result,
+                narrative: '',
+            );
+            $enable = ' tw:opacity-40';
+            if(in_array($result, $enabledBadges)) {
+                $enable = '';
+            }
+
+            $badgeExtension = '<span data-target="'.$text.'" data-status="'.$result.'" class="badgeButton '.$enable.' hover:tw:opacity-80 tw:cursor-pointer ';
+
+            $badges[$text] = str_replace('<span class="',$badgeExtension,$plainResult->badge());
+        }
+
+        return $badges;
+    }
 
     /**
      * Run the diagnostics suite
      */
     public function customer( Customer $customer, Diagnostics $diagnostics ): View
     {
+        Log::notice( Auth::getUser()->username . ' ran customer diagnostics for ' .
+            'customer with ID ' . $customer->id);
+
         $resultSets = [];
 
         $resultSets[] = $diagnostics->getCustomerDiagnostics($customer);
-
-        //info("resSets\n".var_export($resultSets, true));
-        $resultSets[] = $diagnostics->getCustomerIrrdbDiagnostics($customer);
 
         foreach( $customer->virtualInterfaces as $vi ) {
             $viSet = $diagnostics->getVirtualInterfaceDiagnostics( $vi );
@@ -66,15 +121,13 @@ class DiagnosticsController extends Controller
             // get the Vlan Interface Diagnostics data
             $protocols = [4,6];
             foreach( $vi->vlanInterfaces as $vli ) {
-
-                $viSet->addSubset( $diagnostics->getVlanInterfaceL2Diagnostics( $vli ) );
+                // not ready: $viSet->addSubset( $diagnostics->getVlanInterfaceL2Diagnostics( $vli ) );
 
                 foreach( $protocols as $protocol ) {
-
                     // if the protocol disabled, there is no diagnostics info
                     $protocolCellEnabled = "ipv" . $protocol . "enabled";
                     if($vli->$protocolCellEnabled) {
-                        $viSet->addSubset( $diagnostics->getVlanInterfaceL3Diagnostics( $vli, $protocol ) );
+                        // not ready: $viSet->addSubset( $diagnostics->getVlanInterfaceL3Diagnostics( $vli, $protocol ) );
                         $viSet->addSubset( $diagnostics->getRouterBgpSessionsDiagnostics( $vli, $protocol ) );
                     }
 
@@ -86,48 +139,11 @@ class DiagnosticsController extends Controller
 
         }
 
-        $badges = [];
-        $enabledBadges = [
-            DiagnosticResult::TYPE_FATAL,
-            DiagnosticResult::TYPE_ERROR,
-            DiagnosticResult::TYPE_WARN,
-            DiagnosticResult::TYPE_INFO,
-            //DiagnosticResult::TYPE_DEBUG,
-            //DiagnosticResult::TYPE_TRACE,
-            DiagnosticResult::TYPE_GOOD,
-        ];
-
-        $badgeTypes = [
-            DiagnosticResult::TYPE_FATAL => 'tw-border-red-600 tw-bg-red-600',
-            DiagnosticResult::TYPE_ERROR => 'tw-border-red-400 tw-bg-red-400',
-            DiagnosticResult::TYPE_WARN  => 'tw-border-amber-400 tw-bg-amber-400',
-            DiagnosticResult::TYPE_INFO  => 'tw-border-teal-400 tw-bg-teal-400',
-            DiagnosticResult::TYPE_DEBUG => 'tw-border-gray-400 tw-bg-gray-400',
-            DiagnosticResult::TYPE_TRACE => 'tw-border-gray-300 tw-bg-gray-300',
-            DiagnosticResult::TYPE_GOOD  => 'tw-border-lime-500 tw-bg-lime-500',
-        ];
-
-        foreach(DiagnosticResult::$RESULT_TYPES_TEXT as $result => $text) {
-
-            $plainResult = new DiagnosticResult(
-                name: '',
-                result: $result,
-                narrative: '',
-            );
-            $enable = ' tw-opacity-40';
-            if(in_array($result, $enabledBadges)) {
-                $enable = '';
-            }
-
-            $badgeExtension = '<span data-target="'.$text.'" data-status="'.$result.'" class="badgeButton '.$enable.' hover:tw-opacity-80 tw-cursor-pointer ';
-
-            $badges[$text] = str_replace('<span class="',$badgeExtension,$plainResult->badge());
-        }
 
         // former view: diagnostics.results (still works)
         return view( 'diagnostics.newresults')->with([
-            "badgeTypes" => $badgeTypes,
-            "badges" => $badges,
+            "badgeTypes" => $this->badgeTypes,
+            "badges" => $this->generateBadges(),
             "customer" => $customer,
             "resultSets"  => $resultSets,
         ]);
@@ -139,11 +155,16 @@ class DiagnosticsController extends Controller
      */
     public function irrdb( Customer $customer, Diagnostics $diagnostics ): View
     {
+        Log::notice( Auth::getUser()->username . ' ran IRRDB diagnostics for ' .
+            'customer with ID ' . $customer->id );
+
         $resultSets = [];
 
         $resultSets[] = $diagnostics->getCustomerIrrdbDiagnostics($customer);
 
         return view( 'diagnostics.results')->with([
+            "badgeTypes" => $this->badgeTypes,
+            "badges" => $this->generateBadges(),
             "customer" => $customer,
             "resultSets"  => $resultSets,
         ]);

@@ -34,10 +34,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// API key can be passed in the header (preferred) or on the URL.
+// API key can be passed in the header (preferred) or on the URL (deprecated).
 //
 //     curl -X GET -H "X-IXP-Manager-API-Key: mySuperSecretApiKey" http://ixpv.dev/api/v4/test
-//     wget http://ixpv.dev/api/v4/test?apikey=mySuperSecretApiKey
+//     DEPRECATED wget http://ixpv.dev/api/v4/test?apikey=mySuperSecretApiKey
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Customers
@@ -51,22 +51,9 @@ Route::group( [  'prefix' => 'customer' ], function() {
 // Patch Panel Port
 //
 Route::group( [  'prefix' => 'patch-panel-port' ], function() {
-//    Route::group( [  'namespace' => 'PatchPanel\Port' ], function() {
-//        Route::delete(  'file/delete/{file}',           'FileController@delete'           );
-//        Route::delete(  'file/delete-history/{file}',   'FileController@deleteHistory'    );
-//        Route::post(    'file/toggle-privacy/{file}',   'FileController@togglePrivacy'    )->name( 'patch-panel-port-file@toogle-privacy' );
-//    });
-
     Route::get(  '{ppp}',                           'PatchPanelPortController@detail'       );
     Route::get(  'deep/{ppp}',                      'PatchPanelPortController@detailDeep'   );
 });
-
-
-//Route::post(  'patch-panel-port/delete/{id}',                    'PatchPanelPortController@delete' );
-//Route::post(  'patch-panel-port/split/{id}',                     'PatchPanelPortController@split' );
-
-//Route::post(  'patch-panel-port/upload-file/{id}',               'PatchPanelPortController@uploadFile' );
-//Route::post(  'patch-panel-port/notes/{ppp}',                    'PatchPanelPortController@setNotes' );
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Patch Panel
@@ -152,6 +139,28 @@ Route::group( [ 'namespace' => 'Customer\Note', 'prefix' => 'customer-note' ], f
     Route::delete(  'delete/{cn}',                  'CustomerNotesController@delete'            )->name( 'customer-notes@delete');
 });
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// CUSTOMER DOCUMENT STORE
+///
+if( !config( 'ixp_fe.frontend.disabled.docstore_customer' ) ) {
+    Route::group( ['namespace' => 'DocstoreCustomer', 'prefix' => 'docstorec'], function() {
+        Route::get(    'file/info/{file}',    'FileController@info'          )->name( 'docstore-c-file-api@info'        );
+    });
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// DOCUMENT STORE
+///
+if( !config( 'ixp_fe.frontend.disabled.docstore' ) ) {
+    Route::group( ['namespace' => 'Docstore', 'prefix' => 'docstore'], function() {
+        Route::get(    'file/info/{file}',    'FileController@info'          )->name( 'docstore-file-api@info'        );
+    });
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // RIPE ATLAS
 //
@@ -159,3 +168,10 @@ Route::group( [ 'namespace' => 'Customer\Note', 'prefix' => 'customer-note' ], f
 //    Route::get(  'measurement/{atlasid}/info',   'RipeAtlasController@getAtlasMeasurementDetail' )->name( 'ripe-atlas@measurement-info' );
 //    Route::get(  'probe/{atlasid}/info',         'RipeAtlasController@getAtlasProbeDetail'       )->name( 'ripe-atlas@probe-info'       );
 //});
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// IRRDB Config
+//
+Route::group( [ 'prefix' => '' ], function() {
+    Route::post(    'store',      'IrrdbConfigController@store'             )->name( 'irrdb-config-api@create');
+});

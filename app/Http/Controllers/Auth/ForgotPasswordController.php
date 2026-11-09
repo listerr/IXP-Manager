@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Auth;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -23,12 +23,11 @@ namespace IXP\Http\Controllers\Auth;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
-use Password, Redirect;
+use Illuminate\Support\Facades\Password;
 
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
 
 use Illuminate\Http\{
-    JsonResponse,
     RedirectResponse,
     Request
 };
@@ -171,6 +170,6 @@ class ForgotPasswordController extends Controller
         }
 
         AlertContainer::push( 'If your email matches user(s) on the system, then an email listing those users has been sent to you.', Alert::INFO );
-        return Redirect::to( route( "login@showForm" ));
+        return redirect( route( "login@showForm" ));
     }
 }

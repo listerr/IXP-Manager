@@ -43,26 +43,26 @@ use Illuminate\Database\Eloquent\{
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read Collection<int, \IXP\Models\Contact> $contacts
  * @property-read int|null $contacts_count
- * @method static Builder|ContactGroup newModelQuery()
- * @method static Builder|ContactGroup newQuery()
- * @method static Builder|ContactGroup query()
- * @method static Builder|ContactGroup whereActive($value)
- * @method static Builder|ContactGroup whereCreatedAt($value)
- * @method static Builder|ContactGroup whereDescription($value)
- * @method static Builder|ContactGroup whereId($value)
- * @method static Builder|ContactGroup whereLimitedTo($value)
- * @method static Builder|ContactGroup whereName($value)
- * @method static Builder|ContactGroup whereType($value)
- * @method static Builder|ContactGroup whereUpdatedAt($value)
- * @property string $created
- * @method static Builder|ContactGroup whereCreated($value)
+ * @method static Builder<static>|ContactGroup newModelQuery()
+ * @method static Builder<static>|ContactGroup newQuery()
+ * @method static Builder<static>|ContactGroup query()
+ * @method static Builder<static>|ContactGroup whereActive($value)
+ * @method static Builder<static>|ContactGroup whereCreatedAt($value)
+ * @method static Builder<static>|ContactGroup whereDescription($value)
+ * @method static Builder<static>|ContactGroup whereId($value)
+ * @method static Builder<static>|ContactGroup whereLimitedTo($value)
+ * @method static Builder<static>|ContactGroup whereName($value)
+ * @method static Builder<static>|ContactGroup whereType($value)
+ * @method static Builder<static>|ContactGroup whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 class ContactGroup extends Model
 {
-    public const TYPE_ROLE = 'ROLE';
+    public const int MAX_TYPE_LENGTH = 20;
 
-    public static $TYPES = [
+    public const string TYPE_ROLE = 'ROLE';
+
+    public static array $TYPES = [
         self::TYPE_ROLE => 'Role'
     ];
 
@@ -86,8 +86,11 @@ class ContactGroup extends Model
         'limited_to'
     ];
 
+    /**
+     * @psalm-return BelongsToMany<Contact>
+     */
     public function contacts(): BelongsToMany
     {
-        return $this->belongsToMany(Contact::class )->withPivot( 'contact_to_group', 'contact_group_id' );
+        return $this->belongsToMany(Contact::class, 'contact_to_group' )->withPivot( 'contact_group_id' );
     }
 }

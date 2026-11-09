@@ -1,7 +1,4 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
  * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,10 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
 
 use Str;
 
@@ -45,106 +46,82 @@ use Tests\DuskTestCase;
  */
 class ApiKeyControllerTest extends DuskTestCase
 {
-    public function tearDown(): void
-    {
-        if( $key = ApiKey::where( 'description','Temporally Test API Key' ) ) {
-            $key->delete();
-        }
-
-        parent::tearDown();
-    }
-
     /**
-     * A Dusk test example.
+     * Api Key test show default, add api key, show created api key, edit api key, delete
      *
      * @return void
      *
-     * @throws
+     * @throws \Throwable
      */
     public function test(): void
     {
         $this->browse( function( Browser $browser ) {
             $browser->resize( 1600, 1200 )
+                ->visit( '/logout' )
                 ->visit( '/login' )
                 ->type( 'username', 'travis' )
                 ->type( 'password', 'travisci' )
                 ->press( '#login-btn' )
-                ->assertPathIs( '/admin' );
+                ->waitForLocation( '/admin/dashboard' );
 
+            // check the key in the database is listed
             $browser->visit( '/api-key/list' )
                 ->assertSee( 'API Keys' )
-                ->assertSee( 'Syy4R8...' );
+                ->assertSee( 'iqLw1OF50aPU' );
 
-            // 1. test add empty inputs
+            // 1. test add some inputs
             $browser->visit( '/api-key/create' )
                 ->assertSee( 'Create API Key' )
+                ->type( "description", "API Key" )
+                ->type( "expires", now()->addMonth()->format("d-m-Y") )
                 ->press( 'Create' )
-                ->assertPathIs( '/api-key/list' )
+                ->waitForLocation( '/api-key/list' )
                 ->assertSee( "API Key created" )
                 ->assertSee( "API key created:" );
-
 
             $apiKey = ApiKey::latest()->first();
 
             // 2. Check the api key
             $this->assertInstanceOf( ApiKey::class, $apiKey );
 
-            $browser->assertSee( Str::limit( $apiKey->apiKey, 6 ) );
+            $element = $browser->element(".alert-dismissible code");
+            $this->assertNotNull($element, "could not locate a code section inside an alert - did we change how we show it to the user?");
+            $locatedApiKey = $element->getText();
+
+            $browser->assertSee( "API key created: " . $locatedApiKey );
 
             // 3. Edit API key
             $browser->click( '#e2f-list-edit-' . $apiKey->id )
-                ->assertSee( 'Edit API Key' )
-                ->assertInputValue( 'apiKey', $keyLimited = Str::limit( $apiKey->apiKey, 6 ) )
-                ->assertInputValue( 'description', '' )
-                ->assertInputValue( 'expires', '' )
-                ->assertDisabled( 'apiKey' )
+                ->waitForText( 'Edit API Key' )
+                ->assertInputValue( 'description', 'API Key' )
                 ->type( "description", "Temporally Test API Key" )
-                ->type( "expires", now()->addYear()->startOfMonth()->format( "d-m-Y" ) )
                 ->press( "Save Changes" )
-                ->assertPathIs( '/api-key/list' )
+                ->waitForLocation( '/api-key/list' )
                 ->assertSee( "API Key updated" );
 
             $apiKey->refresh();
 
             // 4. Check Value
-            $this->assertEquals( $keyLimited, Str::limit( $apiKey->apiKey, 6 ) );
 
             // work around locale issues:
-            $now = now()->addYear()->startOfMonth()->format( "Y-m-d" );
+            $expectedExpires = now()->addMonth()->format( "Y-m-d" );
 
-            if( $now === Carbon::parse( $apiKey->expires )->format( "Y-m-d" ) ) {
+            if( $expectedExpires === Carbon::parse( $apiKey->expires )->format( "Y-m-d" ) ) {
                 $db = Carbon::parse( $apiKey->expires )->format( "Y-m-d" );
             } else {
                 $db = Carbon::parse( $apiKey->expires )->format( "Y-d-m" );
             }
 
-            $this->assertEquals( $db, $now );
+            $this->assertEquals( $expectedExpires, $db );
             $this->assertEquals( 'Temporally Test API Key', $apiKey->description );
 
-            // 5. Enter wrong password to see the not limited API KEY
-            $browser->type( "pass", "wrongPass" )
-                ->press( "Submit" )
-                ->assertPathIs( "/api-key/list-show-keys" )
-                ->assertSee( "Incorrect password entered" );
-
-            // 6. Enter good password to see the not limited API KEY
-            $browser->type( "pass", 'travisci' )
-                ->press( "Submit" )
-                ->assertPathIs( "/api-key/list-show-keys" )
-                ->assertSee( "API keys are visible for this request only" )
-                ->assertSee( $apiKey->apiKey );
-
-            // 7. Check that the API Key are restricted again
-            $browser->visit( '/api-key/list' )
-                ->assertSee( $keyLimited );
-
-            // 9. Delete API KEY
+            // 5. Delete API KEY
             $browser->click( "#e2f-list-delete-" . $apiKey->id )
                 ->waitForText( 'Do you really want to delete this API key' )
                 ->press( 'Delete' )
-                ->assertPathIs( '/api-key/list' )
+                ->waitForLocation( '/api-key/list' )
                 ->assertSee( "API Key deleted" )
-                ->assertDontSee( $keyLimited );
+                ->assertDontSee( $apiKey->token_identifier );
 
             $this->assertTrue( ApiKey::whereId( $apiKey->id )->doesntExist() );
         } );

@@ -59,16 +59,16 @@ use Illuminate\Support\Facades\{
  * @property-read DocstoreCustomerDirectory|null $parentDirectory
  * @property-read Collection<int, DocstoreCustomerDirectory> $subDirectories
  * @property-read int|null $sub_directories_count
- * @method static Builder|DocstoreCustomerDirectory newModelQuery()
- * @method static Builder|DocstoreCustomerDirectory newQuery()
- * @method static Builder|DocstoreCustomerDirectory query()
- * @method static Builder|DocstoreCustomerDirectory whereCreatedAt($value)
- * @method static Builder|DocstoreCustomerDirectory whereCustId($value)
- * @method static Builder|DocstoreCustomerDirectory whereDescription($value)
- * @method static Builder|DocstoreCustomerDirectory whereId($value)
- * @method static Builder|DocstoreCustomerDirectory whereName($value)
- * @method static Builder|DocstoreCustomerDirectory whereParentDirId($value)
- * @method static Builder|DocstoreCustomerDirectory whereUpdatedAt($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory newModelQuery()
+ * @method static Builder<static>|DocstoreCustomerDirectory newQuery()
+ * @method static Builder<static>|DocstoreCustomerDirectory query()
+ * @method static Builder<static>|DocstoreCustomerDirectory whereCreatedAt($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereCustId($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereDescription($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereId($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereName($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereParentDirId($value)
+ * @method static Builder<static>|DocstoreCustomerDirectory whereUpdatedAt($value)
  * @mixin Eloquent
  */
 
@@ -114,6 +114,7 @@ class DocstoreCustomerDirectory extends Model
      *
      * @return void
      */
+    #[\Override]
     protected static function boot(): void
     {
         parent::boot();
@@ -134,6 +135,8 @@ class DocstoreCustomerDirectory extends Model
 
     /**
      * Get the customer
+     *
+     * @return BelongsTo<Customer, DocstoreCustomerDirectory>
      */
     public function customer(): BelongsTo
     {
@@ -142,6 +145,7 @@ class DocstoreCustomerDirectory extends Model
 
     /**
      * Get the subdirectories for this directory
+     * @return HasMany<DocstoreCustomerDirectory, DocstoreCustomerDirectory>
      */
     public function subDirectories(): HasMany
     {
@@ -150,6 +154,8 @@ class DocstoreCustomerDirectory extends Model
 
     /**
      * Get the parent directory
+     *
+     * @return BelongsTo<self, DocstoreCustomerDirectory>
      */
     public function parentDirectory(): BelongsTo
     {
@@ -158,6 +164,8 @@ class DocstoreCustomerDirectory extends Model
 
     /**
      * Get the files in this directory
+     *
+     * @return HasMany<DocstoreCustomerFile, DocstoreCustomerDirectory>
      */
     public function files(): HasMany
     {
@@ -170,7 +178,7 @@ class DocstoreCustomerDirectory extends Model
      *
      * @param Customer                  $cust
      * @param DocstoreDirectory|null    $dir
-     * @param User|null                 $user
+     * @param User $user
      *
      * @return Collection
      */
@@ -187,17 +195,19 @@ class DocstoreCustomerDirectory extends Model
     /**
      * Create an array of directories keeping the hierarchy root/subfolder
      *
-     *  [
-     *      [ "id" => 1, "name"  => "Folder 1" ],
-     *      [ "id" => 2, "name"  => " - Sub Folder 1" ],
-     *      [ "id" => 3, "name"  => " - Sub Folder 2" ],
-     *      [ "id" => 4, "name"  => "Folder 2" ],
-     *  ]
+     * [
+     * [ "id" => 1, "name"  => "Folder 1" ],
+     * [ "id" => 2, "name"  => " - Sub Folder 1" ],
+     * [ "id" => 3, "name"  => " - Sub Folder 2" ],
+     * [ "id" => 4, "name"  => "Folder 2" ],
+     * ]
      *
      * @param $dirs     Collection
      * @param $depth    int
      *
-     * @return array
+     * @return ((mixed|string)[]|mixed)[]
+     *
+     * @psalm-return list{0: array{id: ''|mixed, name: string}|mixed, 1?: array{id: ''|mixed, name: string}|mixed,...}
      */
     public static function getListingForDropdown( Collection $dirs, int $depth = 5 ): array
     {

@@ -26,6 +26,7 @@ namespace IXP\Http\Controllers\Switches;
 use Auth, DateTime, Former, Route;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\{
     Request,
     RedirectResponse
@@ -82,9 +83,13 @@ class SwitchController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         /** @var User $us */
@@ -105,14 +110,14 @@ class SwitchController extends EloquentController
                 'cabinet'  => [
                     'title'      => 'Rack',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'rack',
+                    'controller' => 'admin/rack',
                     'action'     => 'view',
                     'idField'    => 'cabinetid'
                 ],
                 'vendor'  => [
                     'title'      => 'Vendor',
                     'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                    'controller' => 'vendor',
+                    'controller' => 'admin/vendor',
                     'action'     => 'view',
                     'idField'    => 'vendorid'
                 ],
@@ -200,15 +205,21 @@ class SwitchController extends EloquentController
      *
      * @return void
      */
+    #[\Override]
     protected static function additionalRoutes( string $route_prefix ): void
     {
         // NB: this route is marked as 'read-only' to disable normal CRUD operations. It's not really read-only.
-        Route::group( [  'prefix' => $route_prefix ], function() {
-            Route::get(  'create-by-snmp',      'Switches\SwitchController@addBySnmp'       )->name( 'switch@create-by-snmp'   );
-            Route::get(  'port-report/{switch}','Switches\SwitchController@portReport'      )->name( "switch@port-report"   );
-            Route::get(  'configuration',       'Switches\SwitchController@configuration'   )->name( "switch@configuration" );
-            Route::post( 'store-by-snmp',       'Switches\SwitchController@storeBySmtp'     )->name( "switch@store-by-snmp" );
+        Route::group( [  'prefix' => ( static::$is_admin_route ? 'admin/' : '' ) . $route_prefix ], function() {
+            Route::get(  'create-by-snmp',       [self::class, 'addBySnmp']     )->name( 'switch@create-by-snmp'   );
+            Route::get(  'port-report/{switch}', [self::class, 'portReport']    )->name( "switch@port-report"   );
+            Route::post( 'store-by-snmp',        [self::class, 'storeBySmtp']   )->name( "switch@store-by-snmp" );
         });
+
+        // never an admin route:
+        Route::group( [  'prefix' => $route_prefix ], function() {
+            Route::get(  'configuration',        [self::class, 'configuration']  )->name( "switch@configuration" );
+        });
+
     }
 
     /**
@@ -218,6 +229,7 @@ class SwitchController extends EloquentController
      *
      * @return View
      */
+    #[\Override]
     public function list( Request $param  ) : View
     {
         if( ( $showActiveOnly = $param->activeOnly ) !== null  ) {
@@ -283,7 +295,7 @@ class SwitchController extends EloquentController
             'vendor'  => [
                 'title'      => 'Vendor',
                 'type'       => self::$FE_COL_TYPES[ 'HAS_ONE' ],
-                'controller' => 'vendor',
+                'controller' => 'admin/vendor',
                 'action'     => 'view',
                 'idField'    => 'vendorid'
             ],
@@ -337,6 +349,7 @@ class SwitchController extends EloquentController
      *
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams   = $this->feParams;
@@ -361,8 +374,11 @@ class SwitchController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (Switcher|array|false|mixed|null|string)[]
+     *
+     * @psalm-return array{object: Switcher, addBySnmp: array|null|string, preAddForm: false, cabinets: array<int, mixed>, infra: mixed, vendors: mixed}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -381,8 +397,9 @@ class SwitchController extends EloquentController
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -401,10 +418,13 @@ class SwitchController extends EloquentController
     /**
      * Display the form to edit an object
      *
-     * @param   int $id ID of the row to edit
+     * @param int $id ID of the row to edit
      *
-     * @return array
+     * @return (array|false|mixed|null|string)[]
+     *
+     * @psalm-return array{object: mixed, addBySnmp: array|null|string, preAddForm: false, cabinets: array<int, mixed>, infra: mixed, vendors: mixed}
      */
+    #[\Override]
     protected function editPrepareForm( int $id ): array
     {
         $this->object = Switcher::findOrFail( $id );
@@ -444,10 +464,11 @@ class SwitchController extends EloquentController
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = Switcher::findOrFail( $id );
@@ -534,6 +555,7 @@ class SwitchController extends EloquentController
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function preDelete() : bool
     {
         $okay = true;
@@ -560,7 +582,7 @@ class SwitchController extends EloquentController
      *
      * @param Switcher $switch ID for the switch
      *
-     * @return view
+     * @return View
      */
     public function portReport( Switcher $switch ) : View
     {
@@ -599,57 +621,26 @@ class SwitchController extends EloquentController
      *
      * @param Request $r
      *
-     * @return view
+     * @return View
      *
      * @throws
      */
     public function configuration( Request $r ) : View
     {
-        $infra  = $location = $speed = $switch = $vlan = $summary = false;
+        $speed = $summary = false;
 
-        $speeds = PhysicalInterface::selectRaw( 'DISTINCT physicalinterface.speed AS speed' )
-            ->orderBy( 'speed' )->get()->pluck( 'speed' )->toArray();
+        $speeds = PhysicalInterface::select('speed as value')
+            ->union(
+                PhysicalInterface::select('rate_limit as value')->whereNotNull('rate_limit')
+            )
+            ->orderBy('value', 'asc')
+            ->pluck('value')
+            ->toArray();
 
-        $rate_limits = PhysicalInterface::selectRaw( 'DISTINCT physicalinterface.rate_limit AS rate_limit' )
-            ->whereNotNull( 'rate_limit' )
-            ->orderBy( 'rate_limit' )->get()->pluck( 'rate_limit' )->toArray();
-
-        $speeds = array_merge( $speeds, $rate_limits );
-        asort( $speeds, SORT_NUMERIC );
-        $speeds = array_values($speeds);
-
-        if( $r->switch !== null ) {
-            if(  $switch = Switcher::find( $r->switch ) ) {
-                $r->session()->put( "switch-configuration-switch", $switch );
-            } else {
-                $r->session()->remove( "switch-configuration-switch" );
-                $switch = false;
-            }
-        } else if( $r->session()->exists( "switch-configuration-switch" ) ) {
-            $switch = $r->session()->get( "switch-configuration-switch" );
-        }
-
-        if( $r->infra !== null ) {
-            if(  $infra = Infrastructure::find( $r->infra ) ) {
-                $r->session()->put( "switch-configuration-infra", $infra );
-            } else {
-                $r->session()->remove( "switch-configuration-infra" );
-                $infra = false;
-            }
-        } else if( $r->session()->exists( "switch-configuration-infra" ) ) {
-            $infra = $r->session()->get( "switch-configuration-infra" );
-        }
-
-        if( $r->location !== null ) {
-            if( $location = Location::find( $r->location ) ) {
-                $r->session()->put( "switch-configuration-location", $location );
-            } else {
-                $r->session()->remove( "switch-configuration-location" );
-                $location = false;
-            }
-        } else if( $r->session()->exists( "switch-configuration-location" ) ) {
-            $location = $r->session()->get( "switch-configuration-location" );
-        }
+        $switch    = $this->resolveAndPersistModel($r, "switch",   Switcher::class);
+        $infra     = $this->resolveAndPersistModel($r, "infra",    Infrastructure::class);
+        $location  = $this->resolveAndPersistModel($r, "location", Location::class);
+        $vlan      = $this->resolveAndPersistModel($r, "vlan",     Vlan::class);
 
         if( $r->speed !== null ) {
             $speed = (int)$r->speed;
@@ -661,17 +652,6 @@ class SwitchController extends EloquentController
             }
         } else if( $r->session()->exists( "switch-configuration-speed" ) ) {
             $speed = $r->session()->get( "switch-configuration-speed" );
-        }
-
-        if( $r->vlan !== null ) {
-            if( $vlan = Vlan::find( $r->vlan ) ) {
-                $r->session()->put( "switch-configuration-vlan", $vlan );
-            } else {
-                $r->session()->remove( "switch-configuration-vlan" );
-                $vlan = false;
-            }
-        } else if( $r->session()->exists( "switch-configuration-vlan" ) ) {
-            $vlan = $r->session()->get( "switch-configuration-vlan" );
         }
 
         if( $switch || $infra || $location || $vlan ) {
@@ -713,9 +693,9 @@ class SwitchController extends EloquentController
             'location'                  => $location,
             'summary'                   => $summary,
             'speeds'                    => $speeds,
-            'infras'                    => $switch ? [ Infrastructure::find( $switch->infrastructure ) ] : Infrastructure::orderBy( 'name' )->get(),
+            'infras'                    => $switch ? collect([$switch->infrastructureModel]) : Infrastructure::orderBy( 'name' )->get(),
             'vlans'                     => Vlan::orderBy( 'name' )->get(),
-            'locations'                 => $switch ? [ Location::find( $switch->cabinet->locationid ) ] : Location::orderBy( 'name' )->get(),
+            'locations'                 => $switch ? collect([$switch->cabinet->location]) : Location::orderBy( 'name' )->get(),
             'switches'                  => SwitcherAggregator::getByLocationInfrastructureSpeed( $infra ? $infra->id : null, $location ? $location->id : null, $speed ?: null ),
             'config'                    => $config,
         ]);
@@ -726,6 +706,7 @@ class SwitchController extends EloquentController
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [
@@ -743,6 +724,36 @@ class SwitchController extends EloquentController
             'loopback_name'     => 'nullable|string|max:255',
             'mgmt_mac_address'  => 'nullable|string|max:17|regex:/^[a-f0-9:\.\-]{12,17}$/i',
         ] );
+    }
+
+    /**
+     * Template method to resolve a requested model from the query string.
+     * Searches for a model of type $classType using the ID defined in the query string under variable with name $inputName.
+     * Persists the model in session if found. Returns false if model id is invalid, or nothing stored in the session.
+     *
+     * @template T of Model
+     * @param Request         $r - request object
+     * @param string          $inputName - name of input that contains our selection
+     * @param class-string<T> $classType - what type of Model are we looking for?
+     * @return T|false
+     */
+    private function resolveAndPersistModel( Request $r , string $inputName, string $classType ): Model|false
+    {
+        $selection  = $r->query( $inputName );
+        $sessionKey = "switch-configuration-{$inputName}";
+
+        if ( is_string($selection) && $selection !== '' ) {
+            /** @psalm-suppress InvalidMethodCall */
+            $instance = $classType::find( $selection );
+            if ( !$instance ) {
+                $r->session()->remove( $sessionKey );
+                return false;
+            }
+            $r->session()->put( $sessionKey, $instance );
+            return $instance;
+        }
+
+        return $r->session()->get( $sessionKey, false );
     }
 
     /**

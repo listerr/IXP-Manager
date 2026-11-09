@@ -13,7 +13,7 @@ namespace IXP\Providers;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -53,12 +53,13 @@ class IxpServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function register(): void
     {
         $this->app->resolving('view', function( $view ) {
             View::composer('*', function($view) {
-                /** @var User $us */
-                $us = Auth::getUser();
+                /** @var ?User $us */
+                $us = Auth::user();
 
                 if( ( Auth::check() && $us->isSuperUser() ) || config( 'IXP_PHPUNIT_RUNNING', false ) ) {
                     // get an array of customer id => names

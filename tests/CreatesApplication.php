@@ -1,4 +1,5 @@
 <?php
+declare(strict_types = 1);
 
 namespace Tests;
 
@@ -14,7 +15,7 @@ namespace Tests;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -46,6 +47,12 @@ trait CreatesApplication
      */
     public function createApplication(): Application
     {
+        date_default_timezone_set('Europe/Dublin');
+
+        if( !defined('LARAVEL_START') ) {
+            define( 'LARAVEL_START', microtime(true ) );
+        }
+
         $app = require __DIR__ . '/../bootstrap/app.php';
 
         $app->make( Kernel::class )->bootstrap();

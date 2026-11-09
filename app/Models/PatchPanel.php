@@ -3,7 +3,7 @@
 namespace IXP\Models;
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -59,25 +59,25 @@ use IXP\Traits\Observable;
  * @property-read \IXP\Models\Cabinet|null $cabinet
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\PatchPanelPort> $patchPanelPorts
  * @property-read int|null $patch_panel_ports_count
- * @method static Builder|PatchPanel newModelQuery()
- * @method static Builder|PatchPanel newQuery()
- * @method static Builder|PatchPanel query()
- * @method static Builder|PatchPanel whereActive($value)
- * @method static Builder|PatchPanel whereCabinetId($value)
- * @method static Builder|PatchPanel whereCableType($value)
- * @method static Builder|PatchPanel whereChargeable($value)
- * @method static Builder|PatchPanel whereColoPpType($value)
- * @method static Builder|PatchPanel whereColoReference($value)
- * @method static Builder|PatchPanel whereConnectorType($value)
- * @method static Builder|PatchPanel whereCreatedAt($value)
- * @method static Builder|PatchPanel whereId($value)
- * @method static Builder|PatchPanel whereInstallationDate($value)
- * @method static Builder|PatchPanel whereLocationNotes($value)
- * @method static Builder|PatchPanel whereMountedAt($value)
- * @method static Builder|PatchPanel whereName($value)
- * @method static Builder|PatchPanel wherePortPrefix($value)
- * @method static Builder|PatchPanel whereUPosition($value)
- * @method static Builder|PatchPanel whereUpdatedAt($value)
+ * @method static Builder<static>|PatchPanel newModelQuery()
+ * @method static Builder<static>|PatchPanel newQuery()
+ * @method static Builder<static>|PatchPanel query()
+ * @method static Builder<static>|PatchPanel whereActive($value)
+ * @method static Builder<static>|PatchPanel whereCabinetId($value)
+ * @method static Builder<static>|PatchPanel whereCableType($value)
+ * @method static Builder<static>|PatchPanel whereChargeable($value)
+ * @method static Builder<static>|PatchPanel whereColoPpType($value)
+ * @method static Builder<static>|PatchPanel whereColoReference($value)
+ * @method static Builder<static>|PatchPanel whereConnectorType($value)
+ * @method static Builder<static>|PatchPanel whereCreatedAt($value)
+ * @method static Builder<static>|PatchPanel whereId($value)
+ * @method static Builder<static>|PatchPanel whereInstallationDate($value)
+ * @method static Builder<static>|PatchPanel whereLocationNotes($value)
+ * @method static Builder<static>|PatchPanel whereMountedAt($value)
+ * @method static Builder<static>|PatchPanel whereName($value)
+ * @method static Builder<static>|PatchPanel wherePortPrefix($value)
+ * @method static Builder<static>|PatchPanel whereUPosition($value)
+ * @method static Builder<static>|PatchPanel whereUpdatedAt($value)
  * @mixin Eloquent
  */
 
@@ -116,15 +116,15 @@ class PatchPanel extends Model
     /**
      * CONST Cable types
      */
-    public const CABLE_TYPE_UTP                = 1;
-    public const CABLE_TYPE_SMF                = 2;
-    public const CABLE_TYPE_MMF                = 3;
-    public const CABLE_TYPE_OTHER              = 999;
+    public const int CABLE_TYPE_UTP                = 1;
+    public const int CABLE_TYPE_SMF                = 2;
+    public const int CABLE_TYPE_MMF                = 3;
+    public const int CABLE_TYPE_OTHER              = 999;
 
     /**
      * Array Cable types
      */
-    public static $CABLE_TYPES = [
+    public static array $CABLE_TYPES = [
         self::CABLE_TYPE_UTP            => 'UTP',
         self::CABLE_TYPE_SMF            => 'SMF',
         self::CABLE_TYPE_MMF            => 'MMF',
@@ -134,7 +134,7 @@ class PatchPanel extends Model
     /**
      * Array 'Fibre' Cable types
      */
-    public static $FIBRE_CABLE_TYPES = [
+    public static array $FIBRE_CABLE_TYPES = [
         self::CABLE_TYPE_SMF,
         self::CABLE_TYPE_MMF,
     ];
@@ -142,13 +142,13 @@ class PatchPanel extends Model
     /**
      * CONST Co-lo simplex/duplex specification
      */
-    public const COLO_PP_TYPE_SIMPLEX   = 0;
-    public const COLO_PP_TYPE_DUPLEX    = 1;
+    public const int COLO_PP_TYPE_SIMPLEX   = 0;
+    public const int COLO_PP_TYPE_DUPLEX    = 1;
 
     /**
      * Array Co-lo simplex/duplex specification
      */
-    public static $COLO_PP_TYPES = [
+    public static array $COLO_PP_TYPES = [
         self::COLO_PP_TYPE_SIMPLEX      => 'Simplex',
         self::COLO_PP_TYPE_DUPLEX       => 'Duplex',
     ];
@@ -156,16 +156,16 @@ class PatchPanel extends Model
     /**
      * CONST Connector types
      */
-    public const CONNECTOR_TYPE_RJ45           = 1;
-    public const CONNECTOR_TYPE_SC             = 2;
-    public const CONNECTOR_TYPE_LC             = 3;
-    public const CONNECTOR_TYPE_MU             = 4;
-    public const CONNECTOR_TYPE_OTHER          = 999;
+    public const int CONNECTOR_TYPE_RJ45           = 1;
+    public const int CONNECTOR_TYPE_SC             = 2;
+    public const int CONNECTOR_TYPE_LC             = 3;
+    public const int CONNECTOR_TYPE_MU             = 4;
+    public const int CONNECTOR_TYPE_OTHER          = 999;
 
     /**
      * Array Connector types
      */
-    public static $CONNECTOR_TYPES = [
+    public static array $CONNECTOR_TYPES = [
         self::CONNECTOR_TYPE_RJ45      => 'RJ45',
         self::CONNECTOR_TYPE_SC        => 'SC',
         self::CONNECTOR_TYPE_LC        => 'LC',
@@ -176,19 +176,21 @@ class PatchPanel extends Model
     /**
      * Counts from patch panel mount position
      */
-    public const MOUNTED_AT_FRONT = 1;
-    public const MOUNTED_AT_REAR  = 2;
+    public const int MOUNTED_AT_FRONT = 1;
+    public const int MOUNTED_AT_REAR  = 2;
 
     /**
      * Mounted at textual representations
      */
-    public static $MOUNTED_AT = [
+    public static array $MOUNTED_AT = [
         self::MOUNTED_AT_FRONT => 'Front',
         self::MOUNTED_AT_REAR  => 'Rear',
     ];
 
     /**
      * Get the patch panel port files for this patch panel port
+     *
+     * @return  HasMany<PatchPanelPort,PatchPanel>
      */
     public function patchPanelPorts(): HasMany
     {
@@ -197,6 +199,8 @@ class PatchPanel extends Model
 
     /**
      * Get the cabinet that own the patch panel
+     *
+     * @return BelongsTo<Cabinet,PatchPanel>
      */
     public function cabinet(): BelongsTo
     {
@@ -315,12 +319,14 @@ class PatchPanel extends Model
     /**
      * get the css class used to display the value => available ports / total ports
      *
-     * @param  int  $total
-     * @param  int  $available
+     * @param int  $total
+     * @param int  $available
      *
      * @return string
-     * @author  Yann Robin <yann@islandbridgenetworks.ie>
      *
+     * @author Yann Robin <yann@islandbridgenetworks.ie>
+     *
+     * @psalm-return 'danger'|'success'|'warning'
      */
     public function cssClassPortCount( int $total, int $available): string
     {
@@ -355,6 +361,98 @@ class PatchPanel extends Model
         $total     = ($divide)? floor( $portCount / 2 ) : $portCount;
 
         return $available . ' / ' . $total;
+    }
+
+    /**
+     * Set the state of unused ports on this patch panel.
+     *
+     * @param int       $state
+     * @param list<int> $includeStates Only update ports currently in these states
+     * @param list<int> $excludeStates Do not update ports currently in these states
+     *
+     * @return int
+     */
+    public function setUnusedPortsState( int $state, array $includeStates = [], array $excludeStates = [] ): int
+    {
+        $validStates = array_keys( PatchPanelPort::$STATES );
+
+        if( !in_array( $state, $validStates, true ) ) {
+            throw new \InvalidArgumentException( 'Invalid patch panel port state.' );
+        } else if (
+            !empty( array_diff( [ ...$includeStates, ...$excludeStates ], $validStates ) ) ||
+            !empty( array_intersect( $includeStates, $excludeStates ) )
+        ) {
+            throw new \InvalidArgumentException( 'Invalid include or exclude states.' );
+        }
+
+        $ports = $this->patchPanelPorts()
+            ->whereNull( 'customer_id' )
+            ->whereNull( 'switch_port_id' );
+
+        if( $includeStates ) {
+            $ports->whereIn( 'state', $includeStates );
+        }
+
+        if( $excludeStates ) {
+            $ports->whereNotIn( 'state', $excludeStates );
+        }
+
+        return $ports->update( [
+            'state'             => $state,
+            'last_state_change' => now(),
+        ] );
+    }
+
+    /**
+     * Pair unused odd-numbered ports with the next even-numbered port.
+     * Existing duplex ports are left unchanged.
+     *
+     * @return int The number of duplex pairs created
+     */
+    public function pairUnusedPortsAsDuplex(): int
+    {
+        $ports = $this->patchPanelPorts()
+            ->whereNull( 'customer_id' )
+            ->whereNull( 'switch_port_id' )
+            ->whereNull( 'duplex_master_id' )
+            ->whereDoesntHave( 'duplexSlavePorts' )
+            ->get()
+            ->keyBy( fn( PatchPanelPort $port ): int => (int)$port->number );
+
+        $pairsCreated = 0;
+
+        foreach( $ports as $number => $master ) {
+            if( $number % 2 === 0 || !( $slave = $ports->get( $number + 1 ) ) ) {
+                continue;
+            }
+
+            $slave->update( [ 'duplex_master_id' => $master->id ] );
+            $pairsCreated++;
+        }
+
+        return $pairsCreated;
+    }
+
+    /**
+     * Split unused duplex pairs into simplex ports.
+     * Pairs with an assigned master or slave are left unchanged.
+     *
+     * @return int The number of duplex pairs split
+     */
+    public function setUnusedPortsAsSimplex(): int
+    {
+        $slaveIds = $this->patchPanelPorts()
+            ->whereNotNull( 'duplex_master_id' )
+            ->whereNull( 'customer_id' )
+            ->whereNull( 'switch_port_id' )
+            ->whereHas( 'duplexMasterPort', function( Builder $q ): void {
+                $q->whereNull( 'customer_id' )
+                    ->whereNull( 'switch_port_id' );
+            } )
+            ->pluck( 'id' );
+
+        return PatchPanelPort::whereIn( 'id', $slaveIds )
+            ->update( [ 'duplex_master_id' => null ] );
     }
 
     /**

@@ -26,6 +26,7 @@ namespace IXP\Console\Commands\Grapher;
 use Carbon\Carbon;
 use Grapher;
 
+use Illuminate\Support\Facades\Log;
 use IXP\Mail\Grapher\TrafficDeltas as TrafficDeltasMailable;
 use IXP\Models\Customer;
 use IXP\Models\TrafficDaily;
@@ -79,6 +80,7 @@ class EmailTrafficDeltas extends GrapherCommand
 
         if( count( $ports ) ) {
             Mail::to( explode( ',', $this->argument( 'email' ) ) )->send( new TrafficDeltasMailable( $ports, (float)$this->option( 'stddev' ), $day ) );
+            Log::notice("Sent email as " . count($ports) . " ports found traffic outside standard deviation");
         } else if( $this->isVerbosityVerbose() ) {
             $this->info("No ports have a traffic delta within the requested deviation");
         }
@@ -92,9 +94,11 @@ class EmailTrafficDeltas extends GrapherCommand
      * @param Carbon    $day
      * @param float     $stddev
      *
-     * @return array
+     * @return (Customer|float|int|mixed|string)[][]
      *
      * @throws
+     *
+     * @psalm-return list<array{count: float(0)|float(1)|float(2), cust: IXP\Models\Customer, dIn: float|int<0, max>, dOut: float|int<0, max>, days: int, meanIn: mixed, meanOut: mixed, percentIn: float|int, percentOut: float|int, pngMonth: string, pngYear: string, sIn: 'decrease'|'increase', sOut: 'decrease'|'increase', stddevIn: float, stddevOut: float, thresholdIn: float, thresholdOut: float, todayAvgIn: mixed, todayAvgOut: mixed}>
      */
     private function portsWithDelta( Carbon $day, float $stddev ): array
     {
@@ -191,6 +195,8 @@ class EmailTrafficDeltas extends GrapherCommand
      * Check the various arguments and options that have been password to the console command
      *
      * @return int 0 for success or else an error code
+     *
+     * @psalm-return 0|253|254
      */
     protected function verifyArgsAndOptions(): int
     {

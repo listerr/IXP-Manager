@@ -62,6 +62,7 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @return string
      */
+    #[\Override]
     public function name(): string
     {
         return 'mrtg';
@@ -74,6 +75,7 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @return bool
      */
+    #[\Override]
     public function isConfigurationRequired(): bool
     {
         return true;
@@ -84,8 +86,9 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @see \IXP\Contracts\Grapher::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return true
      */
+    #[\Override]
     public function isMonolithicConfigurationSupported(): bool
     {
         return true;
@@ -96,8 +99,9 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @see \IXP\Contracts\Grapher::isMonolithicConfigurationSupported() for an explanation
      *
-     * @return bool
+     * @return false
      */
+    #[\Override]
     public function isMultiFileConfigurationSupported(): bool
     {
         return false;
@@ -111,8 +115,11 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      * @param int   $type       The type of configuration to generate
      * @param array $options
      *
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return list{string}
      */
+    #[\Override]
     public function generateConfiguration( int $type = self::GENERATED_CONFIG_TYPE_MONOLITHIC, array $options = [] ): array
     {
         return [
@@ -126,25 +133,27 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
 
     /**
      * Utility function to slurp all peering ports from the database and arrange them in
-     * arrays for genertaing Mrtg configuration files.
+     * arrays for generating Mrtg configuration files.
      *
      * The array returned is an array of arrays containing:
      *
-     * * array `['pis']` of PhysicalInterfaceEntity objects indexed by their ID
-     * * array `['custs']` of Customer objects indexed by their ID
-     * * array `['sws']` of Switcher objects indexed by their ID
-     * * array `['locs']` of Location objects indexed by their ID
-     * * array `['infras']` of Infrastructure objects indexed by their ID
-     * * array `['custports']` containing an array of PhysicalInterfaceEntity IDs indexed by customer ID
+     * array `['pis']` of PhysicalInterfaceEntity objects indexed by their ID
+     * array `['custs']` of Customer objects indexed by their ID
+     * array `['sws']` of Switcher objects indexed by their ID
+     * array `['locs']` of Location objects indexed by their ID
+     * array `['infras']` of Infrastructure objects indexed by their ID
+     * array `['custports']` containing an array of PhysicalInterfaceEntity IDs indexed by customer ID
      * * array `['custaggr']` containing an array of PhysicalInterfaceEntity IDs indexed by customer ID for aggregate graph
-     * * array `['custlags']` containing an array of PhysicalInterfaceEntity IDs contained in an array indexed
-     *       by VirtualInterfaceEntity IDs in turn in an array of customer IDs:
-     *       `['custlags'][$custid][$viid][]`
-     * * array `['swports']` indexed by Switcher ID conataining the PhysicalInterfaceEntity IDs of peering ports
-     * * array `['infraports']` indexed by Infrastructure ID conataining the PhysicalInterfaceEntity IDs of peering ports
-     * * array `['ixpports']` conataining the PhysicalInterfaceEntity IDs of peering ports
+     * array `['custlags']` containing an array of PhysicalInterfaceEntity IDs contained in an array indexed
+     * by VirtualInterfaceEntity IDs in turn in an array of customer IDs:
+     * `['custlags'][$custid][$viid][]`
+     * array `['swports']` indexed by Switcher ID containing the PhysicalInterfaceEntity IDs of peering ports
+     * array `['infraports']` indexed by Infrastructure ID containing the PhysicalInterfaceEntity IDs of peering ports
+     * array `['ixpports']` conataining the PhysicalInterfaceEntity IDs of peering ports
      *
-     * @return array
+     * @return (((int|int[])[]|Customer|Infrastructure|PhysicalInterface|\IXP\Models\CoreBundle|\IXP\Models\Location|\IXP\Models\Switcher|float|int|null)[]|float|int)[]
+     *
+     * @psalm-return array{ixpports: list<int>, ixpports_maxbytes: float|int<min, max>, infras: array<''|int, Infrastructure|null>, infraports: array<''|int, non-empty-list<int>>, infraports_maxbytes: array<''|int, float|int<min, max>>, custs: array<int, Customer>, custports: array<int, non-empty-list<int>>, custlags: array<int, array<int, non-empty-list<int>>>, locs: array<''|int, \IXP\Models\Location|null>, locports: array<''|int, non-empty-list<int>>, locports_maxbytes: array<''|int, float|int<min, max>>, sws: array<''|int, \IXP\Models\Switcher|null>, swports: array<''|int, list{int,...}>, swports_maxbytes: array<''|int, float|int<min, max>>, cbs: array<int, \IXP\Models\CoreBundle>, cbports: array<int, array<int, array{sidea: int, sideb: int}>>, cbbundles: array<int, array{sidea: list{int,...}, sideb: list{int,...}}>, pis?: array<int, PhysicalInterface>}
      */
     public function getPeeringPorts(): array
     {
@@ -392,8 +401,11 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * {inheritDoc}
      *
-     * @return array
+     * @return string[][][]
+     *
+     * @psalm-return array{ixp: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, infrastructure: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, location: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, switcher: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, trunk: array{protocols: array{all: 'all'}, categories: array{bits: 'bits'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, corebundle: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts', errs: 'errs', discs: 'discs', bcasts: 'bcasts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, physicalinterface: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts', errs: 'errs', discs: 'discs', bcasts: 'bcasts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, virtualinterface: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts', errs: 'errs', discs: 'discs', bcasts: 'bcasts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}, customer: array{protocols: array{all: 'all'}, categories: array{bits: 'bits', pkts: 'pkts', errs: 'errs', discs: 'discs', bcasts: 'bcasts'}, periods: array{day: 'day', week: 'week', month: 'month', year: 'year'}, types: array<string, string>}}
      */
+    #[\Override]
     public static function supports(): array
     {
         $rrd = config('grapher.backends.mrtg.dbtype') === 'rrd';
@@ -474,6 +486,7 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @throws
      */
+    #[\Override]
     public function data( Graph $graph ): array
     {
         try {
@@ -497,11 +510,10 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @param Graph $graph
      *
-     * @return string
-     *
-     * @throws
+     * @return false|string
      */
-    public function png( Graph $graph ): string
+    #[\Override]
+    public function png( Graph $graph ): false|string
     {
         try {
             if( config('grapher.backends.mrtg.dbtype') === 'log' ) {
@@ -527,12 +539,10 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      * {inheritDoc}
      *
      * @param Graph $graph
-     *
-     * @return string
-     *
-     * @throws
+     * @return false|string
      */
-    public function rrd( Graph $graph ): string
+    #[\Override]
+    public function rrd( Graph $graph ): false|string
     {
         try {
             if( config('grapher.backends.mrtg.dbtype') === 'log' ) {
@@ -556,6 +566,7 @@ class Mrtg extends GrapherBackend implements GrapherBackendContract
      *
      * @throws
      */
+    #[\Override]
     public function dataPath( Graph $graph ): string
     {
         try {

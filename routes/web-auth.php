@@ -65,12 +65,8 @@ Route::group( [ 'namespace' => 'PatchPanel\Port', 'prefix' => 'patch-panel-port'
 /////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////
 ///
-/// Route Server Prefixes
+/// Filtered Prefixes
 ///
-Route::group( [ 'prefix' => 'rs-prefixes', 'middleware' => [ 'rs-prefixes' ] ], function() {
-    Route::get(     'list',          'RsPrefixesController@list' )->name( 'rs-prefixes@list'  );
-    Route::get(     'view/{cust}',   'RsPrefixesController@view' )->name( 'rs-prefixes@view'  );
-});
 
 Route::get('filtered-prefixes/{cust}', 'FilteredPrefixesController@list' )->name( 'filtered-prefixes@list' );
 
@@ -99,9 +95,12 @@ Route::get(  'switch/configuration',       'Switches\SwitchController@configurat
 ///
 /// Authentication
 ///
-Route::group( [ 'namespace' => 'Auth' ], function() {
+Route::group( [ 'prefix' => 'admin', 'namespace' => 'Auth' ], function() {
     Route::get('switch-user/{c2u}',        'SwitchUserController@switch'       )->name( 'switch-user@switch'            );
     Route::get('switch-user-back',         'SwitchUserController@switchBack'    )->name( 'switch-user@switchBack'        );
+});
+
+Route::group( [ 'namespace' => 'Auth' ], function() {
     Route::get('switch-customer/{cust}',   'SwitchCustomerController@switch'    )->name( 'switch-customer@switch'        );
 });
 
@@ -186,7 +185,7 @@ if( config( 'google2fa.enabled' ) ) {
             }
             return redirect( '' );
 
-        } )->name( '2fa@authenticate' )->middleware( '2fa' );
+        } )->name( '2fa@authenticate' )->middleware( [ '2fa', 'throttle:2fa-authenticate' ] );
     } );
 }
 
@@ -220,7 +219,7 @@ if( !config( 'ixp_fe.frontend.disabled.rs-filters') ) {
         Route::get('create/{cust}',                  'RsFilterController@create'            )->name("rs-filter@create"             );
         Route::get('edit/{rsf}',                     'RsFilterController@edit'           )->name("rs-filter@edit"            );
         Route::get('view/{rsf}',                     'RsFilterController@view'           )->name("rs-filter@view"            );
-        Route::get('toogle-enable/{rsf}/{enable}',   'RsFilterController@toggleEnable'   )->name("rs-filter@toggle-enable"   );
+        Route::get('toggle-enable/{rsf}/{enable}',   'RsFilterController@toggleEnable'   )->name("rs-filter@toggle-enable"   );
         Route::get('change-order/{rsf}/{up}',        'RsFilterController@changeOrderBy'  )->name("rs-filter@change-order"    );
 
         Route::post('revert/{cust}',                 'RsFilterController@revert'         )->name("rs-filter@revert"          );

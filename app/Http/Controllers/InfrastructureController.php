@@ -26,6 +26,7 @@ namespace IXP\Http\Controllers;
 use Countries, Former;
 
 use Illuminate\Database\Eloquent\Builder;
+use IXP\Utils\CountryUtils;
 use Illuminate\Http\{
     Request,
     RedirectResponse
@@ -34,6 +35,8 @@ use Illuminate\Http\{
 use IXP\Models\{
     Infrastructure
 };
+
+use IXP\Rules\IsCountry;
 
 use IXP\Utils\View\Alert\{
     Alert,
@@ -61,9 +64,13 @@ class InfrastructureController extends Eloquent2Frontend
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = (object)[
@@ -84,12 +91,12 @@ class InfrastructureController extends Eloquent2Frontend
                 'ixf_ix_id' => [
                     'title'    => 'IXF-ID',
                     'type'     => self::$FE_COL_TYPES[ 'REPLACE' ],
-                    'subject'  => '<a href="' . config( 'ixp_api.IXPDB.ixp_www' ) . '/%%COL%%/" target="_blank">%%COL%%</a>',
+                    'subject'  => '<a href="' . config( 'ixp_api.IXPDB.ixp_www' ) . '" target="_blank">%%COL%%</a>',
                 ],
                 'peeringdb_ix_id' => [
                     'title'    => 'PeeringDB ID',
                     'type'     => self::$FE_COL_TYPES[ 'REPLACE' ],
-                    'subject'  => '<a href="' . config( 'ixp_api.peeringDB.ixp_www' ) . '/%%COL%%" target="_blank">%%COL%%</a>',
+                    'subject'  => '<a href="' . config( 'ixp_api.peeringDB.ixp_www' ) . '" target="_blank">%%COL%%</a>',
                 ],
             ],
         ];
@@ -100,6 +107,10 @@ class InfrastructureController extends Eloquent2Frontend
                 'country'   => [
                     'title' => 'Country',
                     'type' => self::$FE_COL_TYPES[ 'COUNTRY' ]
+                ],
+                'exclude_from_ixf_export' => [
+                    'title' => 'Exclude from IX-F Export',
+                    'type' => self::$FE_COL_TYPES[ 'YES_NO' ]
                 ],
                 'notes'       => [
                     'title'         => 'Notes',
@@ -124,6 +135,7 @@ class InfrastructureController extends Eloquent2Frontend
 
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -137,8 +149,11 @@ class InfrastructureController extends Eloquent2Frontend
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return (Infrastructure|array)[]
+     *
+     * @psalm-return array{object: Infrastructure, countries: array}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -150,10 +165,13 @@ class InfrastructureController extends Eloquent2Frontend
     /**
      * Display the form to add/edit an object
      *
-     * @param   int $id ID of the row to edit
+     * @param int $id ID of the row to edit
      *
-     * @return array
+     * @return (array|mixed)[]
+     *
+     * @psalm-return array{object: mixed, countries: array}
      */
+    #[\Override]
     protected function editPrepareForm( int $id ): array
     {
         $this->object = Infrastructure::findOrFail( $id );
@@ -162,8 +180,10 @@ class InfrastructureController extends Eloquent2Frontend
             'name'             => request()->old( 'name',      $this->object->name          ),
             'shortname'        => request()->old( 'shortname', $this->object->shortname     ),
             'isPrimary'        => request()->old( 'isPrimary', $this->object->isPrimary     ),
-            'country'          => request()->old( 'country', in_array( $this->object->country,  array_values( Countries::getListForSelect( 'iso_3166_2' ) ), false ) ? $this->object->country : null ),
-            'notes'            => request()->old( 'notes', $this->object->notes             ),
+            'country'          => request()->old( 'country',   CountryUtils::isKnownBy($this->object->country) ? $this->object->country : null ),
+            'exclude_from_ixf_export'
+                               => request()->old( 'exclude_from_ixf_export', $this->object->exclude_from_ixf_export  ),
+            'notes'            => request()->old( 'notes',                   $this->object->notes                    ),
         ]);
 
         return [
@@ -177,10 +197,11 @@ class InfrastructureController extends Eloquent2Frontend
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -195,10 +216,11 @@ class InfrastructureController extends Eloquent2Frontend
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = Infrastructure::findOrFail( $id );
@@ -229,6 +251,7 @@ class InfrastructureController extends Eloquent2Frontend
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function preDelete(): bool
     {
         $okay = true;
@@ -258,12 +281,13 @@ class InfrastructureController extends Eloquent2Frontend
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [
             'name'          => 'required|string|max:255|unique:infrastructure,name' . ( $r->id ? ','. $r->id : '' ),
             'shortname'     => 'required|string|max:255',
-            'country'       => 'required|string|max:2|in:' . implode( ',', array_values( Countries::getListForSelect( 'iso_3166_2' ) ) ),
+            'country'       => ['required', 'string', 'max:2', new IsCountry],
         ] );
     }
 }

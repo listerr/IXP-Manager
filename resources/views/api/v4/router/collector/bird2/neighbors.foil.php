@@ -7,9 +7,9 @@
  * you can't effect the changes you need with skinning, consider posting to the mailing
  * list to see if it can be achieved / incorporated.
  *
- * Skinning: https://ixp-manager.readthedocs.io/en/latest/features/skinning.html
+ * Skinning: https://docs.ixpmanager.org/latest/features/skinning/
  *
- * Copyright (C) 2009 - 2019 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -68,7 +68,7 @@
 ?>
 
 
-function f_import_as<?= $int['autsys'] ?>() -> bool
+function f_import_as<?= $int['autsys'] ?>()
 
 prefix set allnet;
 ip set allips;
@@ -156,9 +156,9 @@ int set allas;
 <?php if( $t->router->rpki && config( 'ixp.rpki.rtr1.host' ) ): ?>
 
     # RPKI check
-    if( roa_check( t_roa, net, bgp_path.last_nonaggregated ) = ROA_INVALID ) then {
+    if( roa_check( t_roa ) = ROA_INVALID ) then {
         bgp_large_community.add( IXP_LC_FILTERED_RPKI_INVALID );
-    } else if( roa_check( t_roa, net, bgp_path.last_nonaggregated ) = ROA_VALID ) then {
+    } else if( roa_check( t_roa ) = ROA_VALID ) then {
         bgp_large_community.add( IXP_LC_INFO_RPKI_VALID );
     } else {
         # RPKI unknown, keep checking and mark as unknown for info

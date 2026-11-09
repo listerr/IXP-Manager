@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Interfaces;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -53,6 +53,7 @@ use IXP\Utils\View\Alert\{
  * PhysicalInterface Controller
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers\Interfaces
  * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
@@ -136,10 +137,20 @@ class PhysicalInterfaceController extends Common
     public function store( StorePhysicalInterface $r ): RedirectResponse
     {
         $vi = VirtualInterface::find( $r->virtualinterfaceid );
+	    $sp = SwitchPort::find( $r->switchportid );
 
-        // when presenting the add PI form, we include peering and unknown port types; set the selected port as peering:
-        SwitchPort::find( $r->switchportid )
-            ->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
+	    // If the first port in an existing virtual interface is already
+	    // reseller, set the new port to reseller.
+	    if ( $vi->physicalInterfaces()->count() > 0
+             && $vi->physicalInterfaces()->first()->switchport->typeReseller() ) {
+             $sp->update( [ 'type' => SwitchPort::TYPE_RESELLER ] );
+	    }
+
+	    // when presenting the add PI form, we include peering, reseller and unknown port types;
+	    // set the selected port as peering unless already reseller
+        if ( $sp->type !== SwitchPort::TYPE_RESELLER ) {
+            $sp->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
+        }
 
         $this->setBundleDetails( $vi );
         $vi->save();
@@ -185,7 +196,7 @@ class PhysicalInterfaceController extends Common
      *
      * @return View|RedirectResponse
      */
-    public function edit( Request $r,  PhysicalInterface $pi, VirtualInterface $vi = null, CoreBundle $cb = null )
+    public function edit( Request $r,  PhysicalInterface $pi, ?VirtualInterface $vi = null, ?CoreBundle $cb = null )
     {
         // we never edit a fanout port:
         if( $pi->switchPort->typeFanout() ) {
@@ -201,12 +212,12 @@ class PhysicalInterfaceController extends Common
         // fill the form with physical interface data
         $data = [
             'switch'        => $r->old( 'switch',        $pi->switchPort->switchid  ),
-            'switchportid'  => $r->old( 'switchportid',  (string)$pi->switchportid          ),
+            'switchportid'  => $r->old( 'switchportid',  (string)$pi->switchportid  ),
             'status'        => $r->old( 'status',        $pi->status                ),
             'speed'         => $r->old( 'speed',         $pi->speed                 ),
             'duplex'        => $r->old( 'duplex',        $pi->duplex                ),
-            'rate_limit'    => $r->old( 'rate_limit',    (string)$pi->rate_limit            ),
-            'autoneg'       => $r->old( 'autoneg',       (string)$pi->autoneg               ),
+            'rate_limit'    => $r->old( 'rate_limit',    (string)$pi->rate_limit    ),
+            'autoneg'       => $r->old( 'autoneg',       (string)$pi->autoneg       ),
             'notes'         => $r->old( 'notes',         $pi->notes                 ),
         ];
 
@@ -253,9 +264,12 @@ class PhysicalInterfaceController extends Common
     public function update( StorePhysicalInterface $r, PhysicalInterface $pi ): RedirectResponse
     {
         $vi = VirtualInterface::find( $r->virtualinterfaceid );
-        // when presenting the add PI form, we include peering and unknown port types; set the selected port as peering:
-        $sp = SwitchPort::find( $r->switchportid );
-        $sp->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
+        // when presenting the add PI form, we include peering, reseller uplink and unknown port types; set the selected port as peering:
+	    $sp = SwitchPort::find( $r->switchportid );
+
+	    if ( $sp->type !== SwitchPort::TYPE_RESELLER ) {
+		    $sp->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
+	    }
 
         if( $pi->otherPICoreLink() ){
             // check if the user has changed the switch port
@@ -316,8 +330,8 @@ class PhysicalInterfaceController extends Common
             $redirect = route( "virtual-interface@edit", [ "vi" => $pi->virtualinterfaceid ] );
         }
 
-        if( $pi->coreInterface ) {
-            AlertContainer::push( 'You cannot delete this physical interface as there is a core bundle linked with it.', Alert::DANGER );
+        if( $ci = $pi->coreInterface ) {
+            AlertContainer::push( 'This physical interface is member of a core link. You can manage it on <a href="' . route( "core-bundle@edit", [ "cb" => $ci->coreLink()->coreBundle->id ] ) . '">the core bundle page</a>', Alert::DANGER );
             return Redirect::to( $redirect );
         }
 

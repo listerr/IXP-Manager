@@ -41,7 +41,7 @@
                         ->id( 'cust' )
                         ->label( ucfirst( config( 'ixp_fe.lang.customer.one' ) ) )
                         ->placeholder( 'Select a ' . config( 'ixp_fe.lang.customer.one' ) )
-                        ->fromQuery( $t->data[ 'params'][ 'custs' ], 'name' )
+                        ->fromQuery( $t->data[ 'params'][ 'custs' ], fn ($model) => $t->ee( $model->name ) )
                         ->addClass( 'chzn-select' )
                         ->blockHelp( ucfirst( config( 'ixp_fe.lang.customer.one' ) )  . ' to assign this contact to.' );
                     ?>
@@ -130,25 +130,25 @@
                             <table class="table table-no-border">
                                 <?php foreach( $t->data[ 'params'][ "allGroups" ] as $gname => $gvalue ): ?>
                                     <?php if( $gname !== "ROLE" && config('contact_group.types.' . $gname ) ): ?>
-                                        <tr>
+                                        <tr class="tw:border-b-1 tw:border-b-solid tw:border-b-gray-200">
                                             <td>
-                                                <label for="mayauthorize" class="control-label col-lg-2 col-sm-4" style="display: grid">&nbsp;<?= $gname ?>&nbsp;</label>
+                                                <label for="mayauthorize" class="control-label col-lg-2 col-sm-4" style="display: grid">&nbsp;<?= $t->ee( $gname ) ?>&nbsp;</label>
                                             </td>
 
-                                            <?php foreach( $gvalue as $ggroup ): ?>
                                                 <td>
+                                                    <?php foreach( $gvalue as $ggroup ): ?>
                                                     <div class="form-group row">
                                                         <div class="col-sm-6 col-md-6 col-lg-8 col-xl-6">
                                                             <div class="form-check form-check-inline">
                                                                 <input id='role_<?= $ggroup[ 'id' ] ?>' type='checkbox' <?= in_array( $ggroup[ 'id' ], $checkedRoles, false ) ? 'checked' : '' ?> name='roles[]' value='<?= $ggroup[ 'id' ] ?>'>
                                                                 <label for="role_<?= $ggroup[ 'id' ] ?>" class="form-check-label">
-                                                                    <?= $ggroup[ 'name' ] ?>
+                                                                    <?= $t->ee( $ggroup[ 'name' ] ) ?>
                                                                 </label>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <?php endforeach; ?>
                                                 </td>
-                                            <?php endforeach; ?>
                                         </tr>
                                     <?php endif; ?>
                                 <?php endforeach; ?>

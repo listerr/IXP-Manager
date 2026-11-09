@@ -1,9 +1,6 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -23,12 +20,15 @@ namespace Tests\Browser;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
+declare(strict_types=1);
+
+namespace Tests\Browser;
+
 use IXP\Models\{
     CoreBundle,
     CoreInterface,
     CoreLink,
     PhysicalInterface,
-    Switcher,
     SwitchPort,
     VirtualInterface
 };
@@ -43,40 +43,26 @@ use Laravel\Dusk\Browser;
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Tests\Browser
- * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class CoreBundleControllerTest extends DuskTestCase
 {
-
-    public function tearDown(): void
-    {
-        foreach( [ 51, 55 ] as $spid ) {
-            $sp = SwitchPort::find( $spid );
-
-            if( $sp ) {
-                $sp->type = SwitchPort::TYPE_CORE;
-                $sp->save();
-            }
-        }
-        parent::tearDown();
-    }
-
     /**
-     * A Dusk test example.
+     * Core bundle tests create (ECMP, L2 lag, l3 lag), core bundle edit, core link edit, core link add, core bundle delete
      *
      * @return void
-     *
-     * @throws
+     * @throws \Throwable
      */
     public function testAddWizard(): void
     {
         $this->browse( function( Browser $browser ) {
-            $browser->visit( '/login' )
+            $browser->visit( '/logout' )
+                ->visit( '/login' )
                 ->type( 'username', 'travis' )
                 ->type( 'password', 'travisci' )
                 ->press( '#login-btn' )
-                ->assertPathIs( '/admin' );
+                ->waitForLocation( '/admin/dashboard' );
 
             $coreBundlesList = [
                 CoreBundle::TYPE_ECMP => [
@@ -221,11 +207,11 @@ class CoreBundleControllerTest extends DuskTestCase
             ];
 
             foreach( $coreBundlesList as $type => $coreBundle ) {
-                $browser->visit( '/interfaces/core-bundle/list' )
-                    ->assertSee( 'Core Bundle / List' )
+                $browser->visit( route( 'core-bundle@list' ) )
+                    ->waitForText( 'Core Bundle / List' )
 //                    ->click(    '#add-cb' )
                     ->click( '#add-cb-wizard' )
-                    ->assertPathIs( '/interfaces/core-bundle/create-wizard' )
+                    ->waitForLocation( route( 'core-bundle@create-wizard' ) )
                     ->assertSee( 'Core Bundles / Create Wizard' );
 
                 // filling forms
@@ -280,7 +266,8 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 1000);' );
 
-                $browser->assertSelectHasOption( '#sp-a-1', $coreBundle[ 'switch-port-a-1' ] )
+                $browser->pause(500)
+                    ->assertSelectHasOption( '#sp-a-1', $coreBundle[ 'switch-port-a-1' ] )
                     ->assertSelectHasOption( '#sp-b-1', $coreBundle[ 'switch-port-b-1' ] );
 
                 $browser->select( '#sp-a-1', $coreBundle[ 'switch-port-a-1' ] )
@@ -297,7 +284,7 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 2000);' );
 
-                $browser->assertSee( 'Link 2' )
+                $browser->waitForText( 'Link 2' )
                     ->assertSelected( '#sp-a-2', $coreBundle[ 'switch-port-a-2' ] )
                     ->assertSelected( '#sp-b-2', $coreBundle[ 'switch-port-b-2' ] )
                     ->assertChecked( '#enabled-cl-2' );
@@ -311,7 +298,7 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
 
-                $browser->assertSee( 'Link 3' )
+                $browser->waitForText( 'Link 3' )
                     ->assertSelected( '#sp-a-3', $coreBundle[ 'switch-port-a-3' ] )
                     ->assertSelected( '#sp-b-3', $coreBundle[ 'switch-port-b-3' ] );
 
@@ -324,7 +311,7 @@ class CoreBundleControllerTest extends DuskTestCase
                     ->click( '#delete-cl-3' )
                     ->assertDontSee( 'Link 3' )
                     ->click( '#core-bundle-submit-btn' )
-                    ->assertPathIs( '/interfaces/core-bundle/list' )
+                    ->waitForLocation( route( 'core-bundle@list' ) )
                     ->assertSee( 'Core bundle created' );
 
                 // Checking values inserted in DB
@@ -402,10 +389,11 @@ class CoreBundleControllerTest extends DuskTestCase
                  * Edit Core bundle type ECMP
                  *
                  */
-                $browser->visit( '/interfaces/core-bundle/list' )
+                $browser->visit( route( 'core-bundle@list' ) )
                     ->click( '#edit-cb-' . $cb->id );
 
-                $browser->assertSelected( 'custid', $coreBundle[ 'cust1' ] )
+                $browser->waitForText( 'General Core Bundle Settings' )
+                    ->assertSelected( 'custid', $coreBundle[ 'cust1' ] )
                     ->assertInputValue( 'description', $coreBundle[ 'description1' ] )
                     ->assertInputValue( 'cost', $coreBundle[ 'cost1' ] )
                     ->assertInputValue( 'graph_title', $coreBundle[ 'graph-title1' ] )
@@ -430,7 +418,7 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->click( '#core-bundle-submit-btn' );
 
-                $browser->assertSee( 'Core bundle updated' );
+                $browser->waitForText( 'Core bundle updated' );
 
 
                 $cb->refresh();
@@ -455,7 +443,7 @@ class CoreBundleControllerTest extends DuskTestCase
                  * Edit Core links for Core Bundle
                  *
                  */
-                $browser->visit( '/interfaces/core-bundle/edit/' . $cb->id );
+                $browser->visit( route( 'core-bundle@edit', $cb->id ) );
 
                 $browser->assertSee( 'Side A' )
                     ->assertSee( 'Side B' )
@@ -481,7 +469,7 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
                 $browser->click( '#core-links-submit-btn' )
-                    ->assertSee( 'Core links updated.' );
+                    ->waitForText( 'Core links updated.' );
 
                 $cb->refresh();
 
@@ -494,7 +482,7 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
                 $browser->click( '#btn-create-cl' )
-                    ->assertSee( 'New Core Link' )
+                    ->waitForText( 'New Core Link' )
                     ->select( '#sp-a-1', $coreBundle[ 'switch-port-a-3' ] )
                     ->select( '#sp-b-1', $coreBundle[ 'switch-port-b-3' ] )
                     ->check( '#enabled-1' );
@@ -511,14 +499,17 @@ class CoreBundleControllerTest extends DuskTestCase
                     $browser->click( '#new-core-links-submit-btn' );
                 }
 
-                $browser->assertSee( 'Core link created.' );
+                $browser->waitForText( 'Core link created.' );
 
                 $cb->refresh();
 
                 $this->assertEquals( 3, $cb->corelinks->count() );
 
                 /** @var $cl3 CoreLink */
+                /** @var SwitchPort $cl3SwitchPort */
                 $this->assertInstanceOf( CoreLink::class, $cl3 = $cb->corelinks->last() );
+                $cl3SwitchPort = $cl3->coreInterfaceSideA->physicalInterface->switchPort;
+
                 $this->assertEquals( $coreBundle[ 'switch-port-a-3-name' ], $cl3->coreInterfaceSideA->physicalInterface->switchPort->name );
                 $this->assertEquals( $coreBundle[ 'switch-port-b-3-name' ], $cl3->coreInterfaceSideB->physicalInterface->switchPort->name );
                 $this->assertEquals( $coreBundle[ 'bfd-cl-3' ], $cl3->bfd );
@@ -527,23 +518,41 @@ class CoreBundleControllerTest extends DuskTestCase
 
                 $cl3id = $cl3->id;
 
-                $browser->visit( '/interfaces/core-bundle/edit/' . $cb->id );
+                $browser->visit( route( 'core-bundle@edit', $cb->id ) );
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
                 $browser->click( '#btn-delete-cl-' . $cl3->id )
                     ->waitForText( 'Do you really want to delete this core link?' )
-                    ->press( 'Delete' );
+                    ->press( 'Delete' )
+                    ->pause(500);
 
                 $this->assertEquals( null, CoreLink::find( $cl3id ) );
+                $cl3SwitchPort->refresh();
+                $this->assertEquals( SwitchPort::TYPE_UNSET, $cl3SwitchPort->type );
+                $this->assertEquals(2, $cb->coreLinks()->count());
 
                 $cbid = $cb->id;
 
-                $browser->visit( '/interfaces/core-bundle/edit/' . $cb->id );
+                $cbVis = $cb->virtualInterfaces();
+                $this->assertCount(2, $cbVis);
+
+                $browser->visit( route( 'core-bundle@edit', $cb->id ) )
+                    ->waitForLocation( route( 'core-bundle@edit', $cb->id ) );
                 $browser->driver->executeScript( 'window.scrollTo(0, 3000);' );
                 $browser->click( '#btn-delete-cb' )
                     ->waitForText( 'Do you really want to delete this core bundle?' )
-                    ->press( 'Delete' );
+                    ->press( 'Delete' )
+                    ->pause(500);
 
                 $this->assertEquals( null, CoreBundle::find( $cbid ) );
+                $this->assertEquals(0, CoreLink::whereCoreBundleId($cbid)->count() );
+
+                // VI's get deleted too
+                foreach ($cbVis as $oldVi) {
+                    $this->assertNull(VirtualInterface::find($oldVi->id));
+                    // and physical interfaces
+                    $this->assertNull(PhysicalInterface::whereVirtualinterfaceid($oldVi->id)->first());
+                }
+
             }
         } );
     }

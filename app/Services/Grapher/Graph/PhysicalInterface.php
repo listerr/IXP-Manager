@@ -77,10 +77,8 @@ class PhysicalInterface extends Graph
 
     /**
      * Get the customer owning this virtual interface
-     *
-     * @return Customer
      */
-    public function customer(): Customer
+    public function customer(): Customer|null
     {
         return $this->physint->virtualInterface->customer;
     }
@@ -90,9 +88,9 @@ class PhysicalInterface extends Graph
      *
      * @param PhysicalInterfaceModel $pi
      *
-     * @return Graph Fluid interface
+     * @return static Fluid interface
      */
-    public function setPhysicalInterface( PhysicalInterfaceModel $pi ): Graph
+    public function setPhysicalInterface( PhysicalInterfaceModel $pi ): static
     {
         if( $this->physicalInterface() && $this->physicalInterface()->id !== $pi->id ) {
             $this->wipe();
@@ -107,9 +105,10 @@ class PhysicalInterface extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function name(): string
     {
-        return $this->physicalInterface()->switchPort->name;
+        return $this->physicalInterface()->switchPort->name ?? '';
     }
 
     /**
@@ -119,6 +118,7 @@ class PhysicalInterface extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function identifier(): string
     {
         return sprintf( "pi%05d", $this->physicalInterface()->id );
@@ -133,12 +133,13 @@ class PhysicalInterface extends Graph
      *
      * @return bool
      */
+    #[\Override]
     public function authorise(): bool
     {
         /** @var User $us */
         $us = Auth::getUser();
 
-        if( is_numeric( config( 'grapher.access.customer' ) ) && config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
+        if( is_numeric( config( 'grapher.access.customer' ) ) && (int)config( 'grapher.access.customer' ) === User::AUTH_PUBLIC ) {
             return $this->allow();
         }
 
@@ -157,7 +158,7 @@ class PhysicalInterface extends Graph
 
         if( config( 'grapher.access.customer' ) !== 'own_graphs_only'
             && is_numeric( config( 'grapher.access.customer' ) )
-            && $us->privs >= config( 'grapher.access.customer' )
+            && $us->privs() >= config( 'grapher.access.customer' )
         ) {
             return $this->allow();
         }
@@ -177,6 +178,7 @@ class PhysicalInterface extends Graph
      *
      * @return string
      */
+    #[\Override]
     public function url( array $overrides = [] ): string
     {
         return parent::url( $overrides ) . sprintf("&id=%d",
@@ -189,8 +191,11 @@ class PhysicalInterface extends Graph
      *
      * Extends base function
      *
-     * @return array $params
+     * @return (\Carbon\Carbon|int|mixed|null)[]
+     *
+     * @psalm-return array{protocol: mixed, period: mixed, category: mixed, type: mixed, period_start?: \Carbon\Carbon|null, period_end?: \Carbon\Carbon|null, id: int}
      */
+    #[\Override]
     public function getParamsAsArray(): array
     {
         $p          = parent::getParamsAsArray();

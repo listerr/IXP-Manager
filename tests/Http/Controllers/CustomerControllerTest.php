@@ -1,0 +1,171 @@
+<?php
+/*
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * All Rights Reserved.
+ *
+ * This file is part of IXP Manager.
+ *
+ * IXP Manager is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, version v2.0 of the License.
+ *
+ * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License v2.0
+ * along with IXP Manager.  If not, see:
+ *
+ * http://www.gnu.org/licenses/gpl-2.0.html
+ */
+
+declare(strict_types=1);
+namespace Tests\Http\Controllers;
+
+use Illuminate\Database\Eloquent\Model;
+use IXP\Models\Cabinet;
+use IXP\Models\CompanyBillingDetail;
+use IXP\Models\CompanyRegisteredDetail;
+use IXP\Models\Customer;
+use IXP\Models\Location;
+use IXP\Models\PatchPanel;
+use IXP\Models\PatchPanelPort;
+use Tests\TestCase;
+
+class CustomerControllerTest extends TestCase
+{
+    public function testCannotDeleteResellerWithCustomers()
+    {
+        $resellerRegisteredDetails = new CompanyRegisteredDetail();
+        $resellerRegisteredDetails->save();
+        $resellerBillingDetails = new CompanyBillingDetail();
+        $resellerBillingDetails->save();
+
+        $reseller = new Customer();
+        $reseller->isReseller = true;
+        $reseller->company_registered_detail_id = $resellerRegisteredDetails->id;
+        $reseller->company_billing_details_id = $resellerBillingDetails->id;
+        $reseller->save();
+
+        $resoldCustomer = new Customer();
+        $resoldCustomer->reseller = $reseller->id;
+        $resoldCustomer->save();
+
+        $this->actingAs($this->getSuperUser());
+
+        // Can't go to delete-recap if they are a reseller with reseller customers
+        $this
+            ->get( route("customer@delete-recap", ['cust' => $reseller->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@overview", ['cust' => $reseller->id] ) );
+
+        $this
+            ->get( route("customer@overview", ['cust' => $reseller->id] ) )
+            ->assertStatus(200)
+            ->assertSee("This customer is a reseller still associated with active resold customers. Please ".
+                " disassociate their customers before proceeding with deleting the reselling customer.");
+
+        // Can't go to delete if they are a reseller with reseller customers
+        $this
+            ->delete( route("customer@delete", ['cust' => $reseller->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@overview", ['cust' => $reseller->id] ) );
+
+        $this
+            ->get( route("customer@overview", ['cust' => $reseller->id] ) )
+            ->assertStatus(200)
+            ->assertSee("This customer is a reseller still associated with active resold customers. Please ".
+                " disassociate their customers before proceeding with deleting the reselling customer.");
+
+        // We can go to delete-recap when the resold customer is dissociated
+        $resoldCustomer->reseller = null;
+        $resoldCustomer->save();
+
+        $this
+            ->get( route("customer@delete-recap", ['cust' => $reseller->id] ) )
+            ->assertStatus(200);
+
+        // We can proceed with the delete delete-recap when the resold customer is dissociated
+
+        $this
+            ->delete( route("customer@delete", ['cust' => $reseller->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@list" ) );
+
+        $this->assertNull(Customer::find($reseller->id));
+    }
+
+    public function testCannotDeleteCustomerWithActivePatchPanelPorts()
+    {
+        $regDetail = new CompanyRegisteredDetail();
+        $regDetail->save();
+
+        $billingDetail = new CompanyBillingDetail();
+        $billingDetail->save();
+
+        $customer = new Customer();
+        $customer->company_registered_detail_id = $regDetail->id;
+        $customer->company_billing_details_id = $billingDetail->id;
+        $customer->save();
+
+        $location = new Location();
+        $location->save();
+
+        $cabinet = new Cabinet();
+        $cabinet->locationid = $location->id;
+        $cabinet->save();
+
+        $pp = new PatchPanel();
+        $pp->cabinet_id = $cabinet->id;
+        $pp->save();
+
+        $ppp = new PatchPanelPort();
+        $ppp->customer_id = $customer->id;
+        $ppp->patch_panel_id = $pp->id;
+        $ppp->save();
+        $this->actingAs($this->getSuperUser());
+
+        // Can't go to delete-recap if they have active patch panel ports
+        $this
+            ->get( route("customer@delete-recap", ['cust' => $customer->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@overview", ['cust' => $customer->id] ) );
+
+        $this
+            ->get( route("customer@overview", ['cust' => $customer->id] ) )
+            ->assertStatus(200)
+            ->assertSee("This customer has active patch panel ports. Please cease "
+                . "these (or set them to awaiting cease and unset the customer link in the patch panel "
+                . "port) to proceed with deleting this customer.");
+
+        // Can't go to delete if they have active patch panel ports
+        $this
+            ->delete( route("customer@delete", ['cust' => $customer->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@overview", ['cust' => $customer->id] ) );
+
+        $this
+            ->get( route("customer@overview", ['cust' => $customer->id] ) )
+            ->assertStatus(200)
+            ->assertSee("This customer has active patch panel ports. Please cease "
+                . "these (or set them to awaiting cease and unset the customer link in the patch panel "
+                . "port) to proceed with deleting this customer.");
+
+        // We can go to delete-recap when the patch panel port is not associated with customer
+        $ppp->customer_id = null;
+        $ppp->save();
+
+        $this
+            ->get( route("customer@delete-recap", ['cust' => $customer->id] ) )
+            ->assertStatus(200);
+
+        // We can proceed with delete then too
+        $this
+            ->delete( route("customer@delete", ['cust' => $customer->id] ) )
+            ->assertStatus(302)
+            ->assertRedirect( route("customer@list") );
+
+        $this->assertNull(Customer::find($customer->id));
+    }
+}

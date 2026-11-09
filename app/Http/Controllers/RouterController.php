@@ -63,8 +63,25 @@ class RouterController extends Controller
      */
     public function list(): View
     {
+        $routers = Router::with( 'vlan' )->get();
+
+        $birdv1Templates = [];
+
+        foreach( $routers as $router ) {
+            if( str_contains( $router->template, 'router/as112/bird/' ) ) {
+                $birdv1Templates[] = $router->handle;
+            }
+        }
+
+        if( $birdv1Templates !== [] ) {
+            AlertContainer::push( 'Bird v1 went end of life at the end of 2023, however the following routers are using a Bird v1 templates: '
+                . implode( ', ', $birdv1Templates ) . '. You should migrate to Bird v2 or v3 as support for Bird v1 will be '
+                . 'removed from IXP Manager in a future release.', Alert::WARNING
+            );
+        }
+
         return view( 'router/index' )->with([
-            'routers'       => Router::with( 'vlan' )->get()
+            'routers'       => Router::with( 'vlan' )->get(),
         ]);
     }
 
@@ -141,6 +158,7 @@ class RouterController extends Controller
     {
         Former::populate([
             'handle'                    => request()->old( 'handle',      $router->handle       ),
+            'pair_id'                   => request()->old( 'pair_id',     $router->pair_id ? (string)$router->pair_id : null ),
             'vlan_id'                   => request()->old( 'vlan_id',     (string)$router->vlan_id      ),
             'protocol'                  => request()->old( 'protocol',    $router->protocol     ),
             'type'                      => request()->old( 'type',        $router->type         ),
@@ -162,7 +180,6 @@ class RouterController extends Controller
             'rpki'                      => request()->old( 'rpki',              (string)$router->rpki               ),
             'rfc1997_passthru'          => request()->old( 'rfc1997_passthru',  (string)$router->rfc1997_passthru   ),
             'skip_md5'                  => request()->old( 'skip_md5',          (string)$router->skip_md5           ),
-            'pair_id'                   => request()->old( 'pair_id',           (string)$router->pair_id            ),
             'template'                  => request()->old( 'template',          $router->template           ),
         ]);
 
@@ -184,6 +201,10 @@ class RouterController extends Controller
      */
     public function update( StoreRouter $r, Router $router ): RedirectResponse
     {
+        if( !$r->exists( 'pair_id' ) ) {
+            $r->merge( ['pair_id' => null]);
+        }
+        
         $router->update( $r->all() );
 
         $this->checkASN32( $router );
@@ -291,7 +312,7 @@ class RouterController extends Controller
             AlertContainer::push( 'You are strongly advised to use / request a dedicated 16-bit ASN from your RIR '
                 . 'for route server use and in our experience, all RIRs understand this and accommodate it. The route server '
                 . 'configurations will support an asn32 but to our knowledge, this has never been used in production. '
-                . 'Also, withouot an asn16, you will be unable to offer your members standard community based filtering. ',
+                . 'Also, without an asn16, you will be unable to offer your members standard community based filtering. ',
          Alert::WARNING
             );
         }

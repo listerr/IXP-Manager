@@ -23,7 +23,7 @@ namespace IXP\Http\Controllers\Interfaces;
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Exception;
 use Former;
 
@@ -62,6 +62,7 @@ use Throwable;
  *
  * @author     Barry O'Donovan <barry@islandbridgenetworks.ie>
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
+ * @author     Thomas Kerin <thomas@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Http\Controllers\Interfaces
  * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
@@ -105,6 +106,48 @@ class VirtualInterfaceController extends Common
     }
 
     /**
+     * Display all the virtualInterfaces that are allocated to non-active customers
+     *
+     * @return  View
+     */
+    public function listOrphaned() : View
+    {
+        return view( 'interfaces/virtual/list-orphaned' )->with([
+            'resellerMode'      => $this->resellerMode(),
+            'vis'               => VirtualInterface::selectRaw(
+                'vi.id AS id, 
+                            SUM( pi.speed ) AS speed,
+                            SUM( pi.rate_limit ) AS rate_limit,
+                            COUNT( pi.id ) AS nbpi,
+                            c.id AS custid, c.name AS custname,
+                            c.dateleave AS dateleave,
+                            c.status AS custstatus,
+                            c.type AS custtype,
+                            l.id as locationid, l.name AS locationname,
+                            s.id AS switchid, s.name AS switchname,
+                            GROUP_CONCAT( sp.name ) AS switchport,
+                            GROUP_CONCAT( sp.type ) AS switchporttype,
+                            GROUP_CONCAT( ppi.id ) AS peering,
+                            GROUP_CONCAT( fpi.id ) AS fanout'
+                )->from( 'virtualinterface AS vi' )
+                    ->leftJoin( 'physicalinterface AS pi', 'pi.virtualinterfaceid', 'vi.id' )
+                    ->leftJoin( 'physicalinterface AS ppi', 'ppi.fanout_physical_interface_id', 'pi.id' )
+                    ->leftJoin( 'physicalinterface AS fpi', 'fpi.id', 'pi.fanout_physical_interface_id' )
+                    ->leftJoin( 'cust AS c', 'c.id', 'vi.custid' )
+                    ->leftJoin( 'switchport AS sp', 'sp.id', 'pi.switchportid' )
+                    ->leftJoin( 'switch AS s', 's.id', 'sp.switchid' )
+                    ->leftJoin( 'cabinet AS cab', 'cab.id', 's.cabinetid' )
+                    ->leftJoin( 'location AS l', 'l.id', 'cab.locationid' )
+                ->whereNotNull( 'c.dateleave' )
+                ->orWhere( 'c.status', '!=', Customer::STATUS_NORMAL )
+                ->orWhere( 'c.type', Customer::TYPE_ASSOCIATE )
+                ->groupBy( 'id' )
+                ->get()->toArray(),
+        ]);
+    }
+
+
+    /**
      * Display the form to create a virtual interface
      *
      * @param  Customer  $cust  customer
@@ -138,7 +181,7 @@ class VirtualInterfaceController extends Common
      *
      * @return View
      */
-    public function create( Request $r, Customer $cust = null ): View
+    public function create( Request $r, ?Customer $cust = null ): View
     {
         if( $cust ) {
             Former::populate( [
@@ -235,6 +278,12 @@ class VirtualInterfaceController extends Common
             $r->merge( [ 'name' => '' , 'channelgroup' => null ] );
         }
 
+        if( $vi->physicalInterfaces()->count() > 1 && $vi->channelgroup && !$r->channelgroup ) {
+            AlertContainer::push( 'You cannot remove a channel group number when there are multiple phsyical interfaces.', Alert::DANGER );
+            return redirect( route( 'virtual-interface@edit', [ 'vi' => $vi->id ] ) )->withInput()->exceptInput( 'channelgroup' );
+        }
+
+
         DB::beginTransaction();
         $vi->fill( $r->all() );
         $this->setBundleDetails( $vi );
@@ -261,17 +310,16 @@ class VirtualInterfaceController extends Common
         AlertContainer::push( 'Virtual Interface updated.', Alert::SUCCESS );
         return redirect( route( 'virtual-interface@edit', [ 'vi' => $vi->id ] ) );
     }
-
+    
     /**
      * Display the wizard form to add a virtual interface
      *
-     * @param  Customer|null  $cust  Id of the customer to preselect
+     * @param Customer|null $cust Id of the customer to preselect
      *
      * @return View
-     *
-     * @throws
+     * @throws JsonException
      */
-    public function wizard( Customer $cust = null ): View
+    public function wizard( ?Customer $cust = null ): View
     {
         if( $cust ) {
             Former::populate( [
@@ -280,48 +328,55 @@ class VirtualInterfaceController extends Common
         }
 
         return view( 'interfaces/virtual/wizard' )->with([
-            'custs'                 => CustomerAggregator::reformatNameWithDetail( Customer::trafficking()->current()->orderBy('name')->get() ),
+            'custs'                 => CustomerAggregator::reformatNameWithDetail( Customer::trafficking()->orderBy('name')->get() ),
             'vli'                   => false,
             'vlans'                 => Vlan::orderBy( 'number' )->get(),
             'pi_switches'           => Switcher::where( 'active', true )
                 ->orderBy( 'name' )->get(),
             'resoldCusts'           => $this->resellerMode() ? json_encode( Customer::join('cust AS reseller', 'reseller.reseller', 'cust.id')
                 ->orderBy('reseller.name')->get(), JSON_THROW_ON_ERROR) : json_encode([], JSON_THROW_ON_ERROR),
-            'selectedCust'          => $cust ?: false
+            'selectedCust'          => $cust ?? false
         ]);
     }
-
+    
     /**
      * Create an interface wizard
      *
-     * @param   StoreVirtualInterfaceWizard $r instance of the current HTTP request
+     * @param StoreVirtualInterfaceWizard $r instance of the current HTTP request
      *
      * @return  RedirectResponse
+     * @throws Throwable
      */
     public function storeWizard( StoreVirtualInterfaceWizard $r ): RedirectResponse
     {
+        DB::beginTransaction();
+        
         $v  = Vlan::find( $r->vlanid );
+        
         $vi = VirtualInterface::create( $r->all() );
-
+        
         PhysicalInterface::create( array_merge( $r->all(), [
             'virtualinterfaceid' => $vi->id,
         ] ) );
-
+        
         SwitchPort::find( $r->switchportid )->update( [ 'type' => SwitchPort::TYPE_PEERING ] );
-
+        
         $vli = VlanInterface::make( array_merge( $r->all(),
             [
                 'virtualinterfaceid' => $vi->id,
                 'busyhost'           => false
             ]
         ) );
-
+        
         if( !$this->setIp( $r, $v, $vli, false ) || !$this->setIp( $r, $v, $vli, true ) ) {
-            return redirect(route( 'virtual-interface@wizard' ) )->withInput( $r->all() );
+            DB::rollBack();
+            return redirect( route( 'virtual-interface@wizard' ) )->withInput( $r->all() );
         }
-
+        
         $vli->save();
-
+        
+        DB::commit();
+        
         // add a warning if we're filtering on irrdb but have not configured one for the customer
         $this->warnIfIrrdbFilteringButNoIrrdbSourceSet( $vli );
 

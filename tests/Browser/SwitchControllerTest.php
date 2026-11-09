@@ -1,9 +1,6 @@
 <?php
-
-namespace Tests\Browser;
-
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -14,7 +11,7 @@ namespace Tests\Browser;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -22,6 +19,11 @@ namespace Tests\Browser;
  *
  * http://www.gnu.org/licenses/gpl-2.0.html
  */
+
+declare(strict_types=1);
+
+namespace Tests\Browser;
+
 
 use IXP\Models\Switcher;
 
@@ -36,47 +38,31 @@ use Tests\DuskTestCase;
  * @author     Yann Robin <yann@islandbridgenetworks.ie>
  * @category   IXP
  * @package    IXP\Tests\Browser
- * @copyright  Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee
+ * @copyright  Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee
  * @license    http://www.gnu.org/licenses/gpl-2.0.html GNU GPL V2.0
  */
 class SwitchControllerTest extends DuskTestCase
 {
     /**
-     * @throws
-     */
-    public function tearDown(): void
-    {
-        foreach( [ 'phpunit', 'phpunit2' ] as $name ) {
-            if( $infra = Switcher::whereName( $name )->first() ) {
-                $infra->delete();
-            }
-        }
-
-        parent::tearDown();
-    }
-
-    /**
-     * A Dusk test example.
-     *
-     * @return void
-     *
-     * @throws
+     * Test SwitchController create by SNMP, edit, delete
+     * @throws \Throwable
      */
     public function testAdd(): void
     {
         $this->browse(function (Browser $browser) {
             $browser->resize( 1600,1200 )
+                    ->visit('/logout')
                     ->visit('/login')
                     ->type( 'username', 'travis' )
                     ->type( 'password', 'travisci' )
                     ->press( '#login-btn' )
-                    ->assertPathIs( '/admin' );
+                    ->waitForLocation( '/admin/dashboard' );
 
-            $browser->visit( '/switch/list' )
+            $browser->visit( route( 'switch@list' ) )
                 ->assertSee( 'switch1' )
                 ->assertSee( 'switch2' );
 
-            $browser->visit( '/switch/create-by-snmp' )
+            $browser->visit( route( 'switch@create-by-snmp' ) )
                 ->assertSee( 'Create Switch via SNMP' )
                 ->assertSee( 'Hostname' )
                 ->assertSee( 'SNMP Community' );
@@ -86,7 +72,7 @@ class SwitchControllerTest extends DuskTestCase
             $browser->type( 'hostname', 'phpunit.test.example.com'  )
                 ->type( 'snmppasswd', 'mXPOSpC52cSFg1qN'            )
                 ->press('Next ≫' )
-                ->assertPathIs('/switch/store-by-snmp' )
+                ->waitForLocation( route( 'switch@store-by-snmp' ) )
                 ->assertInputValue( 'name',       'phpunit' )
                 ->assertInputValue( 'hostname',   'phpunit.test.example.com'    )
                 ->assertInputValue( 'snmppasswd', 'mXPOSpC52cSFg1qN'            )
@@ -109,7 +95,7 @@ class SwitchControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press( 'Create' )
-                    ->assertPathIs('/switch/list' )
+                    ->waitForLocation( route( 'switch@list' ) )
                     ->assertSee( 'phpunit' )
                     ->assertSee( 'FESX648' );
 
@@ -135,13 +121,13 @@ class SwitchControllerTest extends DuskTestCase
             $this->assertEquals( 'Test note',                $switch->notes             );
 
             // test that editing while not making any changes and saving changes nothing
-            $browser->visit( '/switch/edit/' . $switch->id          )
-                    ->assertPathIs('/switch/edit/' . $switch->id    );
+            $browser->visit( route( 'switch@edit', $switch->id ) )
+                    ->waitForLocation(route( 'switch@edit', $switch->id ) );
 
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press( 'Save Changes'     )
-                    ->assertPathIs('/switch/list' )
+                    ->waitForLocation(route( 'switch@list' ) )
                     ->assertSee( 'phpunit' )
                     ->assertSee( 'FESX648' );
 
@@ -168,8 +154,8 @@ class SwitchControllerTest extends DuskTestCase
 
             // now test that editing while making changes works
 
-            $browser->visit( '/switch/edit/' . $switch->id                     )
-                    ->assertPathIs('/switch/edit/' . $switch->id              )
+            $browser->visit( route( 'switch@edit', $switch->id ) )
+                    ->waitForLocation(route( 'switch@edit', $switch->id ) )
                     ->type( 'name', 'phpunit2'                          )
                     ->type( 'hostname', 'phpunit2.test.example.com'     )
                     ->type( 'snmppasswd', 'newpassword'                 )
@@ -189,7 +175,7 @@ class SwitchControllerTest extends DuskTestCase
             $browser->driver->executeScript('window.scrollTo(0, 3000);' );
 
             $browser->press( 'Save Changes'        )
-                    ->assertPathIs('/switch/list'   )
+                    ->waitForLocation(route( 'switch@list' )   )
                     ->assertSee( 'phpunit2'         )
                     ->assertSee( 'TI24X'            );
 
@@ -217,13 +203,13 @@ class SwitchControllerTest extends DuskTestCase
             // test that editing while not making any changes and saving changes nothing
             // (this is a retest for, e.g. unchecked checkboxes)
 
-            $browser->visit( '/switch/edit/' . $switch->id      )
-                ->assertPathIs('/switch/edit/' . $switch->id    );
+            $browser->visit( route( 'switch@edit', $switch->id ) )
+                ->waitForLocation(route( 'switch@edit', $switch->id ) );
 
             $browser->driver->executeScript('window.scrollTo(0, 3000);');
 
             $browser->press( 'Save Changes'        )
-                    ->assertPathIs('/switch/list'   )
+                    ->waitForLocation(route( 'switch@list' )   )
                     ->assertSee( 'phpunit2'         )
                     ->assertSee( 'TI24X'            );
 
@@ -249,7 +235,7 @@ class SwitchControllerTest extends DuskTestCase
             $browser->press( '#d2f-list-delete-' . $switch->id      )
                 ->waitForText( 'Do you really want to delete this'    )
                 ->press( 'Delete' )
-                ->assertPathIs('/switch/list'   )
+                ->waitForLocation(route( 'switch@list' )   )
                 ->assertDontSee( 'phpunit2'     )
                 ->assertDontSee( 'TI24X'        );
         });

@@ -25,12 +25,13 @@ namespace IXP\Http\Controllers;
 
 use App, Carbon\Carbon;
 
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Auth;
 
 use Illuminate\Auth\Access\AuthorizationException;
 
 use IXP\Exceptions\Services\Grapher\ParameterException;
-use IXP\Http\Requests\StatisticsP2pRequest;
+use IXP\IXP;
 use Illuminate\Http\{
     Request,
     RedirectResponse
@@ -159,15 +160,16 @@ class StatisticsController extends Controller
     /**
      * Show Vlan (sflow) graphs
      *
-     * @param Vlan|null     $vlan       VLAN to show the graph of
-     * @param string        $protocol   IPv4/6
-     * @param string        $category
+     * @param Vlan|null $vlan VLAN to show the graph of
+     * @param string $protocol IPv4/6
+     * @param string $category
      *
      * @return View
      *
-     * @throws
+     * @throws ParameterException
+     * @throws BindingResolutionException
      */
-    public function vlan( Vlan $vlan = null, string $protocol = Graph::PROTOCOL_IPV4, string $category = Graph::CATEGORY_BITS ) : View
+    public function vlan( ?Vlan $vlan = null, string $protocol = Graph::PROTOCOL_IPV4, string $category = Graph::CATEGORY_BITS ) : View
     {
         $vlans   = Vlan::publicOnly()
             ->where( 'peering_matrix', true )
@@ -205,14 +207,14 @@ class StatisticsController extends Controller
     /**
      * Show IXP switch graphs
      *
-     * @param Switcher|null $switch         Switch to show the graph of
-     * @param string        $category       Category of graph to show (e.g. bits / pkts)
+     * @param Switcher|null $switch Switch to show the graph of
+     * @param string $category Category of graph to show (e.g. bits / pkts)
      *
      * @return View
-     *
-     * @throws
+     * @throws BindingResolutionException
+     * @throws ParameterException
      */
-    public function switch( Switcher $switch = null, string $category = Graph::CATEGORY_BITS ) : View
+    public function switch( ?Switcher $switch = null, string $category = Graph::CATEGORY_BITS ) : View
     {
         $switches = Switcher::where( 'active', true )
             ->orderBy( 'name' )->get()
@@ -237,14 +239,14 @@ class StatisticsController extends Controller
     /**
      * Show IXP location graphs
      *
-     * @param Location|null $location       Location§ to show the graph of
-     * @param string        $category       Category of graph to show (e.g. bits / pkts)
+     * @param Location|null $location Location§ to show the graph of
+     * @param string $category Category of graph to show (e.g. bits / pkts)
      *
      * @return View
-     *
-     * @throws
+     * @throws BindingResolutionException
+     * @throws ParameterException
      */
-    public function location( Location $location = null, string $category = Graph::CATEGORY_BITS ) : View
+    public function location( ?Location $location = null, string $category = Graph::CATEGORY_BITS ) : View
     {
         $locations = Location::orderBy( 'name' )->get()
             ->keyBy( 'id' );
@@ -275,7 +277,7 @@ class StatisticsController extends Controller
      *
      * @throws ParameterException
      */
-    public function trunk( string $trunk = null, string $category = Graph::CATEGORY_BITS ): RedirectResponse|View
+    public function trunk( ?string $trunk = null, string $category = Graph::CATEGORY_BITS ): RedirectResponse|View
     {
         if( !is_array( config('grapher.backends.mrtg.trunks') ) || !count( config('grapher.backends.mrtg.trunks') ) ) {
             AlertContainer::push(
@@ -343,7 +345,7 @@ class StatisticsController extends Controller
             if( !in_array( $r->protocol, Graph::PROTOCOLS_REAL, true ) ) {
                 $r->protocol = Graph::PROTOCOL_IPV4;
             }
-            $targets = VlanInterfaceAggregator::forVlan( $vlan, $r->protocol );
+            $targets = VlanInterfaceAggregator::forVlan( $vlan, IXP::protocolTextToInt( $r->protocol ) );
         } else {
             $targets = [];
         }
@@ -387,18 +389,18 @@ class StatisticsController extends Controller
      * Display all graphs for a member
      *
      * @param StatisticsRequest     $r
-     * @param Customer|null         $cust the member
+     * @param Customer|null $cust the member
      *
      * @return RedirectResponse|View
      *
      */
-    public function member( StatisticsRequest $r, Customer $cust = null ): RedirectResponse|View
+    public function member( StatisticsRequest $r, ?Customer $cust = null ): RedirectResponse|View
     {
         if( !$cust && Auth::check() ) {
             $cust = Auth::getUser()->customer;
         }
 
-        if( $cust == null ) {
+        if( !$cust ) {
             abort( 403, "You are not authorised to view this member's graphs." );
         }
 
@@ -513,12 +515,14 @@ class StatisticsController extends Controller
     /**
      * sFlow Peer to Peer statistics
      *
-     * @param  Request  $request
-     * @param  Customer|null  $customer
+     * @param Request  $request
+     * @param Customer|null  $customer
      *
-     * @return array
+     * @return (Customer|VlanInterface|\Illuminate\Support\Collection|mixed|null|string)[]
      *
      * @throws ParameterException
+     *
+     * @psalm-return array{c: Customer|null, category: null|string, period: null|string, protocol: null|string, srcVlis: mixed, srcVli: VlanInterface|mixed, dstVlis: \Illuminate\Support\Collection, dstVli: VlanInterface|null}
      */
     public function p2pPrepare( Request $request, ?Customer $customer, ?VlanInterface $dstVli = null ): array
     {
@@ -656,7 +660,7 @@ class StatisticsController extends Controller
      *
      * @param  Request  $request
      * @param  VlanInterface $srcVli
-     * @param VlanInterface $dstVli
+     * @param  VlanInterface $dstVli
      * @return RedirectResponse|View
      * @throws ParameterException
      */
@@ -758,19 +762,28 @@ class StatisticsController extends Controller
                 ->where('day', $r->day)->where('cust_id', $r->custid )->get();
         }
 
+        $defaultChartProtocol = null;
+        if( $r->custid ) {
+            $customer = $customers[$r->custid];
+
+            if ($customer->isIPvXEnabled(4) && $customer->isIPvXEnabled(6)) {
+                $defaultChartProtocol = Graph::PROTOCOL_ALL;
+            } else if ($customer->isIPvXEnabled(4)) {
+                $defaultChartProtocol = Graph::PROTOCOL_IPV4;
+            } else if ($customer->isIPvXEnabled(6)) {
+                $defaultChartProtocol = Graph::PROTOCOL_IPV6;
+            }
+        }
+
         return view( 'statistics/p2p-table' )->with( [
-            'day'          => $r->day,
-            'days'         => $days,
-            'stats'        => $stats,
-            'customers'    => $customers,
-            'c'            => $r->custid ? $customers[$r->custid] : false,
+            'day'                  => $r->day,
+            'days'                 => $days,
+            'stats'                => $stats,
+            'customers'            => $customers,
+            'c'                    => $r->custid ? $customers[$r->custid] : false,
+            'defaultChartProtocol' => $defaultChartProtocol,
         ] );
     }
-
-
-
-
-
 
     /**
      * Show daily traffic for customers in a table.

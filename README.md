@@ -1,4 +1,4 @@
-![IXP Manager Logo](https://github.com/inex/IXP-Manager/raw/master/public/images/ixp-manager.png)
+![IXP Manager Logo](https://github.com/inex/IXP-Manager/raw/main/public/images/ixp-manager.png)
 
 [INEX](https://www.inex.ie/) are pleased to release [IXP Manager](http://www.ixpmanager.org/) under an open source license (the
 GNU Public License V2) which we hope will benefit the wider IXP community,
@@ -19,7 +19,6 @@ and especially new and small IXPs looking to expand.
 * [How to Get Help](https://www.ixpmanager.org/support)
 * [Presentations & Talks](https://www.ixpmanager.org/support/talks)
 * [Sponsors and Sponsorship](https://www.ixpmanager.org/sponsors)
-* Follow [@ixpmanager](https://twitter.com/ixpmanager) on Twitter
 
 ## Documentation
 
@@ -43,10 +42,10 @@ See also: https://www.inex.ie/
 
 Authors:
 
-* [Barry O'Donovan](https://www.barryodonovan.com/) / [@barryo79](https://twitter.com/#!/barryo79)
+* [Barry O'Donovan](https://www.barryodonovan.com/) 
 * Nick Hilliard
 
-Copyright (C) 2009 - 2022 Internet Neutral Exchange Association Company Limited By Guarantee.
+Copyright (C) 2009 - 2025 Internet Neutral Exchange Association Company Limited By Guarantee.
 All Rights Reserved.
 
 

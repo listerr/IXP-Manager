@@ -3,7 +3,7 @@
 namespace IXP\Http\Requests;
 
 /*
- * Copyright (C) 2009 - 2021 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -60,7 +60,9 @@ class StoreVirtualInterfaceWizard extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return ((IdnValidate|string)[]|string)[]
+     *
+     * @psalm-return array{custid: 'required|integer|exists:cust,id', vlanid: 'required|integer|exists:vlan,id', trunk: 'boolean', switch: 'required|integer|exists:switch,id', switchportid: 'required|integer|exists:switchport,id', status: string, speed: string, duplex: string, rate_limit: 'nullable|integer|min:0', autoneg: 'boolean', ipv4maxbgpprefix: 'integer|nullable', ipv6maxbgpprefix: 'integer|nullable', mcastenabled: 'boolean', rsclient: 'boolean', irrdbfilter: 'boolean', rsmorespecifics: 'boolean', as112client: 'boolean', ipv4enabled: 'boolean', ipv4address: 'ipv4|nullable'|'ipv4|required', ipv4hostname: list{'string', 'max:255', 'nullable'|'required', IdnValidate}, ipv4bgpmd5secret: 'string|max:255|nullable', ipv4canping: 'boolean', ipv4monitorrcbgp: 'boolean', ipv6enabled: 'boolean', ipv6address: 'ipv6|nullable'|'ipv6|required', ipv6hostname: list{'string', 'max:255', 'nullable'|'required', IdnValidate}, ipv6bgpmd5secret: 'string|max:255|nullable', ipv6canping: 'boolean', ipv6monitorrcbgp: 'boolean'}
      */
     public function rules(): array
     {
@@ -74,8 +76,9 @@ class StoreVirtualInterfaceWizard extends FormRequest
             'status'                => 'required|integer|in:' . implode( ',', array_keys( PhysicalInterface::$STATES ) ),
             'speed'                 => 'required|integer|in:' . implode( ',', array_keys( PhysicalInterface::$SPEED ) ),
             'duplex'                => 'required|string|in:' . implode( ',', array_keys( PhysicalInterface::$DUPLEX ) ),
+            'rate_limit'            => 'nullable|integer|min:0',
+            'autoneg'               => 'boolean',
 
-            'maxbgpprefix'          => 'integer|nullable',
             'mcastenabled'          => 'boolean',
             'rsclient'              => 'boolean',
             'irrdbfilter'           => 'boolean',
@@ -86,6 +89,7 @@ class StoreVirtualInterfaceWizard extends FormRequest
             'ipv4address'           => 'ipv4|' . ( $this->ipv4enabled ? 'required' : 'nullable' ),
             'ipv4hostname'          => [ 'string', 'max:255' , ( ( config('ixp_fe.vlaninterfaces.hostname_required' ) && $this->ipv4enabled ) ? 'required' : 'nullable' ), new IdnValidate() ],
             'ipv4bgpmd5secret'      => 'string|max:255|nullable',
+            'ipv4maxbgpprefix'      => 'integer|nullable',
             'ipv4canping'           => 'boolean',
             'ipv4monitorrcbgp'      => 'boolean',
 
@@ -93,6 +97,7 @@ class StoreVirtualInterfaceWizard extends FormRequest
             'ipv6address'           => 'ipv6|' . ( $this->ipv6enabled ? 'required' : 'nullable' ),
             'ipv6hostname'          => [ 'string', 'max:255' , ( ( config('ixp_fe.vlaninterfaces.hostname_required' ) && $this->ipv6enabled ) ? 'required' : 'nullable' ), new IdnValidate() ],
             'ipv6bgpmd5secret'      => 'string|max:255|nullable',
+            'ipv6maxbgpprefix'      => 'integer|nullable',
             'ipv6canping'           => 'boolean',
             'ipv6monitorrcbgp'      => 'boolean',
         ];

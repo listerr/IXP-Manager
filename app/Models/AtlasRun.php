@@ -50,17 +50,17 @@ use Illuminate\Database\Eloquent\{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\AtlasMeasurement> $atlasMeasurements
  * @property-read int|null $atlas_measurements_count
  * @property-read \IXP\Models\Vlan|null $vlan
- * @method static Builder|AtlasRun newModelQuery()
- * @method static Builder|AtlasRun newQuery()
- * @method static Builder|AtlasRun query()
- * @method static Builder|AtlasRun whereCompletedAt($value)
- * @method static Builder|AtlasRun whereCreatedAt($value)
- * @method static Builder|AtlasRun whereId($value)
- * @method static Builder|AtlasRun whereProtocol($value)
- * @method static Builder|AtlasRun whereScheduledAt($value)
- * @method static Builder|AtlasRun whereStartedAt($value)
- * @method static Builder|AtlasRun whereUpdatedAt($value)
- * @method static Builder|AtlasRun whereVlanId($value)
+ * @method static Builder<static>|AtlasRun newModelQuery()
+ * @method static Builder<static>|AtlasRun newQuery()
+ * @method static Builder<static>|AtlasRun query()
+ * @method static Builder<static>|AtlasRun whereCompletedAt($value)
+ * @method static Builder<static>|AtlasRun whereCreatedAt($value)
+ * @method static Builder<static>|AtlasRun whereId($value)
+ * @method static Builder<static>|AtlasRun whereProtocol($value)
+ * @method static Builder<static>|AtlasRun whereScheduledAt($value)
+ * @method static Builder<static>|AtlasRun whereStartedAt($value)
+ * @method static Builder<static>|AtlasRun whereUpdatedAt($value)
+ * @method static Builder<static>|AtlasRun whereVlanId($value)
  * @mixin Eloquent
  */
 class AtlasRun extends Model
@@ -89,19 +89,21 @@ class AtlasRun extends Model
     /**
      * CONST SCHEDULED
      */
-    public const SCHEDULED_AT_NOW         = 1;
-    public const SCHEDULED_AT_DATETIME    = 2;
+    public const int SCHEDULED_AT_NOW         = 1;
+    public const int SCHEDULED_AT_DATETIME    = 2;
 
     /**
      * @var array Email ids to classes
      */
-    public static $SCHEDULED_AT = [
+    public static array $SCHEDULED_AT = [
         self::SCHEDULED_AT_NOW         =>      'Run immediately',
         self::SCHEDULED_AT_DATETIME    =>      'Run scheduled at'
     ];
 
     /**
      * Get the atlas measurements
+     *
+     * @return HasMany<AtlasMeasurement,AtlasRun>
      */
     public function atlasMeasurements(): HasMany
     {
@@ -110,6 +112,8 @@ class AtlasRun extends Model
 
     /**
      * Get the vlan
+     *
+     * @return BelongsTo<Vlan,AtlasRun>
      */
     public function vlan(): BelongsTo
     {

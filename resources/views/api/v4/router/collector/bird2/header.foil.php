@@ -7,9 +7,9 @@
  * you can't effect the changes you need with skinning, consider posting to the mailing
  * list to see if it can be achieved / incorporated.
  *
- * Skinning: https://ixp-manager.readthedocs.io/en/latest/features/skinning.html
+ * Skinning: https://docs.ixpmanager.org/latest/features/skinning/
  *
- * Copyright (C) 2009 - 2019 Internet Neutral Exchange Association Company Limited By Guarantee.
+ * Copyright (C) 2009 - 2026 Internet Neutral Exchange Association Company Limited By Guarantee.
  * All Rights Reserved.
  *
  * This file is part of IXP Manager.
@@ -48,7 +48,7 @@ timeformat route        iso long;
 
 
 log "/var/log/bird/<?= $t->handle ?>.log" all;
-log syslog all;
+log syslog name "bird-<?= $t->handle ?>" all;
 
 define routerasn     = <?= $t->router->asn        ?>;
 define routeraddress = <?= $t->router->peering_ip ?>;
@@ -61,7 +61,7 @@ protocol device { }
 
 # This function excludes weird networks
 #  rfc1918, class D, class E, too long and too short prefixes
-function avoid_martians() -> bool
+function avoid_martians()
 prefix set martians;
 {
 <?php if( $t->router->protocol == 6 ): ?>

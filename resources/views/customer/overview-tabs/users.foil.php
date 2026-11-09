@@ -2,7 +2,7 @@
     $c = $t->c; /** @var $c \IXP\Models\Customer */
     $isSuperUser = $t->isSuperUser;
 ?>
-<table class="table tw-border-1 tw-border-grey-light tw-shadow-md table-striped table-responsive-ixp-action collapse w-100">
+<table class="table tw:border-1 tw:border-grey-light tw:shadow-md table-striped table-responsive-ixp-action collapse w-100">
     <thead class="thead-dark">
         <tr>
             <th>
@@ -21,7 +21,7 @@
                 Last Login
             </th>
             <th>
-                2FA Enabled
+                Flags
             </th>
             <th>
                 Actions
@@ -53,7 +53,15 @@
                     <?= $c2u->last_login_date ?? '<em>Never</em>' ?>
                 </td>
                 <td>
-                    <?= $u2fa && $u2fa->enabled ? "Yes" : "No" ?>
+                    <?php if( $u2fa && $u2fa->isEnabled() ): ?>
+                        <span class="badge badge-success">2FA</span>
+                    <?php else: ?>
+                        <span class="badge badge-danger">2FA</span>
+                    <?php endif; ?>
+
+                    <?php if( config( 'auth.peeringdb.enabled' ) && $user->peeringdb_id ): ?>
+                        <span class="badge badge-info">OAuth</span>
+                    <?php endif; ?>
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
@@ -86,7 +94,7 @@
                                 Login history
                             </a>
                             <?php if( $isSuperUser ): ?>
-                                <?php if( $u2fa && $u2fa->enabled ): ?>
+                                <?php if( $u2fa && $u2fa->isEnabled() ): ?>
                                     <a id="d2f-option-remove-2fa-<?= $u2fa->id ?>" class="dropdown-item remove-2fa" data-object-id="<?= $c2u->user_id ?>" href="#">
                                         Remove 2FA
                                     </a>

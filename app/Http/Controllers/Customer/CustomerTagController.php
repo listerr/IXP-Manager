@@ -65,9 +65,13 @@ class CustomerTagController extends EloquentController
      */
     protected $object = null;
 
+    protected static bool $is_admin_route = true;
+
+
     /**
      * This function sets up the frontend controller
      */
+    #[\Override]
     public function feInit(): void
     {
         $this->feParams         = ( object )[
@@ -118,11 +122,12 @@ class CustomerTagController extends EloquentController
      *
      * @return void
      */
+    #[\Override]
     protected static function additionalRoutes( string $route_prefix ): void
     {
-        Route::group( [ 'prefix' => $route_prefix ], static function() use ( $route_prefix ) {
-            Route::get(     'cust/{cust}',  'Customer\CustomerTagController@linkCustomer' )->name( $route_prefix . '@link-customer' );
-            Route::post(    'link/{cust}',  'Customer\CustomerTagController@link'         )->name( $route_prefix . '@link'          );
+        Route::group( [ 'prefix' => ( static::$is_admin_route ? 'admin/' : '' ) .  $route_prefix ], static function() use ( $route_prefix ) {
+            Route::get(     'cust/{cust}',  [self::class, 'linkCustomer'] )->name( $route_prefix . '@link-customer' );
+            Route::post(    'link/{cust}',  [self::class, 'link']         )->name( $route_prefix . '@link'          );
         });
     }
 
@@ -133,6 +138,7 @@ class CustomerTagController extends EloquentController
      *
      * @return array
      */
+    #[\Override]
     protected function listGetData( ?int $id = null ): array
     {
         $feParams = $this->feParams;
@@ -146,8 +152,11 @@ class CustomerTagController extends EloquentController
     /**
      * Display the form to create an object
      *
-     * @return array
+     * @return CustomerTag[]
+     *
+     * @psalm-return array{object: CustomerTag}
      */
+    #[\Override]
     protected function createPrepareForm(): array
     {
         return [
@@ -158,10 +167,13 @@ class CustomerTagController extends EloquentController
     /**
      * Display the form to edit an object
      *
-     * @param   int $id ID of the row to edit
+     * @param int $id ID of the row to edit
      *
      * @return array
+     *
+     * @psalm-return array{object: mixed}
      */
+    #[\Override]
     protected function editPrepareForm( int $id ): array
     {
         $this->object = CustomerTag::findOrFail( $id );
@@ -183,10 +195,11 @@ class CustomerTagController extends EloquentController
      *
      * @param Request $r
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doStore( Request $r ): bool|RedirectResponse
     {
         $this->checkForm( $r );
@@ -201,10 +214,11 @@ class CustomerTagController extends EloquentController
      * @param Request   $r
      * @param int       $id
      *
-     * @return bool|RedirectResponse
+     * @return true
      *
      * @throws
      */
+    #[\Override]
     public function doUpdate( Request $r, int $id ): bool|RedirectResponse
     {
         $this->object = CustomerTag::findOrFail( $r->id );
@@ -217,6 +231,7 @@ class CustomerTagController extends EloquentController
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function preDelete(): bool
     {
         $this->object->customers()->detach();
@@ -278,6 +293,7 @@ class CustomerTagController extends EloquentController
      *
      * @param Request $r
      */
+    #[\Override]
     public function checkForm( Request $r ): void
     {
         $r->validate( [

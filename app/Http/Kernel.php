@@ -13,7 +13,7 @@ namespace IXP\Http;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -35,7 +35,8 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\{
     CheckForMaintenanceMode,
     ConvertEmptyStringsToNull,
-    ValidatePostSize
+    InvokeDeferredCallbacks,
+    ValidatePostSize,
 };
 
 use Illuminate\Http\Middleware\HandleCors;
@@ -51,9 +52,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-use IXP\Http\Middleware\{
-    PreventRequestsDuringMaintenance,
-    Authenticate};
+use IXP\Http\Middleware\{HandleFailedRememberMeIntegrityCheck, PreventRequestsDuringMaintenance, Authenticate};
 use Illuminate\Http\Middleware\TrustProxies;
 
 class Kernel extends HttpKernel
@@ -72,7 +71,7 @@ class Kernel extends HttpKernel
         ValidatePostSize::class,
         Middleware\TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-
+        InvokeDeferredCallbacks::class,
     ];
 
     /**
@@ -86,6 +85,7 @@ class Kernel extends HttpKernel
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
+            HandleFailedRememberMeIntegrityCheck::class,
             Middleware\VerifyCsrfToken::class,
             SubstituteBindings::class,
             Middleware\ControllerEnabled::class,
@@ -96,6 +96,7 @@ class Kernel extends HttpKernel
             AddQueuedCookiesToResponse::class,
             StartSession::class,
             ShareErrorsFromSession::class,
+            HandleFailedRememberMeIntegrityCheck::class,
             SubstituteBindings::class,
             Middleware\ControllerEnabled::class,
             //'throttle:60,1',
@@ -146,24 +147,24 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
+        '2fa'                   => Middleware\Google2FA::class,
+        'apiauth'               => Middleware\ApiAuthenticate::class,
+        'apideprecated'         => Middleware\ApiDeprecated::class,
+        'apimaybeauth'          => Middleware\ApiMaybeAuthenticate::class,
+        'assert.privilege'      => Middleware\AssertUserPrivilege::class,
         'auth'                  => Middleware\Authenticate::class,
         'auth.basic'            => AuthenticateWithBasicAuth::class,
         'auth.session'          => \Illuminate\Session\Middleware\AuthenticateSession::class,
         //'bindings'              => SubstituteBindings::class,
-        'can'                   => Authorize::class,
         'cache.headers'         => SetCacheHeaders::class,
+        'can'                   => Authorize::class,
+        'controller-enabled'    => Middleware\ControllerEnabled::class,
+        'eloquent2Frontend'     => Middleware\Eloquent2Frontend::class,
+        'grapher'               => Middleware\Services\Grapher::class,
         'guest'                 => Middleware\RedirectIfAuthenticated::class,
         'signed'                => Middleware\ValidateSignature::class,
         'throttle'              => ThrottleRequests::class,
         'verified'              => EnsureEmailIsVerified::class,
-        'apiauth'               => Middleware\ApiAuthenticate::class,
-        'apimaybeauth'          => Middleware\ApiMaybeAuthenticate::class,
-        'assert.privilege'      => Middleware\AssertUserPrivilege::class,
-        'controller-enabled'    => Middleware\ControllerEnabled::class,
-        'eloquent2Frontend'     => Middleware\Eloquent2Frontend::class,
-        'grapher'               => Middleware\Services\Grapher::class,
-        'rs-prefixes'           => Middleware\RsPrefixes::class,
-        '2fa'                   => Middleware\Google2FA::class,
     ];
 
     /**
@@ -176,6 +177,7 @@ class Kernel extends HttpKernel
     protected $middlewarePriority = [
         StartSession::class,
         ShareErrorsFromSession::class,
+        HandleFailedRememberMeIntegrityCheck::class,
         Authenticate::class,
         ThrottleRequests::class,
         AuthenticateSession::class,

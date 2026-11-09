@@ -43,10 +43,10 @@ use IXP\Models\PatchPanelPort;
  * @property-read Collection<int, \IXP\Models\PatchPanelPortHistory> $patchPanelPortHistories
  * @property-read int|null $patch_panel_port_histories_count
  * @property-read \IXP\Models\SwitchPort|null $switchPort
- * @method static Builder|PatchPanelPort masterPort()
- * @method static Builder|PatchPanelPortAggregator newModelQuery()
- * @method static Builder|PatchPanelPortAggregator newQuery()
- * @method static Builder|PatchPanelPortAggregator query()
+ * @method static Builder<static>|PatchPanelPortAggregator masterPort()
+ * @method static Builder<static>|PatchPanelPortAggregator newModelQuery()
+ * @method static Builder<static>|PatchPanelPortAggregator newQuery()
+ * @method static Builder<static>|PatchPanelPortAggregator query()
  * @mixin \Eloquent
  */
 class PatchPanelPortAggregator extends PatchPanelPort
@@ -70,7 +70,7 @@ class PatchPanelPortAggregator extends PatchPanelPort
      *
      * @return Collection
      */
-    public static function list( int $ppid = null, bool $advanced = false, int $location = null, int $cabinet = null, int $cabletype = null, bool $availableForUse = false, bool $prewiredOnly = false ): Collection
+    public static function list( ?int $ppid = null, bool $advanced = false, ?int $location = null, ?int $cabinet = null, ?int $cabletype = null, bool $availableForUse = false, bool $prewiredOnly = false ): Collection
     {
         return self::selectRaw( '
             ppp.*,
@@ -133,7 +133,7 @@ class PatchPanelPortAggregator extends PatchPanelPort
      *
      * @return  array   list of patch panel form key => pppId , value => ppp name
      */
-    public static function getAvailablePorts( int $ppid, $excludeIds = [], int $includeSlave = null, bool $excludeDuplex = true )
+    public static function getAvailablePorts( int $ppid, $excludeIds = [], ?int $includeSlave = null, bool $excludeDuplex = true )
     {
         $ppps = PatchPanelPort::selectRaw(
             'ppp.id, ppp.number, 

@@ -47,16 +47,19 @@ class VirtualInterfaceDiagnosticSuite extends DiagnosticSuite
         private readonly VirtualInterface $vi,
     ) {
 
-        $name = 'Connection to ';
+        $name = '';
 
-        if( $vi->physicalInterfaces ) {
+        if( $vi->physicalInterfaces->count() ) {
+            $name .= 'Connection to ';
             $name .= $vi->physicalInterfaces[0]?->switchPort?->switcher?->infrastructureModel->name
-                    . ' - ' . $vi->physicalInterfaces[0]?->switchPort?->switcher?->name;
+                    . ' via ' . $vi->physicalInterfaces[0]?->switchPort?->switcher?->name;
+            $name .= '   /    ';
         }
 
-        $this->name        = $name . '[Virtual Interface #' . $vi->id . ']';
+        $this->name        = $name . 'Virtual Interface #' . $vi->id;
         $this->description = "Virtual interfaces general diagnostics.";
         $this->type        = 'INTERFACE';
+        $this->link        = route( 'virtual-interface@edit', ['vi' => $vi] );
 
         parent::__construct();
     }
@@ -64,7 +67,7 @@ class VirtualInterfaceDiagnosticSuite extends DiagnosticSuite
     /**
      * Run the diagnostics suite
      */
-    public function run(): VirtualInterfaceDiagnosticSuite
+    public function run(): static
     {
         $this->results->add( $this->portType( $this->vi ) );
         $this->results->add( $this->sameSwitch( $this->vi ) );

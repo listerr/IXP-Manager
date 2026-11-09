@@ -28,7 +28,6 @@ use Illuminate\Support\Collection;
 use IXP\Models\CoreBundle;
 use IXP\Models\Customer;
 use IXP\Models\Infrastructure;
-use IXP\Models\Location;
 use IXP\Models\Switcher;
 use IXP\Models\SwitchPort;
 
@@ -64,43 +63,41 @@ use IXP\Models\SwitchPort;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \IXP\Models\Cabinet|null $cabinet
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \IXP\Models\ConsoleServerConnection> $consoleServerConnections
- * @property-read int|null $console_server_connections_count
  * @property-read Infrastructure|null $infrastructureModel
  * @property-read \Illuminate\Database\Eloquent\Collection<int, SwitchPort> $switchPorts
  * @property-read int|null $switch_ports_count
  * @property-read \IXP\Models\Vendor|null $vendor
- * @method static Builder|SwitcherAggregator newModelQuery()
- * @method static Builder|SwitcherAggregator newQuery()
- * @method static Builder|SwitcherAggregator query()
- * @method static Builder|SwitcherAggregator whereActive($value)
- * @method static Builder|SwitcherAggregator whereAsn($value)
- * @method static Builder|SwitcherAggregator whereCabinetid($value)
- * @method static Builder|SwitcherAggregator whereCreatedAt($value)
- * @method static Builder|SwitcherAggregator whereHostname($value)
- * @method static Builder|SwitcherAggregator whereId($value)
- * @method static Builder|SwitcherAggregator whereInfrastructure($value)
- * @method static Builder|SwitcherAggregator whereIpv4addr($value)
- * @method static Builder|SwitcherAggregator whereIpv6addr($value)
- * @method static Builder|SwitcherAggregator whereLastPolled($value)
- * @method static Builder|SwitcherAggregator whereLoopbackIp($value)
- * @method static Builder|SwitcherAggregator whereLoopbackName($value)
- * @method static Builder|SwitcherAggregator whereMauSupported($value)
- * @method static Builder|SwitcherAggregator whereMgmtMacAddress($value)
- * @method static Builder|SwitcherAggregator whereModel($value)
- * @method static Builder|SwitcherAggregator whereName($value)
- * @method static Builder|SwitcherAggregator whereNotes($value)
- * @method static Builder|SwitcherAggregator whereOs($value)
- * @method static Builder|SwitcherAggregator whereOsDate($value)
- * @method static Builder|SwitcherAggregator whereOsVersion($value)
- * @method static Builder|SwitcherAggregator wherePoll($value)
- * @method static Builder|SwitcherAggregator whereSerialNumber($value)
- * @method static Builder|SwitcherAggregator whereSnmpEngineBoots($value)
- * @method static Builder|SwitcherAggregator whereSnmpEngineTime($value)
- * @method static Builder|SwitcherAggregator whereSnmpSystemUptime($value)
- * @method static Builder|SwitcherAggregator whereSnmppasswd($value)
- * @method static Builder|SwitcherAggregator whereUpdatedAt($value)
- * @method static Builder|SwitcherAggregator whereVendorid($value)
+ * @method static Builder<static>|SwitcherAggregator newModelQuery()
+ * @method static Builder<static>|SwitcherAggregator newQuery()
+ * @method static Builder<static>|SwitcherAggregator query()
+ * @method static Builder<static>|SwitcherAggregator whereActive($value)
+ * @method static Builder<static>|SwitcherAggregator whereAsn($value)
+ * @method static Builder<static>|SwitcherAggregator whereCabinetid($value)
+ * @method static Builder<static>|SwitcherAggregator whereCreatedAt($value)
+ * @method static Builder<static>|SwitcherAggregator whereHostname($value)
+ * @method static Builder<static>|SwitcherAggregator whereId($value)
+ * @method static Builder<static>|SwitcherAggregator whereInfrastructure($value)
+ * @method static Builder<static>|SwitcherAggregator whereIpv4addr($value)
+ * @method static Builder<static>|SwitcherAggregator whereIpv6addr($value)
+ * @method static Builder<static>|SwitcherAggregator whereLastPolled($value)
+ * @method static Builder<static>|SwitcherAggregator whereLoopbackIp($value)
+ * @method static Builder<static>|SwitcherAggregator whereLoopbackName($value)
+ * @method static Builder<static>|SwitcherAggregator whereMauSupported($value)
+ * @method static Builder<static>|SwitcherAggregator whereMgmtMacAddress($value)
+ * @method static Builder<static>|SwitcherAggregator whereModel($value)
+ * @method static Builder<static>|SwitcherAggregator whereName($value)
+ * @method static Builder<static>|SwitcherAggregator whereNotes($value)
+ * @method static Builder<static>|SwitcherAggregator whereOs($value)
+ * @method static Builder<static>|SwitcherAggregator whereOsDate($value)
+ * @method static Builder<static>|SwitcherAggregator whereOsVersion($value)
+ * @method static Builder<static>|SwitcherAggregator wherePoll($value)
+ * @method static Builder<static>|SwitcherAggregator whereSerialNumber($value)
+ * @method static Builder<static>|SwitcherAggregator whereSnmpEngineBoots($value)
+ * @method static Builder<static>|SwitcherAggregator whereSnmpEngineTime($value)
+ * @method static Builder<static>|SwitcherAggregator whereSnmpSystemUptime($value)
+ * @method static Builder<static>|SwitcherAggregator whereSnmppasswd($value)
+ * @method static Builder<static>|SwitcherAggregator whereUpdatedAt($value)
+ * @method static Builder<static>|SwitcherAggregator whereVendorid($value)
  * @mixin \Eloquent
  */
 class SwitcherAggregator extends Switcher
@@ -114,7 +111,7 @@ class SwitcherAggregator extends Switcher
 
      * @return Collection
      */
-    public static function getByLocationInfrastructureSpeed( int $infra = null, int $location = null, int $speed = null ): Collection
+    public static function getByLocationInfrastructureSpeed( ?int $infra = null, ?int $location = null, ?int $speed = null ): Collection
     {
         /** @psalm-suppress InvalidArgument - psalm can not recognise eloquent grouped conditions */
         return self::select( 'switch.*' )
@@ -154,7 +151,7 @@ class SwitcherAggregator extends Switcher
      *
      * @return array
      */
-    public static function getConfiguration( int $switchid = null, int $infraid = null, int $facilityid = null, int $speed = null, int $vlanid = null, bool $rsclient = false, bool $ipv6enabled = false ): array
+    public static function getConfiguration( ?int $switchid = null, ?int $infraid = null, ?int $facilityid = null, ?int $speed = null, ?int $vlanid = null, bool $rsclient = false, bool $ipv6enabled = false ): array
     {
         // BUGLET: see https://github.com/inex/IXP-Manager/issues/757
         // "Switch configuration port list erroneously lists non-rate limited port as rate limited"
@@ -264,7 +261,7 @@ class SwitcherAggregator extends Switcher
     }
 
     /**
-     * @param string|null $net
+     * @param string $net
      * @param string $side
      * @param bool $maskneeded
      *
@@ -293,6 +290,8 @@ class SwitcherAggregator extends Switcher
      * @param Switcher      $switch     switch to query
      *
      * @return array
+     *
+     * @psalm-return array<int, mixed>
      */
     public static function coreBundleNeighbors( Switcher $switch ): array
     {

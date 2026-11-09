@@ -14,7 +14,7 @@ namespace IXP\Http\Controllers\Customer;
  *
  * IXP Manager is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GpNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  *
  * You should have received a copy of the GNU General Public License v2.0
@@ -80,10 +80,8 @@ class CustomerNotesController extends Controller
 
     /**
      * Get the list of unread not for the current user
-     *
-     * @return Application|Factory|\Illuminate\Contracts\View\View
      */
-    public function unreadNotes()
+    public function unreadNotes(): \Illuminate\Contracts\View\View
     {
         /** @var User $us */
         $us = Auth::getUser();

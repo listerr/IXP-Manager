@@ -66,10 +66,8 @@ class Generator
      * Set the template name
      *
      * @param string $tmpl
-     *
-     * @return Generator
      */
-    public function setTemplate( string $tmpl ): Generator
+    public function setTemplate( string $tmpl ): static
     {
         $this->tmpl = $tmpl;
         return $this;
@@ -90,9 +88,9 @@ class Generator
      *
      * @return string
      *
-     * @throws
+     * @throws GeneralException
      */
-    public function generate(): string
+    public function generate( bool $forJson = false ): string
     {
         if( !( $this->template() ) ) {
             throw new GeneralException( 'You must specify a template name so you can generate a RIR object' );
@@ -112,34 +110,89 @@ class Generator
                 'customers'     => $customers,
                 'asns'          => $this->generateASNs( $customers ),
                 "rsclients"     => $this->generateRouteServerClientDetails( $customers ),
-                "protocols"     => [ 4, 6 ]
+                "protocols"     => [ 4, 6 ],
+                "forJson"       => $forJson,
             ] )->render();
     }
 
+    
+    public function generateJson(): array {
+        
+        $text = $this->generate( forJson: true );
+        
+        $type = null;
+        $key  = null;
+        $attributes = [];
+        
+        foreach( preg_split("/((\r?\n)|(\r\n?))/", $text ) as $line ) {
+            
+            if( !strpos( $line, ':' ) ) {
+                continue;
+            }
+            
+            [ $name, $value ] = explode( ':', $line, 2 );
+            
+            if( trim( $name ) === 'IXPM-OBJECT' ) {
+                $type = trim( $value );
+            } else if( trim( $name ) === 'IXPM-KEY' ) {
+                $key = trim( $value );
+            } else {
+                $attributes[] = [
+                    'name'  => trim( $name ),
+                    'value' => trim( $value )
+                ];
+            }
+        }
+
+        return [
+            'type'     => $type,
+            'key'      => $key,
+            'data'     => [
+                'objects' => [
+                    'object' => [
+                        [
+                            'source' => [
+                                'id' => 'RIPE'
+                            ],
+                            'attributes' => [
+                                'attribute' => $attributes
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+        ];
+    }
+    
+    
+    
     /**
      * Gather and create the IXP customer ASN details.
      *
      * Returns an associate array indexed by ordered ASNs of active external trafficking customers:
      *
-     *     [
-     *         [65500] => [
-     *                        ['name']    => Customer Name
-     *                        ['asmacro'] => AS-CUSTOMER
-     *                    ],
-     *                    ...
-     *     ]
+     * [
+     *     [65500] => [
+     *         ['name'] => Customer Name
+     *         ['asmacro'] => AS-CUSTOMER
+     *     ],
+     * ...
+     * ]
      *
-     * @param   Collection $customers Array of all active external trafficking customers
+     * @param Collection $customers Array of all active external trafficking customers
+     * @return array<int, array{asmacro: ?string, name: string}>
      *
-     * @return array Associate array indexed by ordered ASNs
-     *
-     * @throws
+     * @throws \Exception
      */
     private function generateASNs( Collection $customers ): array
     {
         $asns = [];
         foreach( $customers as $c ) {
-            /** @var $c Customer */
+
+            if( !$c->autsys ) {
+                continue;
+            }
+
             $asns[ $c->autsys ] = [
                 'asmacro' => $c->asMacro( 4, 'AS' ),
                 'name'    => $c->name
@@ -156,46 +209,41 @@ class Generator
      *
      * Returns an array of the form:
      *
-     *     [
-     *         [ vlans ] => [
-     *             [ $vlanid ] => [
-     *                 [servers] => [   // route server IP addresses by protocol
-     *                     [4] => [
-     *                         [0] => 193.242.111.8
-     *                         ...
-     *                     ],
-     *                     [6] => [
-     *                         ...
-     *                     ]
-     *                 ]
-     *             ],
-     *             [ $another_vlanid ] => [
-     *                 ...
-     *             ],
-     *             ...
-     *         ],
-     *         [clients] => [
-     *             [$customer_asn] => [
-     *                 [id] => customer id,
-     *                 [ vlans ] => [
-     *                     [ vlanid ] => [
-     *                         [$vlan_interface_id] => [    // customer's IP addresses by protocol
-     *                             [4] => 193.242.111.xx
-     *                             [6] => 2001:7f8:18::xx
-     *                         ],
-     *                         ...   // if the user has more than one VLAN interface on this VLAN
-     *                     ],
-     *                     ...
-     *                 ],
-     *             ],
-     *         ],
-     *     ]
+     * [
+     * [ vlans ] => [
+     * [ $vlanid ] => [
+     * [servers] => [   // route server IP addresses by protocol
+     * [4] => [
+     * [0] => 193.242.111.8
+     * ...
+     * ],
+     * [6] => [
+     * ...
+     * ]
+     * ]
+     * ],
+     * [ $another_vlanid ] => [
+     * ...
+     * ],
+     * ...
+     * ],
+     * [clients] => [
+     * [$customer_asn] => [
+     * [id] => customer id,
+     * [ vlans ] => [
+     * [ vlanid ] => [
+     * [$vlan_interface_id] => [    // customer's IP addresses by protocol
+     * [4] => 193.242.111.xx
+     * [6] => 2001:7f8:18::xx
+     * ],
+     * ...   // if the user has more than one VLAN interface on this VLAN
+     * ],
+     * ...
+     * ],
+     * ],
+     * ],
+     * ]
      *
-     * @param Collection $customers
-     *
-     * @return array As defined above
-     *
-     * @throws
      */
     private function generateRouteServerClientDetails( Collection $customers ): array
     {
@@ -208,7 +256,7 @@ class Generator
             foreach( [ 4, 6 ] as $proto ) {
                 // get the available route servers
                 $servers = Router::routeServer()->where( 'vlan_id', $vlan->id )
-                    ->where( 'protocol', 4 )->get()->pluck( 'peering_ip' )->toArray();
+                    ->where( 'protocol', $proto )->get()->pluck( 'peering_ip' )->toArray();
 
                 if( !count( $servers ) ){
                     continue;
